@@ -9,8 +9,13 @@ interface ListRowProps {
   subtitle?: string
   trailing?: string
   accent?: string
+  // Shown instead of the accent bar, e.g. a checkbox.
+  leading?: React.ReactNode
   highlighted?: boolean
   dim?: boolean
+  strike?: boolean
+  // Briefly marks the row red, e.g. after a failed change.
+  error?: boolean
   onClick?: () => void
 }
 
@@ -19,8 +24,11 @@ const ListRow: React.FC<ListRowProps> = ({
   subtitle,
   trailing,
   accent,
+  leading,
   highlighted,
   dim,
+  strike,
+  error,
   onClick
 }) => {
   const ref = useRef<HTMLDivElement>(null)
@@ -35,12 +43,16 @@ const ListRow: React.FC<ListRowProps> = ({
       className={styles.row}
       data-highlighted={!!highlighted}
       data-dim={!!dim}
+      data-strike={!!strike}
+      data-error={!!error}
       onClick={onClick}
     >
-      <div
-        className={styles.accent}
-        style={{ backgroundColor: accent ?? 'transparent' }}
-      />
+      {leading ?? (
+        <div
+          className={styles.accent}
+          style={{ backgroundColor: accent ?? 'transparent' }}
+        />
+      )}
       <div className={styles.body}>
         <div className={styles.title}>{title}</div>
         {subtitle && <div className={styles.subtitle}>{subtitle}</div>}

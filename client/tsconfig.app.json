@@ -25,5 +25,8 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Tests run with vitest from the repo root, which the client doesn't
+  // depend on.
+  "exclude": ["src/**/*.test.ts"]
 }
