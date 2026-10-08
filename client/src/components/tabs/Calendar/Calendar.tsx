@@ -13,7 +13,7 @@ const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
   const highlighted = useListNav(feed.items.length, active)
 
   return (
-    <div className={styles.tab}>
+    <div className={styles.tab} data-scroll-container>
       <StaleBadge stale={feed.stale} label={feed.fetchedAtLabel} />
       {feed.loaded && feed.items.length === 0 && (
         <div className={styles.empty}>Nothing coming up</div>

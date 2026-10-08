@@ -17,7 +17,7 @@ const Todo: React.FC<{ active: boolean }> = ({ active }) => {
   const highlighted = useListNav(tasks.length, active)
 
   return (
-    <div className={styles.tab}>
+    <div className={styles.tab} data-scroll-container>
       <StaleBadge stale={feed.stale} label={feed.fetchedAtLabel} />
       {feed.loaded && tasks.length === 0 && (
         <div className={styles.empty}>All done</div>
