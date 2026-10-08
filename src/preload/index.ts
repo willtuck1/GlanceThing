@@ -53,7 +53,9 @@ enum IPCHandler {
   ConnectGoogle = 'connectGoogle',
   DisconnectGoogle = 'disconnectGoogle',
   GetGoogleCalendars = 'getGoogleCalendars',
-  SetGoogleCalendars = 'setGoogleCalendars'
+  SetGoogleCalendars = 'setGoogleCalendars',
+  GetGoogleTaskLists = 'getGoogleTaskLists',
+  SetGoogleTaskList = 'setGoogleTaskList'
 }
 
 // Custom APIs for renderer
@@ -139,7 +141,11 @@ const api = {
   getGoogleCalendars: () =>
     ipcRenderer.invoke(IPCHandler.GetGoogleCalendars),
   setGoogleCalendars: (ids: string[]) =>
-    ipcRenderer.invoke(IPCHandler.SetGoogleCalendars, ids)
+    ipcRenderer.invoke(IPCHandler.SetGoogleCalendars, ids),
+  getGoogleTaskLists: () =>
+    ipcRenderer.invoke(IPCHandler.GetGoogleTaskLists),
+  setGoogleTaskList: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.SetGoogleTaskList, id)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

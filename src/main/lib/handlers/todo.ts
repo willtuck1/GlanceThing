@@ -1,4 +1,9 @@
 import { respondWithFeed } from '../feeds/respond.js'
+import { getFeed } from '../feeds/registry.js'
+import { setTaskDone } from '../google/tasks.js'
+import { googlePatch } from '../google/tasksSettings.js'
+import { parseToggle, toggleTask } from '../google/todoToggle.js'
+import { log, LogLevel } from '../utils.js'
 
 import {
   HandlerAction,
@@ -13,19 +18,29 @@ export const handle: HandlerFunction = async ws => {
   respondWithFeed('todo', ws)
 }
 
-// Stub until M3: acknowledges every toggle without touching any data.
 export const actions: HandlerAction[] = [
   {
     action: 'toggle',
     handle: async (ws, data) => {
-      const reqId = (data as { reqId?: string } | null)?.reqId
-      ws.send(
-        JSON.stringify({
-          type: 'todo',
-          action: 'ack',
-          data: { reqId, ok: true }
-        })
-      )
+      const req = parseToggle(data)
+      if (!req) {
+        log('Ignoring toggle without reqId', 'Todo', LogLevel.WARN)
+        return
+      }
+
+      const ack =
+        'invalid' in req
+          ? { reqId: req.reqId, ok: false, error: 'Invalid request' }
+          : await toggleTask(req, {
+              setDone: (listId, id, done) =>
+                setTaskDone(googlePatch, listId, id, done, Date.now()),
+              refetch: () => void getFeed('todo')?.refetch()
+            })
+
+      if (!ack.ok)
+        log(`Task toggle failed: ${ack.error}`, 'Todo', LogLevel.WARN)
+
+      ws.send(JSON.stringify({ type: 'todo', action: 'ack', data: ack }))
     }
   }
 ]
