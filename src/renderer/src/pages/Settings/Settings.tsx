@@ -18,6 +18,7 @@ enum Tab {
   Client,
   Appearance,
   Startup,
+  Google,
   Advanced,
   Logs,
   About
@@ -86,6 +87,13 @@ const Settings: React.FC = () => {
               <span className="material-icons">security</span>
               Startup
             </button>
+            <button
+              onClick={() => setCurrentTab(Tab.Google)}
+              data-active={currentTab === Tab.Google}
+            >
+              <span className="material-icons">event</span>
+              Google
+            </button>
             {devMode ? (
               <>
                 <button
@@ -121,6 +129,8 @@ const Settings: React.FC = () => {
               <AppearanceTab />
             ) : currentTab === Tab.Startup ? (
               <StartupTab />
+            ) : currentTab === Tab.Google ? (
+              <GoogleTab />
             ) : currentTab === Tab.Advanced ? (
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
@@ -710,6 +720,204 @@ const StartupTab: React.FC = () => {
         />
       </div>
     )
+  )
+}
+
+type GoogleStatus = Awaited<ReturnType<typeof window.api.getGoogleStatus>>
+type GoogleCalendar = Extract<
+  Awaited<ReturnType<typeof window.api.getGoogleCalendars>>,
+  { ok: true }
+>['calendars'][number]
+
+const GoogleTab: React.FC = () => {
+  const [status, setStatus] = useState<GoogleStatus | null>(null)
+  const [clientId, setClientId] = useState('')
+  const [clientSecret, setClientSecret] = useState('')
+  const [connecting, setConnecting] = useState(false)
+  const [message, setMessage] = useState<{
+    text: string
+    type: 'error' | 'success'
+  } | null>(null)
+  const [calendars, setCalendars] = useState<GoogleCalendar[] | null>(null)
+  const [calendarError, setCalendarError] = useState<string | null>(null)
+
+  async function loadStatus() {
+    const s = await window.api.getGoogleStatus()
+    setStatus(s)
+    if (s.clientSource === 'settings') setClientId(s.clientId)
+  }
+
+  useEffect(() => {
+    loadStatus()
+  }, [])
+
+  useEffect(() => {
+    if (!status?.connected) {
+      setCalendars(null)
+      setCalendarError(null)
+      return
+    }
+
+    let cancelled = false
+    window.api.getGoogleCalendars().then(res => {
+      if (cancelled) return
+      if (res.ok) {
+        setCalendars(res.calendars)
+        setCalendarError(null)
+      } else {
+        setCalendarError(res.error)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [status?.connected])
+
+  async function saveClient() {
+    const id = clientId.trim()
+    const secret = clientSecret.trim()
+    if (id && !secret) {
+      setMessage({ text: 'Enter the client secret too.', type: 'error' })
+      return
+    }
+    setStatus(await window.api.setGoogleClient(id, secret))
+    setClientSecret('')
+    setMessage({
+      text: id ? 'OAuth client saved.' : 'OAuth client cleared.',
+      type: 'success'
+    })
+  }
+
+  async function connect() {
+    setConnecting(true)
+    setMessage(null)
+    const res = await window.api.connectGoogle()
+    setConnecting(false)
+    setMessage(
+      res.ok
+        ? { text: 'Google account connected.', type: 'success' }
+        : { text: res.error, type: 'error' }
+    )
+    await loadStatus()
+  }
+
+  async function disconnect() {
+    await window.api.disconnectGoogle()
+    setMessage(null)
+    await loadStatus()
+  }
+
+  function toggleCalendar(id: string, selected: boolean) {
+    if (!calendars) return
+    const next = calendars.map(c => (c.id === id ? { ...c, selected } : c))
+    setCalendars(next)
+    window.api.setGoogleCalendars(next.filter(c => c.selected).map(c => c.id))
+  }
+
+  if (!status) return null
+
+  return (
+    <div className={styles.settingsTab}>
+      <div className={styles.googleSection}>
+        <p>OAuth client</p>
+        <p className={styles.description}>
+          {status.clientSource === 'build'
+            ? 'This app has a built-in Google client. Enter your own to use it instead.'
+            : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}
+        </p>
+        <input
+          type="text"
+          placeholder="Client ID"
+          value={clientId}
+          onChange={e => setClientId(e.target.value)}
+        />
+        <input
+          type="password"
+          placeholder={
+            status.clientSource === 'settings'
+              ? 'Client secret (saved)'
+              : 'Client secret'
+          }
+          value={clientSecret}
+          onChange={e => setClientSecret(e.target.value)}
+        />
+        <div className={styles.actions}>
+          <button onClick={saveClient}>Save</button>
+          {status.clientSource === 'settings' && (
+            <button
+              onClick={() => {
+                setClientId('')
+                setClientSecret('')
+                window.api
+                  .setGoogleClient('', '')
+                  .then(setStatus)
+                  .then(() =>
+                    setMessage({
+                      text: 'OAuth client cleared.',
+                      type: 'success'
+                    })
+                  )
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className={styles.googleSection}>
+        <p>Google account</p>
+        <p className={styles.description}>
+          {status.connected
+            ? 'Connected. Calendar events show on the Car Thing.'
+            : connecting
+              ? 'Waiting for you to sign in from your browser...'
+              : 'Not connected.'}
+        </p>
+        <div className={styles.actions}>
+          {status.connected ? (
+            <button data-type="danger" onClick={disconnect}>
+              Disconnect
+            </button>
+          ) : (
+            <button
+              disabled={!status.configured || connecting}
+              onClick={connect}
+            >
+              Connect
+            </button>
+          )}
+        </div>
+        {message && <p className={styles[message.type]}>{message.text}</p>}
+      </div>
+
+      {status.connected && (
+        <div className={styles.googleSection}>
+          <p>Calendars</p>
+          <p className={styles.description}>
+            Events from the checked calendars show on the Car Thing.
+          </p>
+          {calendarError && <p className={styles.error}>{calendarError}</p>}
+          {!calendars && !calendarError && (
+            <p className={styles.description}>Loading calendars...</p>
+          )}
+          {calendars?.map(calendar => (
+            <label key={calendar.id} className={styles.calendarOption}>
+              <input
+                type="checkbox"
+                checked={calendar.selected}
+                onChange={e => toggleCalendar(calendar.id, e.target.checked)}
+              />
+              <span
+                className={styles.swatch}
+                style={{ backgroundColor: calendar.color }}
+              />
+              {calendar.name}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }
 
