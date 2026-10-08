@@ -139,13 +139,49 @@ export function toggleFavorite(favorites: string[], teamKey: string) {
     : [...favorites, teamKey]
 }
 
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
+function sameLocalDay(a: number, b: number) {
+  const x = new Date(a)
+  const y = new Date(b)
+  return (
+    x.getFullYear() === y.getFullYear() &&
+    x.getMonth() === y.getMonth() &&
+    x.getDate() === y.getDate()
+  )
+}
+
+// Short label for a scheduled game, in the host's local time: "7:00 PM"
+// today, "Sun 1:00 PM" on later days. ESPN's own label carries the date and
+// time zone ("10/8 - 7:00 PM EDT").
+export function scheduleLabel(
+  start: number,
+  now: number,
+  formatTime: (ts: number) => string
+) {
+  const time = formatTime(start)
+  if (sameLocalDay(start, now)) return time
+  return `${WEEKDAYS[new Date(start).getDay()]} ${time}`
+}
+
+export interface DecorateOptions {
+  now: number
+  formatTime: (ts: number) => string
+}
+
 export function decorateSports(
   payload: FeedPayload<Game>,
-  favorites: string[]
+  favorites: string[],
+  { now, formatTime }: DecorateOptions
 ): SportsPayload {
+  const items = payload.items.map(g =>
+    g.state === 'pre'
+      ? { ...g, detail: scheduleLabel(g.start, now, formatTime) }
+      : g
+  )
   return {
     ...payload,
-    items: sortGames(payload.items, favorites),
+    items: sortGames(items, favorites),
     favorites
   }
 }
