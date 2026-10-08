@@ -10,6 +10,7 @@ import {
   log,
   LogLevel
 } from './utils.js'
+import { getClientZipUrl } from './repo.js'
 
 export async function getWebAppDir() {
   if (isDev() && hasCustomWebApp()) {
@@ -34,7 +35,7 @@ export async function getWebAppDir() {
   if (fs.existsSync(extractPath))
     fs.rmSync(extractPath, { recursive: true })
 
-  const url = `https://github.com/BluDood/GlanceThing/releases/download/v${version}/glancething-client-v${version}.zip`
+  const url = getClientZipUrl(version)
 
   const res = await axios.get(url, {
     responseType: 'stream',
