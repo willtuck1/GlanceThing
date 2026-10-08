@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy - GlanceThing</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<nav><a href="./">Home</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Service</a></nav>
+<h1>Privacy Policy</h1>
+<p class="sub">Last updated: 8 October 2026</p>
+
+<p>This policy covers the GlanceThing desktop app published at
+<a href="https://github.com/willtuck1/GlanceThing">github.com/willtuck1/GlanceThing</a>
+("GlanceThing", "the app") and its Car Thing client.</p>
+
+<h2>Summary</h2>
+<p>GlanceThing runs entirely on your computer. It has no servers, no accounts of its own, no analytics and no
+advertising. The developer never receives your Google data.</p>
+
+<h2>Google user data the app accesses</h2>
+<p>If you connect a Google account, the app requests these permissions:</p>
+<ul>
+  <li><code>https://www.googleapis.com/auth/calendar.readonly</code>: to read your calendar list and the events
+  in the calendars you select, for the next 7 days.</li>
+  <li><code>https://www.googleapis.com/auth/tasks</code>: to read your task lists and tasks, and to change a
+  task's status between completed and not completed when you tick it on the Car Thing.</li>
+</ul>
+
+<h2>How that data is used</h2>
+<ul>
+  <li>Event titles, times and locations, and task titles, due dates and status, are shown on your Car Thing.</li>
+  <li>The app changes a task's completed status only when you tick or untick it on the device. It does not
+  create, edit or delete events, and does not delete tasks.</li>
+  <li>Data is not used for advertising, profiling, or training AI or machine-learning models, and is not sold.</li>
+</ul>
+
+<h2>Where data is stored and sent</h2>
+<ul>
+  <li>Google data travels from Google's servers to the app on your computer over HTTPS, and from your computer
+  to your Car Thing over a local USB connection. It is not sent anywhere else.</li>
+  <li>The app keeps a copy of the most recently fetched events and tasks in its local settings file on your
+  computer, so the Car Thing has something to show while offline. Disconnecting your Google account deletes it.</li>
+  <li>The Google refresh token, and any OAuth client secret you enter, are stored on your computer encrypted with
+  your operating system's secure storage. Access tokens are kept only in memory.</li>
+</ul>
+
+<h2>Sharing</h2>
+<p>GlanceThing does not share, transfer or disclose Google user data to any third party. The developer has no
+access to it.</p>
+
+<h2>Other data</h2>
+<p>Sports scores are fetched from ESPN's public scoreboard without any personal information. Spotify features
+work as in the original GlanceThing and stay on your computer.</p>
+
+<h2>Removing access and deleting data</h2>
+<ul>
+  <li>In the desktop app, open <em>Settings &rarr; Google</em> and click <em>Disconnect</em>. This revokes the
+  app's access with Google and deletes the stored token and cached calendar data.</li>
+  <li>You can also revoke access at any time at
+  <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+  <li>Uninstalling the app and deleting its settings folder removes everything it stored.</li>
+</ul>
+
+<h2>Limited Use</h2>
+<p>GlanceThing's use and transfer of information received from Google APIs adheres to the
+<a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>,
+including the Limited Use requirements.</p>
+
+<h2>Children</h2>
+<p>The app is not directed at children under 13.</p>
+
+<h2>Changes</h2>
+<p>Changes to this policy are published on this page with a new "Last updated" date. The history is public in
+the repository's <code>gh-pages</code> branch.</p>
+
+<h2>Contact</h2>
+<p>Open an issue at
+<a href="https://github.com/willtuck1/GlanceThing/issues">github.com/willtuck1/GlanceThing/issues</a>.</p>
+<footer>GlanceThing (tabs fork) is an open-source project and is not affiliated with Google, Spotify or BluDood. Source: <a href="https://github.com/willtuck1/GlanceThing">github.com/willtuck1/GlanceThing</a></footer>
+</main>
+</body>
+</html>
