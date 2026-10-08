@@ -14,6 +14,7 @@ import {
   sortGames,
   sportsInterval,
   applyFavorite,
+  teamColor,
   visibleGames
 } from './logic.js'
 
@@ -55,14 +56,16 @@ describe('normalize', () => {
         abbr: 'BOS',
         name: 'Celtics',
         score: 88,
-        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png'
+        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png',
+        color: '#008348'
       },
       away: {
         key: 'nba:LAL',
         abbr: 'LAL',
         name: 'Lakers',
         score: 84,
-        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/lal.png'
+        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/lal.png',
+        color: '#552583'
       },
       state: 'in',
       detail: 'Q3 4:12',
@@ -159,6 +162,8 @@ describe('normalize (real ESPN captures)', () => {
         expect(g.state).toBe('pre')
         expect(g.home.score).toBeNull()
         expect(g.away.score).toBeNull()
+        expect(g.home.color).toMatch(/^#[0-9a-f]{6}$/)
+        expect(g.away.color).toMatch(/^#[0-9a-f]{6}$/)
       }
     })
   }
@@ -172,13 +177,38 @@ describe('normalize (real ESPN captures)', () => {
         key: 'nba:CLE',
         abbr: 'CLE',
         name: 'Cavaliers',
-        score: null
+        score: null,
+        color: '#860038'
       },
       away: { key: 'nba:BOS', abbr: 'BOS', name: 'Celtics', score: null },
       state: 'pre',
       detail: '10/8 - 7:00 PM EDT',
       start: Date.parse('2026-10-08T23:00Z')
     })
+  })
+})
+
+describe('teamColor', () => {
+  it('uses the primary color, normalized to #rrggbb', () => {
+    expect(teamColor('860038', 'bc945c')).toBe('#860038')
+    expect(teamColor('#ABCDEF', null)).toBe('#abcdef')
+  })
+
+  it('swaps a near-black primary for its alternate', () => {
+    // Real ESPN values: Bears navy, Spurs black, Nets black/white.
+    expect(teamColor('0b1c3a', 'e64100')).toBe('#e64100')
+    expect(teamColor('000000', 'c4ced4')).toBe('#c4ced4')
+    expect(teamColor('000000', 'ffffff')).toBe('#ffffff')
+  })
+
+  it('keeps a near-black primary when the alternate is no better', () => {
+    expect(teamColor('000000', '021018')).toBe('#000000')
+  })
+
+  it('ignores anything that is not a hex color', () => {
+    expect(teamColor('red', 'url(x)')).toBeNull()
+    expect(teamColor(undefined, 12)).toBeNull()
+    expect(teamColor('zzz', '00338d')).toBe('#00338d')
   })
 })
 

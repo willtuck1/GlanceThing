@@ -36,6 +36,31 @@ function list(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
 
+const HEX = /^#?([0-9a-f]{6})$/i
+
+function hexColor(value: unknown): string | null {
+  const m = typeof value === 'string' ? HEX.exec(value.trim()) : null
+  return m ? `#${m[1].toLowerCase()}` : null
+}
+
+function isNearBlack(hex: string) {
+  const n = parseInt(hex.slice(1), 16)
+  const r = n >> 16
+  const g = (n >> 8) & 0xff
+  const b = n & 0xff
+  return 0.299 * r + 0.587 * g + 0.114 * b < 40
+}
+
+// The team's primary color for the row background. A near-black primary
+// would vanish on the dark screen, so its alternate color is used instead
+// when that one isn't near-black too.
+export function teamColor(primary: unknown, alternate: unknown) {
+  const main = hexColor(primary)
+  const alt = hexColor(alternate)
+  if (main && isNearBlack(main) && alt && !isNearBlack(alt)) return alt
+  return main ?? alt
+}
+
 function toTeam(
   league: League,
   raw: Record<string, unknown>,
@@ -60,6 +85,8 @@ function toTeam(
   }
   const logo = text(info?.logo)
   if (logo) team.logo = logo
+  const color = teamColor(info?.color, info?.alternateColor)
+  if (color) team.color = color
   return team
 }
 
