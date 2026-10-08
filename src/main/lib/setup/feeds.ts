@@ -1,5 +1,4 @@
 import { Feed } from '../feeds/Feed.js'
-import { todoFixture } from '../feeds/fixtures.js'
 import {
   decoratePayload,
   FeedDecorator,
@@ -13,6 +12,9 @@ import {
   googleGet
 } from '../google/calendarSettings.js'
 import { CALENDAR_INTERVAL } from '../google/calendarLogic.js'
+import { createTasksFetcher } from '../google/tasks.js'
+import { TASKS_INTERVAL } from '../google/tasksLogic.js'
+import { getSelectedTaskList } from '../google/tasksSettings.js'
 import { createSportsFetcher } from '../sports/espn.js'
 import { getFavorites } from '../sports/favorites.js'
 import { decorateSports, sportsInterval } from '../sports/logic.js'
@@ -25,8 +27,6 @@ import { FeedKey, FeedPayload, Game } from '../feeds/types.js'
 import { SetupFunction } from '../../types/WebSocketSetup.js'
 
 export const name = 'feeds'
-
-const STUB_INTERVAL = 5 * 60 * 1000
 
 interface CachedItems {
   items: unknown[]
@@ -62,11 +62,14 @@ function sources(): Source[] {
       }),
       interval: () => CALENDAR_INTERVAL
     },
-    // To-do stays on fixtures until M3.
     {
       key: 'todo',
-      fetch: async () => todoFixture,
-      interval: () => STUB_INTERVAL
+      fetch: createTasksFetcher({
+        get: googleGet,
+        getSelected: getSelectedTaskList,
+        now: () => Date.now()
+      }),
+      interval: () => TASKS_INTERVAL
     },
     {
       key: 'sports',
@@ -82,9 +85,12 @@ function sources(): Source[] {
 }
 
 export const setup: SetupFunction = async () => {
-  // Without a Google account, don't show events cached from an earlier
-  // account (or from the M0 fixtures).
-  if (!getGoogleStatus().connected) setStorageValue('feedCache.calendar', null)
+  // Without a Google account, don't show events or tasks cached from an
+  // earlier account (or from the M0 fixtures).
+  if (!getGoogleStatus().connected) {
+    setStorageValue('feedCache.calendar', null)
+    setStorageValue('feedCache.todo', null)
+  }
 
   const feeds = sources().map(({ key, fetch, interval, decorate }) => {
     const feed = new Feed<unknown>(

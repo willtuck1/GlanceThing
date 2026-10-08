@@ -189,3 +189,31 @@ describe('Feed.reset', () => {
     expect(feed.getPayload().items).toEqual([7])
   })
 })
+
+describe('Feed.refetch', () => {
+  it('ignores an older in-flight fetch and publishes the new data', async () => {
+    let calls = 0
+    let resolveOld: (items: number[]) => void = () => {}
+    const { feed, published } = setup({
+      fetch: () =>
+        ++calls === 1
+          ? new Promise<number[]>(r => (resolveOld = r))
+          : Promise.resolve([2])
+    })
+    const old = feed.refresh()
+    const fresh = feed.refetch()
+    resolveOld([1])
+    await Promise.all([old, fresh])
+    expect(feed.getPayload().items).toEqual([2])
+    expect(published).toHaveLength(1)
+    expect(published[0]).toMatchObject({ items: [2] })
+  })
+
+  it('keeps existing data until the new fetch lands', async () => {
+    const { feed } = setup({ fetch: async () => [4] })
+    await feed.refresh()
+    const pending = feed.refetch()
+    expect(feed.getPayload().items).toEqual([4])
+    await pending
+  })
+})

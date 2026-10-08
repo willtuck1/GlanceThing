@@ -1,4 +1,4 @@
-import { CalendarEvent, Game, Task } from './types.js'
+import { CalendarEvent, Game } from './types.js'
 
 export const calendarFixture: CalendarEvent[] = [
   {
@@ -39,19 +39,6 @@ export const calendarFixture: CalendarEvent[] = [
     dayLabel: 'Tomorrow',
     calendarColor: '#4285f4'
   }
-]
-
-export const todoFixture: Task[] = [
-  { id: 't1', listId: 'l1', title: 'Buy groceries', done: false },
-  {
-    id: 't2',
-    listId: 'l1',
-    title: 'Send invoice',
-    done: false,
-    dueLabel: 'Thu 9 Oct'
-  },
-  { id: 't3', listId: 'l1', title: 'Book flights', done: false },
-  { id: 't4', listId: 'l1', title: 'Renew passport', done: true }
 ]
 
 export const sportsFixture: Game[] = [

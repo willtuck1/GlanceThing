@@ -17,6 +17,15 @@
   opacity: 0.5;
 }
 
+.row[data-strike='true'] .title {
+  text-decoration: line-through;
+}
+
+.row[data-error='true'] {
+  background-color: #4a1616;
+  outline: 2px solid #ff6b6b;
+}
+
 .accent {
   width: 6px;
   align-self: stretch;

@@ -20,6 +20,13 @@ interface GoogleCalendarOption {
   selected: boolean
 }
 
+interface GoogleTaskListOption {
+  id: string
+  name: string
+  isDefault: boolean
+  selected: boolean
+}
+
 declare global {
   interface Window {
     api: {
@@ -104,6 +111,11 @@ declare global {
         | { ok: false; error: string }
       >
       setGoogleCalendars: (ids: string[]) => Promise<void>
+      getGoogleTaskLists: () => Promise<
+        | { ok: true; taskLists: GoogleTaskListOption[] }
+        | { ok: false; error: string }
+      >
+      setGoogleTaskList: (id: string) => Promise<void>
     }
   }
 }

@@ -255,7 +255,9 @@ enum IPCHandler {
   ConnectGoogle = 'connectGoogle',
   DisconnectGoogle = 'disconnectGoogle',
   GetGoogleCalendars = 'getGoogleCalendars',
-  SetGoogleCalendars = 'setGoogleCalendars'
+  SetGoogleCalendars = 'setGoogleCalendars',
+  GetGoogleTaskLists = 'getGoogleTaskLists',
+  SetGoogleTaskList = 'setGoogleTaskList'
 }
 
 async function setupIpcHandlers() {
@@ -548,6 +550,14 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.SetGoogleCalendars, (_event, ids) => {
     google.saveCalendars(ids)
+  })
+
+  ipcMain.handle(IPCHandler.GetGoogleTaskLists, async () => {
+    return await google.taskLists()
+  })
+
+  ipcMain.handle(IPCHandler.SetGoogleTaskList, (_event, id) => {
+    google.saveTaskList(id)
   })
 }
 
