@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState } from 'react'
 
 import { AXIS_LOCK_PX, resolveSnap } from './snap.ts'
 
@@ -12,6 +12,18 @@ export interface TabPage {
 interface TabPagerProps {
   pages: TabPage[]
 }
+
+// Re-renders only when its own `active` flips, not on every drag frame or
+// when another tab becomes active. `page` must be stable (defined once).
+const Page = memo(function Page({
+  page,
+  active
+}: {
+  page: TabPage
+  active: boolean
+}) {
+  return <>{page.render(active)}</>
+})
 
 interface Drag {
   startX: number
@@ -118,7 +130,7 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
             className={styles.page}
             style={{ width: `${100 / pages.length}%` }}
           >
-            {page.render(i === index)}
+            <Page page={page} active={i === index} />
           </div>
         ))}
       </div>
