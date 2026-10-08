@@ -110,6 +110,45 @@ describe('normalize', () => {
   })
 })
 
+// Real ESPN responses captured 2026-10-08. Every game is still 'pre', so
+// live and final handling is covered by the hand-built fixtures above.
+describe('normalize (real ESPN captures)', () => {
+  const captures = [
+    { league: 'nba' as const, file: 'nba-live.json', count: 6 },
+    { league: 'nfl' as const, file: 'nfl-live.json', count: 15 }
+  ]
+
+  for (const { league, file, count } of captures) {
+    it(`maps every ${league.toUpperCase()} event`, () => {
+      const games = normalize(league, fixture(file))
+      expect(games).toHaveLength(count)
+      for (const g of games) {
+        expect(isTeamKey(g.home.key)).toBe(true)
+        expect(isTeamKey(g.away.key)).toBe(true)
+        expect(g.home.key).not.toBe(g.away.key)
+        expect(Number.isNaN(g.start)).toBe(false)
+        expect(g.detail).not.toBe('')
+        expect(g.state).toBe('pre')
+        expect(g.home.score).toBeNull()
+        expect(g.away.score).toBeNull()
+      }
+    })
+  }
+
+  it('reads a real game correctly', () => {
+    const games = normalize('nba', fixture('nba-live.json'))
+    const game = games.find(g => g.id === 'nba:401898392')
+    expect(game).toMatchObject({
+      league: 'nba',
+      home: { key: 'nba:CLE', abbr: 'CLE', name: 'Cavaliers', score: null },
+      away: { key: 'nba:BOS', abbr: 'BOS', name: 'Celtics', score: null },
+      state: 'pre',
+      detail: '10/8 - 7:00 PM EDT',
+      start: Date.parse('2026-10-08T23:00Z')
+    })
+  })
+})
+
 describe('sortGames', () => {
   const all = [...nba, ...nfl]
 
