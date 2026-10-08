@@ -1,0 +1,46 @@
+.pager {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.track {
+  display: flex;
+  height: 100%;
+  will-change: transform;
+  transition: transform 0.25s ease-out;
+}
+
+.track[data-dragging='true'] {
+  transition: none;
+}
+
+.page {
+  height: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.dots {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  margin: 0 5px;
+  border-radius: 50%;
+  background-color: #555;
+}
+
+.dot[data-active='true'] {
+  background-color: #fff;
+}

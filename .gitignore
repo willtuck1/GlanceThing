@@ -4,3 +4,5 @@ out
 
 client/*.tsbuildinfo
 .DS_Store
+*.tsbuildinfo
+.env

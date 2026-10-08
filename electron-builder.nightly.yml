@@ -1,4 +1,4 @@
-appId: com.bludood.glancething.nightly
+appId: com.glancething.tabs.nightly
 productName: GlanceThing Nightly
 directories:
   buildResources: build/nightly
@@ -35,7 +35,7 @@ dmg:
 linux:
   target:
     - AppImage
-  maintainer: BluDood
+  maintainer: GlanceThing contributors
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

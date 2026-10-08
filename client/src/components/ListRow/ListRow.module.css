@@ -1,0 +1,51 @@
+.row {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding: 8px 16px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background-color: #161616;
+}
+
+.row[data-highlighted='true'] {
+  background-color: #2a2a2a;
+  outline: 2px solid #fff;
+}
+
+.row[data-dim='true'] {
+  opacity: 0.5;
+}
+
+.accent {
+  width: 6px;
+  align-self: stretch;
+  border-radius: 3px;
+  margin-right: 14px;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.subtitle {
+  font-size: 0.6em;
+  color: #aaa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trailing {
+  margin-left: 12px;
+  font-size: 0.75em;
+  white-space: nowrap;
+}

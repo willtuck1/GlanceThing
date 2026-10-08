@@ -8,9 +8,20 @@ import LoadingScreen from '@/components/LoadingScreen/LoadingScreen.tsx'
 import UpdateScreen from './components/UpdateScreen/UpdateScreen.tsx'
 import Statusbar from '@/components/Statusbar/Statusbar.tsx'
 import Widgets from '@/components/Widgets/Widgets.tsx'
+import TabPager, { TabPage } from '@/components/TabPager/TabPager.tsx'
+import Calendar from '@/components/tabs/Calendar/Calendar.tsx'
+import Todo from '@/components/tabs/Todo/Todo.tsx'
+import Sports from '@/components/tabs/Sports/Sports.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
 
 import styles from './App.module.css'
+
+const pages: TabPage[] = [
+  { key: 'calendar', render: active => <Calendar active={active} /> },
+  { key: 'todo', render: active => <Todo active={active} /> },
+  { key: 'sports', render: active => <Sports active={active} /> },
+  { key: 'spotify', render: () => <Widgets /> }
+]
 
 const App: React.FC = () => {
   const { blurred } = useContext(AppBlurContext)
@@ -35,7 +46,7 @@ const App: React.FC = () => {
     <>
       <div className={styles.app} data-blurred={blurred || !ready}>
         <Statusbar />
-        <Widgets />
+        <TabPager pages={pages} />
         <FullescreenPlayer shown={playerShown} setShown={setPlayerShown} />
       </div>
       <LoadingScreen />

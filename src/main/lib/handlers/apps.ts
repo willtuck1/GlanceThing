@@ -19,7 +19,10 @@ export const actions: HandlerAction[] = [
       const shortcuts = getShortcuts()
       const app = shortcuts.find(app => app.id === data)
       if (app) {
-        const { cmd, shell } = getParsedPlatformCommand(app.command)
+        const command = getParsedPlatformCommand(app.command)
+        if (!command) return
+
+        const { cmd, shell } = command
 
         exec(cmd, {
           shell

@@ -1,10 +1,11 @@
 {
   "name": "glancething",
-  "version": "0.0.16",
+  "version": "0.0.16-tabs.1",
   "description": "Desktop application for GlanceThing",
   "main": "./out/main/index.js",
   "author": "BluDood",
-  "homepage": "https://github.com/BluDood/GlanceThing",
+  "homepage": "https://github.com/willtuck1/GlanceThing",
+  "repository": "github:willtuck1/GlanceThing",
   "scripts": {
     "lint": "eslint . --ext .js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix",
     "format": "prettier --write .",
@@ -55,7 +56,8 @@
     "react-dom": "^19.2.4",
     "typed-emitter": "^2.1.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^5.0.3"
   },
   "optionalDependencies": {
     "node-nowplaying-darwin-universal": "0.1.0",

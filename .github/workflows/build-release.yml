@@ -1,12 +1,20 @@
 name: Build GlanceThing Release
 
 on:
+  push:
+    tags:
+      - 'v*-tabs.*'
   release:
     types: [created]
   workflow_dispatch:
 
 permissions:
   contents: write
+
+env:
+  GT_REPO: ${{ vars.GT_REPO || github.repository }}
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+  GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
 
 jobs:
   build-windows:
@@ -34,7 +42,7 @@ jobs:
           path: ./dist/glancething-*-setup.exe
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/glancething-*-setup.exe
@@ -64,7 +72,7 @@ jobs:
           path: ./dist/glancething-*.dmg
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/glancething-*.dmg
@@ -94,7 +102,7 @@ jobs:
           path: ./dist/glancething-*.AppImage
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: ./dist/glancething-*.AppImage
@@ -131,7 +139,7 @@ jobs:
           path: ./client/dist
 
       - name: Upload to GitHub Releases
-        if: github.event_name == 'release' && github.event.action == 'created'
+        if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: /tmp/glancething-client-*.zip
