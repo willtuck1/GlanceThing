@@ -61,7 +61,8 @@ export const sportsFixture: Game[] = [
     home: { key: 'nba:BOS', abbr: 'BOS', name: 'Celtics', score: 88 },
     away: { key: 'nba:LAL', abbr: 'LAL', name: 'Lakers', score: 84 },
     state: 'in',
-    detail: 'Q3 4:12'
+    detail: 'Q3 4:12',
+    start: Date.UTC(2026, 9, 8, 23, 0)
   },
   {
     id: 'g2',
@@ -69,7 +70,8 @@ export const sportsFixture: Game[] = [
     home: { key: 'nfl:KC', abbr: 'KC', name: 'Chiefs', score: 27 },
     away: { key: 'nfl:BUF', abbr: 'BUF', name: 'Bills', score: 24 },
     state: 'post',
-    detail: 'Final'
+    detail: 'Final',
+    start: Date.UTC(2026, 9, 8, 17, 0)
   },
   {
     id: 'g3',
@@ -77,6 +79,7 @@ export const sportsFixture: Game[] = [
     home: { key: 'nba:GSW', abbr: 'GSW', name: 'Warriors', score: null },
     away: { key: 'nba:DEN', abbr: 'DEN', name: 'Nuggets', score: null },
     state: 'pre',
-    detail: '7:30 PM'
+    detail: '7:30 PM',
+    start: Date.UTC(2026, 9, 9, 2, 30)
   }
 ]

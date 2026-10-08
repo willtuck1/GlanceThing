@@ -1,0 +1,278 @@
+{
+  "leagues": [
+    {
+      "id": "46",
+      "abbreviation": "NBA",
+      "name": "National Basketball Association"
+    }
+  ],
+  "day": {
+    "date": "2026-10-08"
+  },
+  "events": [
+    {
+      "id": "401700001",
+      "uid": "s:basketball~l:nba~e:401700001",
+      "date": "2026-10-08T23:00Z",
+      "name": "Los Angeles Lakers at Boston Celtics",
+      "shortName": "LAL @ BOS",
+      "season": {
+        "year": 2026,
+        "type": 2
+      },
+      "competitions": [
+        {
+          "id": "401700001",
+          "date": "2026-10-08T23:00Z",
+          "attendance": 0,
+          "competitors": [
+            {
+              "id": "2",
+              "type": "team",
+              "order": 0,
+              "homeAway": "home",
+              "team": {
+                "id": "2",
+                "uid": "s:basketball~l:nba~t:2",
+                "location": "Boston",
+                "name": "Celtics",
+                "abbreviation": "BOS",
+                "displayName": "Boston Celtics",
+                "shortDisplayName": "Celtics",
+                "color": "000000",
+                "alternateColor": "ffffff",
+                "isActive": true,
+                "logo": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png"
+              },
+              "score": "88"
+            },
+            {
+              "id": "13",
+              "type": "team",
+              "order": 1,
+              "homeAway": "away",
+              "team": {
+                "id": "13",
+                "uid": "s:basketball~l:nba~t:13",
+                "location": "Los Angeles",
+                "name": "Lakers",
+                "abbreviation": "LAL",
+                "displayName": "Los Angeles Lakers",
+                "shortDisplayName": "Lakers",
+                "color": "000000",
+                "alternateColor": "ffffff",
+                "isActive": true,
+                "logo": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/lal.png"
+              },
+              "score": "84"
+            }
+          ],
+          "status": {
+            "clock": 0,
+            "displayClock": "4:12",
+            "period": 3,
+            "type": {
+              "id": "2",
+              "name": "STATUS_IN_PROGRESS",
+              "state": "in",
+              "completed": false,
+              "description": "In_Progress",
+              "detail": "3rd Quarter - 4:12",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ],
+      "status": {
+        "clock": 0,
+        "displayClock": "4:12",
+        "period": 3,
+        "type": {
+          "id": "2",
+          "name": "STATUS_IN_PROGRESS",
+          "state": "in",
+          "completed": false,
+          "description": "In_Progress",
+          "detail": "3rd Quarter - 4:12",
+          "shortDetail": "Q3 4:12"
+        }
+      }
+    },
+    {
+      "id": "401700002",
+      "uid": "s:basketball~l:nba~e:401700002",
+      "date": "2026-10-09T02:30Z",
+      "name": "Denver Nuggets at Golden State Warriors",
+      "shortName": "DEN @ GS",
+      "season": {
+        "year": 2026,
+        "type": 2
+      },
+      "competitions": [
+        {
+          "id": "401700002",
+          "date": "2026-10-09T02:30Z",
+          "attendance": 0,
+          "competitors": [
+            {
+              "id": "9",
+              "type": "team",
+              "order": 0,
+              "homeAway": "home",
+              "team": {
+                "id": "9",
+                "uid": "s:basketball~l:nba~t:9",
+                "location": "Golden State",
+                "name": "Warriors",
+                "abbreviation": "GS",
+                "displayName": "Golden State Warriors",
+                "shortDisplayName": "Warriors",
+                "color": "000000",
+                "alternateColor": "ffffff",
+                "isActive": true,
+                "logo": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/gs.png"
+              },
+              "score": "0"
+            },
+            {
+              "id": "7",
+              "type": "team",
+              "order": 1,
+              "homeAway": "away",
+              "team": {
+                "id": "7",
+                "uid": "s:basketball~l:nba~t:7",
+                "location": "Denver",
+                "name": "Nuggets",
+                "abbreviation": "DEN",
+                "displayName": "Denver Nuggets",
+                "shortDisplayName": "Nuggets",
+                "color": "000000",
+                "alternateColor": "ffffff",
+                "isActive": true,
+                "logo": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/den.png"
+              },
+              "score": "0"
+            }
+          ],
+          "status": {
+            "clock": 0,
+            "displayClock": "0.0",
+            "period": 0,
+            "type": {
+              "id": "1",
+              "name": "STATUS_SCHEDULED",
+              "state": "pre",
+              "completed": false,
+              "description": "Scheduled",
+              "detail": "Thu, October 8th at 10:30 PM EDT",
+              "shortDetail": "10/8 - 10:30 PM EDT"
+            }
+          }
+        }
+      ],
+      "status": {
+        "clock": 0,
+        "displayClock": "0.0",
+        "period": 0,
+        "type": {
+          "id": "1",
+          "name": "STATUS_SCHEDULED",
+          "state": "pre",
+          "completed": false,
+          "description": "Scheduled",
+          "detail": "Thu, October 8th at 10:30 PM EDT",
+          "shortDetail": "10/8 - 10:30 PM EDT"
+        }
+      }
+    },
+    {
+      "id": "401700003",
+      "uid": "s:basketball~l:nba~e:401700003",
+      "date": "2026-10-08T17:00Z",
+      "name": "Miami Heat at New York Knicks",
+      "shortName": "MIA @ NY",
+      "season": {
+        "year": 2026,
+        "type": 2
+      },
+      "competitions": [
+        {
+          "id": "401700003",
+          "date": "2026-10-08T17:00Z",
+          "attendance": 0,
+          "competitors": [
+            {
+              "id": "18",
+              "type": "team",
+              "order": 0,
+              "homeAway": "home",
+              "team": {
+                "id": "18",
+                "uid": "s:basketball~l:nba~t:18",
+                "location": "New York",
+                "name": "Knicks",
+                "abbreviation": "NY",
+                "displayName": "New York Knicks",
+                "shortDisplayName": "Knicks",
+                "color": "000000",
+                "alternateColor": "ffffff",
+                "isActive": true,
+                "logo": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/ny.png"
+              },
+              "score": "112"
+            },
+            {
+              "id": "14",
+              "type": "team",
+              "order": 1,
+              "homeAway": "away",
+              "team": {
+                "id": "14",
+                "uid": "s:basketball~l:nba~t:14",
+                "location": "Miami",
+                "name": "Heat",
+                "abbreviation": "MIA",
+                "displayName": "Miami Heat",
+                "shortDisplayName": "Heat",
+                "color": "000000",
+                "alternateColor": "ffffff",
+                "isActive": true,
+                "logo": "https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/mia.png"
+              },
+              "score": "104"
+            }
+          ],
+          "status": {
+            "clock": 0,
+            "displayClock": "0.0",
+            "period": 4,
+            "type": {
+              "id": "3",
+              "name": "STATUS_FINAL",
+              "state": "post",
+              "completed": true,
+              "description": "Final",
+              "detail": "Final",
+              "shortDetail": "Final"
+            }
+          }
+        }
+      ],
+      "status": {
+        "clock": 0,
+        "displayClock": "0.0",
+        "period": 4,
+        "type": {
+          "id": "3",
+          "name": "STATUS_FINAL",
+          "state": "post",
+          "completed": true,
+          "description": "Final",
+          "detail": "Final",
+          "shortDetail": "Final"
+        }
+      }
+    }
+  ]
+}
