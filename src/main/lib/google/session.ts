@@ -1,9 +1,15 @@
 import axios, { AxiosError, AxiosInstance, CreateAxiosDefaults } from 'axios'
 
+import { describeFetchError, FeedError, httpStatus } from '../feeds/errors.js'
 import { GoogleClient, PostForm, refreshTokens, TokenError } from './oauth.js'
 
 export const NOT_CONNECTED = 'Connect Google in the desktop app'
-export const REVOKED = 'Google access was revoked. Reconnect in the desktop app'
+export const REVOKED =
+  'Google access was revoked. Reconnect Google in the desktop app'
+// Google answers 403 when the project doesn't have the API turned on, the
+// most likely setup mistake.
+export const FORBIDDEN =
+  'Google refused access (403). Check the Calendar and Tasks APIs are enabled'
 
 // Refresh this long before Google's stated expiry to avoid racing it.
 const EXPIRY_MARGIN = 60_000
@@ -13,6 +19,16 @@ export class NotConnectedError extends Error {
     super(message)
     this.name = 'NotConnectedError'
   }
+}
+
+// Feed error for a failed Google request. Without a working account the
+// cached events and tasks are dropped, so the tab shows how to reconnect.
+export function describeGoogleError(e: unknown): FeedError {
+  if (e instanceof NotConnectedError)
+    return { message: e.message, dropItems: true }
+  if (httpStatus(e) === 403)
+    return { message: FORBIDDEN, dropItems: false }
+  return describeFetchError(e, 'Google')
 }
 
 export interface SessionDeps {

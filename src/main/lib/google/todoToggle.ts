@@ -1,3 +1,5 @@
+import { describeGoogleError } from './session.js'
+
 import { Task } from '../feeds/types.js'
 
 export interface ToggleRequest {
@@ -42,10 +44,10 @@ export async function toggleTask(
     deps.refetch()
     return { reqId: req.reqId, ok: true, task }
   } catch (e) {
-    return {
-      reqId: req.reqId,
-      ok: false,
-      error: e instanceof Error ? e.message : String(e)
-    }
+    const { message, dropItems } = describeGoogleError(e)
+    // The account is gone: refetch so the tab swaps its tasks for the
+    // reconnect message.
+    if (dropItems) deps.refetch()
+    return { reqId: req.reqId, ok: false, error: message }
   }
 }

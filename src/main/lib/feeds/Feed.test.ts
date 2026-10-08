@@ -1,11 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { Feed, FeedDeps, REFRESH_RATE_LIMIT_MS } from './Feed.js'
+import {
+  Feed,
+  FeedDeps,
+  FeedOptions,
+  REFRESH_RATE_LIMIT_MS
+} from './Feed.js'
 
 function setup(opts?: {
   fetch?: () => Promise<number[]>
   cached?: { items: number[]; fetchedAt: number } | null
   interval?: number
+  describeError?: FeedOptions<number>['describeError']
 }) {
   let now = 1_000_000
   const published: unknown[] = []
@@ -21,7 +27,12 @@ function setup(opts?: {
   }
   const fetch = vi.fn(opts?.fetch ?? (async () => [1, 2, 3]))
   const feed = new Feed<number>(
-    { key: 'test', fetch, interval: () => opts?.interval ?? 60_000 },
+    {
+      key: 'test',
+      fetch,
+      interval: () => opts?.interval ?? 60_000,
+      describeError: opts?.describeError
+    },
     deps
   )
   return {
@@ -215,5 +226,46 @@ describe('Feed.refetch', () => {
     const pending = feed.refetch()
     expect(feed.getPayload().items).toEqual([4])
     await pending
+  })
+
+  it('publishes the described error and keeps data by default', async () => {
+    let fail = false
+    const { feed, published } = setup({
+      fetch: async () => {
+        if (fail) throw new Error('getaddrinfo ENOTFOUND')
+        return [5]
+      },
+      describeError: () => ({ message: 'Offline', dropItems: false })
+    })
+    await feed.refresh()
+    fail = true
+    await feed.refresh()
+    expect(published[1]).toMatchObject({
+      items: [5],
+      stale: true,
+      error: 'Offline'
+    })
+  })
+
+  it('drops data and the cache when the error says so', async () => {
+    let fail = false
+    const { feed, published, saved } = setup({
+      fetch: async () => {
+        if (fail) throw new Error('revoked')
+        return [5]
+      },
+      describeError: () => ({ message: 'Reconnect', dropItems: true })
+    })
+    await feed.refresh()
+    fail = true
+    await feed.refresh()
+    expect(saved.test).toBeNull()
+    expect(published[1]).toMatchObject({
+      items: [],
+      fetchedAt: null,
+      fetchedAtLabel: '',
+      stale: true,
+      error: 'Reconnect'
+    })
   })
 })

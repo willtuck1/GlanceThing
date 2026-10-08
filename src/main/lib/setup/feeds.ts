@@ -1,3 +1,4 @@
+import { describeFetchError, FeedError } from '../feeds/errors.js'
 import { Feed } from '../feeds/Feed.js'
 import {
   decoratePayload,
@@ -14,6 +15,7 @@ import {
 import { CALENDAR_INTERVAL } from '../google/calendarLogic.js'
 import { createTasksFetcher } from '../google/tasks.js'
 import { TASKS_INTERVAL } from '../google/tasksLogic.js'
+import { describeGoogleError } from '../google/session.js'
 import { getSelectedTaskList } from '../google/tasksSettings.js'
 import { createSportsFetcher } from '../sports/espn.js'
 import { getFavorites } from '../sports/favorites.js'
@@ -41,6 +43,7 @@ interface Source {
   key: FeedKey
   fetch: () => Promise<unknown[]>
   interval: (items: unknown[]) => number
+  describeError: (e: unknown) => FeedError
   decorate?: FeedDecorator
 }
 
@@ -60,7 +63,8 @@ function sources(): Source[] {
         now: () => Date.now(),
         formatTime: ts => formatDate(new Date(ts)).time
       }),
-      interval: () => CALENDAR_INTERVAL
+      interval: () => CALENDAR_INTERVAL,
+      describeError: describeGoogleError
     },
     {
       key: 'todo',
@@ -69,12 +73,14 @@ function sources(): Source[] {
         getSelected: getSelectedTaskList,
         now: () => Date.now()
       }),
-      interval: () => TASKS_INTERVAL
+      interval: () => TASKS_INTERVAL,
+      describeError: describeGoogleError
     },
     {
       key: 'sports',
       fetch: fetchSports,
       interval: items => sportsInterval(items as Game[], Date.now()),
+      describeError: e => describeFetchError(e, 'ESPN'),
       decorate: payload =>
         decorateSports(payload as FeedPayload<Game>, getFavorites(), {
           now: Date.now(),
@@ -92,9 +98,9 @@ export const setup: SetupFunction = async () => {
     setStorageValue('feedCache.todo', null)
   }
 
-  const feeds = sources().map(({ key, fetch, interval, decorate }) => {
+  const feeds = sources().map(({ decorate, ...options }) => {
     const feed = new Feed<unknown>(
-      { key, fetch, interval },
+      options,
       {
         now: () => Date.now(),
         formatTime: ts => formatDate(new Date(ts)).time,
@@ -108,7 +114,7 @@ export const setup: SetupFunction = async () => {
         log: message => log(message, 'Feeds', LogLevel.WARN)
       }
     )
-    registerFeed(key, feed, decorate)
+    registerFeed(options.key, feed, decorate)
     return feed
   })
 

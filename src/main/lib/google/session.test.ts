@@ -2,7 +2,13 @@ import { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { describe, expect, it, vi } from 'vitest'
 
 import { PostForm } from './oauth.js'
-import { createGoogleSession, NotConnectedError, REVOKED } from './session.js'
+import {
+  createGoogleSession,
+  describeGoogleError,
+  FORBIDDEN,
+  NotConnectedError,
+  REVOKED
+} from './session.js'
 
 const client = { clientId: 'id', clientSecret: 'secret' }
 
@@ -119,5 +125,34 @@ describe('createGoogleSession', () => {
     expect(err).toBeInstanceOf(NotConnectedError)
     expect(err.message).toBe(REVOKED)
     expect(setRefreshToken).toHaveBeenCalledWith(null)
+  })
+})
+
+describe('describeGoogleError', () => {
+  it('drops cached data when the account is gone', () => {
+    expect(describeGoogleError(new NotConnectedError(REVOKED))).toEqual({
+      message: REVOKED,
+      dropItems: true
+    })
+    expect(describeGoogleError(new NotConnectedError())).toEqual({
+      message: 'Connect Google in the desktop app',
+      dropItems: true
+    })
+  })
+
+  it('points at the APIs on a 403', () => {
+    const e = Object.assign(new Error('403'), { response: { status: 403 } })
+    expect(describeGoogleError(e)).toEqual({
+      message: FORBIDDEN,
+      dropItems: false
+    })
+  })
+
+  it('keeps cached data on a Google outage', () => {
+    const e = Object.assign(new Error('500'), { response: { status: 500 } })
+    expect(describeGoogleError(e)).toEqual({
+      message: 'Google is having problems (500). Retrying',
+      dropItems: false
+    })
   })
 })

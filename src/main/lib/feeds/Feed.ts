@@ -1,3 +1,4 @@
+import { FeedError } from './errors.js'
 import { FeedPayload } from './types.js'
 
 export const STALE_FACTOR = 2
@@ -21,6 +22,16 @@ export interface FeedOptions<T> {
   key: string
   fetch: () => Promise<T[]>
   interval: (items: T[]) => number
+  // Maps a failed fetch to the message clients see. Defaults to the
+  // error's own message.
+  describeError?: (e: unknown) => FeedError
+}
+
+function defaultDescribe(e: unknown): FeedError {
+  return {
+    message: e instanceof Error ? e.message : String(e),
+    dropItems: false
+  }
 }
 
 export class Feed<T> {
@@ -137,9 +148,18 @@ export class Feed<T> {
       })
     } catch (e) {
       if (generation !== this.generation) return
+      const { message, dropItems } = (
+        this.options.describeError ?? defaultDescribe
+      )(e)
       this.lastFetchFailed = true
-      this.error = e instanceof Error ? e.message : String(e)
-      this.deps.log?.(`Fetch failed for ${this.options.key}: ${this.error}`)
+      this.error = message
+      if (dropItems) {
+        this.items = []
+        this.fetchedAt = null
+        this.deps.saveCache(this.options.key, null)
+      }
+      const raw = e instanceof Error ? e.message : String(e)
+      this.deps.log?.(`Fetch failed for ${this.options.key}: ${raw}`)
     }
 
     this.deps.publish(this.options.key, this.getPayload())
