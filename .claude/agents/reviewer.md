@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Use after code changes to review the diff for correctness, security and protocol mismatches between host and client. Read-only.
-model: opus
+model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash
 ---
 Run `git diff` against the base branch and review it. Look for:

@@ -99,6 +99,6 @@ each was handled, and a list of everything unverified.
 
 ## Notes
 
-- To pin models instead of using aliases, set `model:` in each agent file to the full ID (`claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`).
+- `planner` and `reviewer` are pinned to `claude-opus-5-5`. `coder` and `explorer` use the `sonnet` and `haiku` aliases; pin them with `claude-sonnet-5-5` and `claude-haiku-5-5` if you want exact versions.
 - If `coder` keeps failing a hard step, raise just that call to Opus rather than changing the whole team.
 - `package.json` has a `test` script only after [PR #2](https://github.com/willtuck1/GlanceThing/pull/2) merges. Until then use `npx vitest run`, as above.
