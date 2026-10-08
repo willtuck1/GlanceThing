@@ -5,6 +5,21 @@ interface Shortcut {
   command: string
 }
 
+interface GoogleStatus {
+  configured: boolean
+  clientSource: 'settings' | 'build' | null
+  clientId: string
+  connected: boolean
+}
+
+interface GoogleCalendarOption {
+  id: string
+  name: string
+  color: string
+  primary: boolean
+  selected: boolean
+}
+
 declare global {
   interface Window {
     api: {
@@ -75,6 +90,20 @@ declare global {
       } | null>
       findOpenPort: () => Promise<number>
       isPortOpen: (port: number) => Promise<boolean>
+      getGoogleStatus: () => Promise<GoogleStatus>
+      setGoogleClient: (
+        clientId: string,
+        clientSecret: string
+      ) => Promise<GoogleStatus>
+      connectGoogle: () => Promise<
+        { ok: true } | { ok: false; error: string }
+      >
+      disconnectGoogle: () => Promise<void>
+      getGoogleCalendars: () => Promise<
+        | { ok: true; calendars: GoogleCalendarOption[] }
+        | { ok: false; error: string }
+      >
+      setGoogleCalendars: (ids: string[]) => Promise<void>
     }
   }
 }

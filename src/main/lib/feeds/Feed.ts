@@ -7,7 +7,7 @@ export interface FeedDeps {
   now: () => number
   formatTime: (timestamp: number) => string
   loadCache: (key: string) => CachedFeed<unknown> | null
-  saveCache: (key: string, value: CachedFeed<unknown>) => void
+  saveCache: (key: string, value: CachedFeed<unknown> | null) => void
   publish: (key: string, payload: unknown) => void
   log?: (message: string) => void
 }
@@ -32,6 +32,8 @@ export class Feed<T> {
   private timer: ReturnType<typeof setTimeout> | null = null
   private running = false
   private inFlight: Promise<void> | null = null
+  // Bumped by reset() so a fetch that started before it is discarded.
+  private generation = 0
 
   constructor(
     private options: FeedOptions<T>,
@@ -88,20 +90,35 @@ export class Feed<T> {
     return true
   }
 
+  // Forgets all data, e.g. after the account behind the feed is removed.
+  // The next refresh publishes the result.
+  reset() {
+    this.generation++
+    this.items = []
+    this.fetchedAt = null
+    this.error = null
+    this.lastFetchFailed = false
+    this.inFlight = null
+    this.deps.saveCache(this.options.key, null)
+  }
+
   refresh(): Promise<void> {
     if (this.inFlight) return this.inFlight
 
-    this.inFlight = this.doFetch().finally(() => {
-      this.inFlight = null
+    const inFlight = this.doFetch().finally(() => {
+      if (this.inFlight === inFlight) this.inFlight = null
       this.schedule()
     })
+    this.inFlight = inFlight
 
-    return this.inFlight
+    return inFlight
   }
 
   private async doFetch() {
+    const generation = this.generation
     try {
       const items = await this.options.fetch()
+      if (generation !== this.generation) return
       this.items = items
       this.fetchedAt = this.deps.now()
       this.error = null
@@ -111,6 +128,7 @@ export class Feed<T> {
         fetchedAt: this.fetchedAt
       })
     } catch (e) {
+      if (generation !== this.generation) return
       this.lastFetchFailed = true
       this.error = e instanceof Error ? e.message : String(e)
       this.deps.log?.(`Fetch failed for ${this.options.key}: ${this.error}`)

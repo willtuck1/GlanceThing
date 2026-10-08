@@ -47,7 +47,13 @@ enum IPCHandler {
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
   FindOpenPort = 'findOpenPort',
-  IsPortOpen = 'isPortOpen'
+  IsPortOpen = 'isPortOpen',
+  GetGoogleStatus = 'getGoogleStatus',
+  SetGoogleClient = 'setGoogleClient',
+  ConnectGoogle = 'connectGoogle',
+  DisconnectGoogle = 'disconnectGoogle',
+  GetGoogleCalendars = 'getGoogleCalendars',
+  SetGoogleCalendars = 'setGoogleCalendars'
 }
 
 // Custom APIs for renderer
@@ -124,7 +130,16 @@ const api = {
   getChannel: () => ipcRenderer.invoke(IPCHandler.GetChannel),
   checkUpdate: () => ipcRenderer.invoke(IPCHandler.CheckUpdate),
   findOpenPort: () => ipcRenderer.invoke(IPCHandler.FindOpenPort),
-  isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port)
+  isPortOpen: port => ipcRenderer.invoke(IPCHandler.IsPortOpen, port),
+  getGoogleStatus: () => ipcRenderer.invoke(IPCHandler.GetGoogleStatus),
+  setGoogleClient: (clientId: string, clientSecret: string) =>
+    ipcRenderer.invoke(IPCHandler.SetGoogleClient, clientId, clientSecret),
+  connectGoogle: () => ipcRenderer.invoke(IPCHandler.ConnectGoogle),
+  disconnectGoogle: () => ipcRenderer.invoke(IPCHandler.DisconnectGoogle),
+  getGoogleCalendars: () =>
+    ipcRenderer.invoke(IPCHandler.GetGoogleCalendars),
+  setGoogleCalendars: (ids: string[]) =>
+    ipcRenderer.invoke(IPCHandler.SetGoogleCalendars, ids)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
