@@ -4,9 +4,12 @@ import { SocketContext } from '@/contexts/SocketContext.tsx'
 
 import type { FeedPayload, FeedType } from '@/types/Feeds.ts'
 
-export function useFeed<T>(type: FeedType, active: boolean) {
+export function useFeed<T, P extends FeedPayload<T> = FeedPayload<T>>(
+  type: FeedType,
+  active: boolean
+) {
   const { ready, socket } = useContext(SocketContext)
-  const [payload, setPayload] = useState<FeedPayload<T> | null>(null)
+  const [payload, setPayload] = useState<P | null>(null)
 
   useEffect(() => {
     if (!ready || !socket) return
@@ -34,6 +37,8 @@ export function useFeed<T>(type: FeedType, active: boolean) {
     loaded: payload !== null,
     stale: !ready || payload === null || payload.stale,
     fetchedAtLabel: payload?.fetchedAtLabel ?? '',
-    error: payload?.error ?? null
+    error: payload?.error ?? null,
+    // The raw payload, for feeds that send extra fields (e.g. favorites).
+    payload
   }
 }
