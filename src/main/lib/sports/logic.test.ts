@@ -12,7 +12,8 @@ import {
   scheduleLabel,
   sortGames,
   sportsInterval,
-  toggleFavorite
+  applyFavorite,
+  visibleGames
 } from './logic.js'
 
 import { Game } from '../feeds/types.js'
@@ -223,9 +224,16 @@ describe('favorites', () => {
   })
 
   it('toggles a key on and off', () => {
-    const on = toggleFavorite([], 'nba:BOS')
+    const on = applyFavorite([], 'nba:BOS')
     expect(on).toEqual(['nba:BOS'])
-    expect(toggleFavorite(on, 'nba:BOS')).toEqual([])
+    expect(applyFavorite(on, 'nba:BOS')).toEqual([])
+  })
+
+  it('sets an explicit state, so repeats are harmless', () => {
+    const on = applyFavorite([], 'nba:BOS', true)
+    expect(applyFavorite(on, 'nba:BOS', true)).toBe(on)
+    expect(applyFavorite(on, 'nba:BOS', false)).toEqual([])
+    expect(applyFavorite([], 'nba:BOS', false)).toEqual([])
   })
 
   it('decorates a payload with sorted items and favorites', () => {
@@ -237,7 +245,7 @@ describe('favorites', () => {
       error: null
     }
     const out = decorateSports(payload, ['nba:MIA'], {
-      now: Date.parse('2026-10-08T12:00Z'),
+      now: Date.parse('2026-10-08T18:00Z'),
       formatTime: () => 'T'
     })
     expect(out.favorites).toEqual(['nba:MIA'])
@@ -254,7 +262,7 @@ describe('favorites', () => {
       error: null
     }
     const out = decorateSports(payload, [], {
-      now: Date.parse('2026-10-08T12:00Z'),
+      now: Date.parse('2026-10-08T18:00Z'),
       formatTime: () => 'T'
     })
     for (const g of out.items) {
@@ -262,6 +270,47 @@ describe('favorites', () => {
       else expect(g.detail).not.toMatch(/T$/)
     }
     expect(out.items.find(g => g.state === 'post')?.detail).toBe('Final')
+  })
+})
+
+describe('visibleGames', () => {
+  const now = Date.parse('2026-10-08T12:00Z')
+  const h = 60 * 60 * 1000
+
+  it('keeps games within 12 hours either side of now', () => {
+    const games = [
+      game({ id: 'old', state: 'post', start: now - 13 * h }),
+      game({ id: 'final', state: 'post', start: now - 11 * h }),
+      game({ id: 'soon', start: now + 11 * h }),
+      game({ id: 'far', start: now + 13 * h })
+    ]
+    expect(visibleGames(games, now).map(g => g.id)).toEqual([
+      'final',
+      'soon'
+    ])
+  })
+
+  it('always keeps fresh live games', () => {
+    const live = game({ id: 'live', state: 'in', start: now - 20 * h })
+    expect(visibleGames([live], now)).toHaveLength(1)
+  })
+
+  it('drops old live games left over from a failed refresh', () => {
+    const leftover = game({
+      id: 'x',
+      state: 'in',
+      start: now - 72 * h,
+      stale: true
+    })
+    expect(visibleGames([leftover], now)).toHaveLength(0)
+    expect(sportsInterval([leftover], now)).toBe(IDLE_INTERVAL)
+  })
+
+  it('hides the weekend NFL slate from a Thursday capture', () => {
+    const nflWeek = normalize('nfl', fixture('nfl-live.json'))
+    const thursday = Date.parse('2026-10-08T20:00Z')
+    const shown = visibleGames(nflWeek, thursday)
+    expect(shown.map(g => g.id)).toEqual(['nfl:401872980'])
   })
 })
 

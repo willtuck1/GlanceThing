@@ -55,7 +55,11 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
     if (!ready || !socket) return
     setPending(p => ({ ...p, [teamKey]: on }))
     socket.send(
-      JSON.stringify({ type: 'sports', action: 'favorite', data: { teamKey } })
+      JSON.stringify({
+        type: 'sports',
+        action: 'favorite',
+        data: { teamKey, on }
+      })
     )
   }
 

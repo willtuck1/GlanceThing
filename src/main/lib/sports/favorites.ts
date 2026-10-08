@@ -1,5 +1,5 @@
 import { getStorageValue, setStorageValue } from '../storage.js'
-import { isTeamKey, toggleFavorite } from './logic.js'
+import { applyFavorite, isTeamKey } from './logic.js'
 
 export const FAVORITES_KEY = 'sportsFavorites'
 
@@ -8,8 +8,9 @@ export function getFavorites(): string[] {
   return Array.isArray(value) ? value.filter(isTeamKey) : []
 }
 
-export function toggleStoredFavorite(teamKey: string) {
-  const next = toggleFavorite(getFavorites(), teamKey)
-  setStorageValue(FAVORITES_KEY, next)
+export function setStoredFavorite(teamKey: string, on?: boolean) {
+  const current = getFavorites()
+  const next = applyFavorite(current, teamKey, on)
+  if (next !== current) setStorageValue(FAVORITES_KEY, next)
   return next
 }

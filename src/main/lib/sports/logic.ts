@@ -7,6 +7,9 @@ export const LEAGUES: League[] = ['nba', 'nfl']
 export const LIVE_INTERVAL = 30 * 1000
 export const IDLE_INTERVAL = 5 * 60 * 1000
 export const SOON_WINDOW = 10 * 60 * 1000
+// Games shown: anything live, plus games starting within this window on
+// either side of now (recent finals and the next few hours).
+export const SHOW_WINDOW = 12 * 60 * 60 * 1000
 
 const TEAM_KEY = /^(nba|nfl):[A-Z0-9]{1,5}$/
 
@@ -104,7 +107,11 @@ export function normalize(league: League, json: unknown): Game[] {
   return games
 }
 
-const STATE_RANK: Record<Game['state'], number> = { in: 0, pre: 1, post: 2 }
+const STATE_RANK: Record<Game['state'], number> = {
+  in: 0,
+  pre: 1,
+  post: 2
+}
 
 export function hasFavorite(game: Game, favorites: string[]) {
   return (
@@ -125,18 +132,38 @@ export function sortGames(games: Game[], favorites: string[]): Game[] {
   })
 }
 
-// 30 s while anything is live or about to start, otherwise 5 min.
+// Live games always show unless they come from a failed refresh; stale
+// leftovers fall back to the time window like everything else.
+export function visibleGames(games: Game[], now: number) {
+  return games.filter(
+    g =>
+      (g.state === 'in' && !g.stale) ||
+      Math.abs(g.start - now) <= SHOW_WINDOW
+  )
+}
+
+// 30 s while anything shown is live or about to start, otherwise 5 min.
 export function sportsInterval(games: Game[], now: number) {
-  const busy = games.some(
-    g => g.state === 'in' || (g.state === 'pre' && g.start - now <= SOON_WINDOW)
+  const busy = visibleGames(games, now).some(
+    g =>
+      g.state === 'in' ||
+      (g.state === 'pre' && g.start - now <= SOON_WINDOW)
   )
   return busy ? LIVE_INTERVAL : IDLE_INTERVAL
 }
 
-export function toggleFavorite(favorites: string[], teamKey: string) {
-  return favorites.includes(teamKey)
-    ? favorites.filter(k => k !== teamKey)
-    : [...favorites, teamKey]
+// Sets a favorite on or off. Without `on` it toggles (older clients).
+export function applyFavorite(
+  favorites: string[],
+  teamKey: string,
+  on?: boolean
+) {
+  const has = favorites.includes(teamKey)
+  const want = on ?? !has
+  if (want === has) return favorites
+  return want
+    ? [...favorites, teamKey]
+    : favorites.filter(k => k !== teamKey)
 }
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -174,7 +201,7 @@ export function decorateSports(
   favorites: string[],
   { now, formatTime }: DecorateOptions
 ): SportsPayload {
-  const items = payload.items.map(g =>
+  const items = visibleGames(payload.items, now).map(g =>
     g.state === 'pre'
       ? { ...g, detail: scheduleLabel(g.start, now, formatTime) }
       : g
