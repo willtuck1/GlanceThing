@@ -33,6 +33,7 @@ const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
               subtitle={event.location}
               trailing={event.allDay ? 'All day' : event.startLabel}
               accent={event.calendarColor}
+              tint={event.calendarColor}
               highlighted={active && i === highlighted}
             />
           </div>

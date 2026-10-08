@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import { useLongPress } from '@/hooks/useLongPress.ts'
 import { scrollRowIntoView } from '@/components/ListRow/scrollRowIntoView.ts'
+import { splitTint } from '@/lib/tint.ts'
 
 import type { Game, Team } from '@/types/Feeds.ts'
 
@@ -35,6 +36,16 @@ const TeamButton: React.FC<{
   </div>
 )
 
+const LEAGUE_ICON: Record<Game['league'], string> = {
+  nba: 'sports_basketball',
+  nfl: 'sports_football'
+}
+
+// Where the two team colors meet: the middle of the score, from the row's
+// left edge. Row padding 16 + badge 52 + 12 margin + team 116 + half the
+// 170 px score. Keep in sync with GameRow.module.css.
+const SPLIT_AT = '281px'
+
 function scoreText(game: Game) {
   if (game.state === 'pre') return null
   return [game.away.score ?? 0, game.home.score ?? 0]
@@ -62,9 +73,20 @@ const GameRow: React.FC<GameRowProps> = ({
       data-highlighted={highlighted}
       data-stale={!!game.stale}
       data-state={game.state}
+      // Away team sits on the left, home on the right; so do their colors.
+      style={{
+        backgroundImage: splitTint(
+          game.away.color,
+          game.home.color,
+          SPLIT_AT
+        )
+      }}
       {...longPress}
     >
-      <div className={styles.chip}>{game.league.toUpperCase()}</div>
+      <div className={styles.chip} data-league={game.league}>
+        <span className="material-icons">{LEAGUE_ICON[game.league]}</span>
+        <span className={styles.league}>{game.league.toUpperCase()}</span>
+      </div>
       <TeamButton
         team={game.away}
         side="away"

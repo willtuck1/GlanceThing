@@ -1,4 +1,5 @@
-/* Chrome 69: no flex gap, use margins. */
+/* Chrome 69: no flex gap, use margins. The fixed widths of the padding,
+   badge, team and score set SPLIT_AT in GameRow.tsx. */
 .row {
   display: flex;
   align-items: center;
@@ -18,16 +19,43 @@
   opacity: 0.6;
 }
 
+/* League badge: icon over the league name, in the league's own color. */
 .chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   flex-shrink: 0;
   width: 52px;
-  padding: 4px 0;
+  padding: 4px 0 3px;
   margin-right: 12px;
   border-radius: 8px;
-  background-color: #2c2c2c;
-  color: #bbb;
-  font-size: 0.5em;
-  text-align: center;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  color: #fff;
+  font-weight: 700;
+}
+
+.chip[data-league='nba'] {
+  background-color: #c8102e;
+}
+
+.chip[data-league='nfl'] {
+  background-color: #013369;
+}
+
+.chip .material-icons {
+  font-size: 0.95em;
+}
+
+.league {
+  font-size: 0.45em;
+  letter-spacing: 0.05em;
+}
+
+/* Team colors sit behind the text; keep it legible on bright ones. */
+.abbr,
+.score,
+.detail {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .team {
@@ -44,7 +72,7 @@
 }
 
 .star {
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 1em;
   margin: 0 8px;
 }
@@ -73,11 +101,11 @@
 
 .dash {
   margin: 0 12px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .at {
-  color: #666;
+  color: rgba(255, 255, 255, 0.6);
   font-size: 0.6em;
 }
 
@@ -89,7 +117,7 @@
   min-width: 0;
   margin-left: 12px;
   font-size: 0.55em;
-  color: #aaa;
+  color: #ddd;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
