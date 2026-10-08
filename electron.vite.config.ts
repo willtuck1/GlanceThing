@@ -12,7 +12,13 @@ export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
     define: {
-      __GT_REPO__: JSON.stringify(repoSlug)
+      __GT_REPO__: JSON.stringify(repoSlug),
+      __GOOGLE_CLIENT_ID__: JSON.stringify(
+        process.env.GOOGLE_CLIENT_ID ?? ''
+      ),
+      __GOOGLE_CLIENT_SECRET__: JSON.stringify(
+        process.env.GOOGLE_CLIENT_SECRET ?? ''
+      )
     }
   },
   preload: {
