@@ -79,6 +79,7 @@ import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
 import * as google from './lib/google/service.js'
+import { watchCarThing } from './lib/watchdog.js'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -330,8 +331,10 @@ async function setupIpcHandlers() {
       return null
     })
 
+    let installed = false
+
     if (found) {
-      const installed = await checkInstalledApp(found)
+      installed = await checkInstalledApp(found)
 
       if (installed) {
         mainWindow?.webContents.send('carThingState', 'ready')
@@ -358,6 +361,10 @@ async function setupIpcHandlers() {
     } else {
       mainWindow?.webContents.send('carThingState', 'not_found')
     }
+
+    await watchCarThing(found, installed).catch(err =>
+      log(`Watchdog failed: ${err.message}`, 'Watchdog', LogLevel.WARN)
+    )
   }
 
   async function interval() {

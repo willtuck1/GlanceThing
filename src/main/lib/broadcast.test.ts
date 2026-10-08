@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { WebSocket } from 'ws'
 
-import { broadcastTo } from './broadcast.js'
+import { broadcastTo, hasOpenClient } from './broadcast.js'
 
 import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
 
@@ -26,5 +26,14 @@ describe('broadcastTo', () => {
     )
     expect(unauth.send).not.toHaveBeenCalled()
     expect(closed.send).not.toHaveBeenCalled()
+  })
+})
+
+describe('hasOpenClient', () => {
+  it('counts only authenticated, open clients', () => {
+    expect(hasOpenClient([client(false, WebSocket.OPEN)])).toBe(false)
+    expect(hasOpenClient([client(true, WebSocket.CLOSED)])).toBe(false)
+    expect(hasOpenClient([client(true, WebSocket.OPEN)])).toBe(true)
+    expect(hasOpenClient([])).toBe(false)
   })
 })
