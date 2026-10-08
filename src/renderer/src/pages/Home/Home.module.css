@@ -63,6 +63,11 @@
   color: #ff9800;
 }
 
+.noticeActions {
+  display: flex;
+  gap: 10px;
+}
+
 .update {
   position: absolute;
   bottom: 0;
