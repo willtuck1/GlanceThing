@@ -1,0 +1,1 @@
+Hand-built from ESPN's public scoreboard schema (site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard). Not captured from a live response: the cloud sandbox blocks ESPN. Replace with real captures when available.

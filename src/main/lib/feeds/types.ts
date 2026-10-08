@@ -42,6 +42,11 @@ export interface Game {
   away: Team
   state: 'pre' | 'in' | 'post'
   detail: string
+  // Scheduled start, epoch ms. Used for sorting and polling interval.
+  start: number
+  // Set when this game's league failed to refresh and the game is from the
+  // last good fetch.
+  stale?: boolean
 }
 
 export interface SportsPayload extends FeedPayload<Game> {
