@@ -25,6 +25,7 @@ declare const __GOOGLE_CLIENT_SECRET__: string
 const CLIENT_ID_KEY = 'googleClientId'
 const CLIENT_SECRET_KEY = 'googleClientSecret'
 const REFRESH_TOKEN_KEY = 'googleRefreshToken'
+const REVOKED_KEY = 'googleRevoked'
 
 const CONNECT_TIMEOUT = 5 * 60 * 1000
 
@@ -35,6 +36,8 @@ export interface GoogleStatus {
   clientSource: ClientSource
   clientId: string
   connected: boolean
+  // Google revoked the last token; the account needs connecting again.
+  revoked: boolean
 }
 
 // Secure values are hex strings; null means "cleared". Read the raw value
@@ -78,10 +81,20 @@ const postForm: PostForm = async (url, form) => {
   return { status: res.status, data: res.data }
 }
 
+function isRevoked() {
+  return getStorageValue(REVOKED_KEY) === true
+}
+
+function setRevoked(revoked: boolean) {
+  setStorageValue(REVOKED_KEY, revoked || null)
+}
+
 export const googleSession = createGoogleSession({
   getClient: getGoogleClient,
   getRefreshToken: () => getSecure(REFRESH_TOKEN_KEY),
   setRefreshToken: token => setSecure(REFRESH_TOKEN_KEY, token),
+  isRevoked,
+  setRevoked,
   post: postForm
 })
 
@@ -93,7 +106,8 @@ export function getGoogleStatus(): GoogleStatus {
     configured: client !== null,
     clientSource: settings ? 'settings' : build ? 'build' : null,
     clientId: client?.clientId ?? '',
-    connected: getSecure(REFRESH_TOKEN_KEY) !== null
+    connected: getSecure(REFRESH_TOKEN_KEY) !== null,
+    revoked: isRevoked()
   }
 }
 
@@ -110,6 +124,7 @@ export function setGoogleClient(clientId: string, clientSecret: string) {
 
   if ((getGoogleClient()?.clientId ?? null) !== before) {
     setSecure(REFRESH_TOKEN_KEY, null)
+    setRevoked(false)
     googleSession.reset()
   }
 }
@@ -209,6 +224,7 @@ export async function connectGoogle(): Promise<void> {
     throw new Error('Google did not return a refresh token')
 
   setSecure(REFRESH_TOKEN_KEY, tokens.refreshToken)
+  setRevoked(false)
   googleSession.setAccessToken(tokens.accessToken, tokens.expiresAt)
   log('Google account connected', 'Google')
 }
@@ -216,6 +232,7 @@ export async function connectGoogle(): Promise<void> {
 export async function disconnectGoogle() {
   const refreshToken = getSecure(REFRESH_TOKEN_KEY)
   setSecure(REFRESH_TOKEN_KEY, null)
+  setRevoked(false)
   googleSession.reset()
 
   if (refreshToken) {

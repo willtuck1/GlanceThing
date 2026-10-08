@@ -13,6 +13,7 @@ import {
 import {
   buildCalendarItems,
   dayLabel,
+  MAX_EVENTS,
   normalizeCalendarList,
   normalizeEvents
 } from './calendarLogic.js'
@@ -144,6 +145,22 @@ describe('buildCalendarItems', () => {
     expect(items.find(i => i.title === 'School run')!.calendarColor).toBe(
       '#bbb'
     )
+  })
+})
+
+describe('buildCalendarItems cap', () => {
+  it(`keeps the first ${MAX_EVENTS} events`, () => {
+    const raw = Array.from({ length: MAX_EVENTS + 5 }, (_, i) => ({
+      id: `e${i}`,
+      title: `Event ${i}`,
+      allDay: false,
+      start: NOW + (i + 1) * 60_000,
+      end: NOW + (i + 2) * 60_000,
+      color: '#aaa'
+    }))
+    const items = buildCalendarItems(raw, NOW, formatTime)
+    expect(items).toHaveLength(MAX_EVENTS)
+    expect(items[0].id).toBe('e0')
   })
 })
 

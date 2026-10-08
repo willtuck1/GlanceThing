@@ -6,6 +6,8 @@ function setup(opts?: {
   fetch?: () => Promise<number[]>
   cached?: { items: number[]; fetchedAt: number } | null
   interval?: number
+  describeError?: (e: unknown) => string
+  dropsData?: (e: unknown) => boolean
 }) {
   let now = 1_000_000
   const published: unknown[] = []
@@ -21,7 +23,13 @@ function setup(opts?: {
   }
   const fetch = vi.fn(opts?.fetch ?? (async () => [1, 2, 3]))
   const feed = new Feed<number>(
-    { key: 'test', fetch, interval: () => opts?.interval ?? 60_000 },
+    {
+      key: 'test',
+      fetch,
+      interval: () => opts?.interval ?? 60_000,
+      describeError: opts?.describeError,
+      dropsData: opts?.dropsData
+    },
     deps
   )
   return {
@@ -215,5 +223,54 @@ describe('Feed.refetch', () => {
     const pending = feed.refetch()
     expect(feed.getPayload().items).toEqual([4])
     await pending
+  })
+
+  it('shows the described error and logs the raw one', async () => {
+    const { feed } = setup({
+      fetch: async () => {
+        throw new Error('Request failed with status code 503')
+      },
+      describeError: () => 'Google is down'
+    })
+    await feed.refresh()
+    expect(feed.getPayload()).toMatchObject({
+      stale: true,
+      error: 'Google is down'
+    })
+  })
+
+  it('drops data and the cache when the error says it is invalid', async () => {
+    let fail = false
+    const { feed, saved } = setup({
+      fetch: async () => {
+        if (fail) throw new Error('revoked')
+        return [1, 2]
+      },
+      dropsData: e => (e as Error).message === 'revoked'
+    })
+    await feed.refresh()
+    fail = true
+    await feed.refresh()
+    expect(feed.getPayload()).toMatchObject({
+      items: [],
+      fetchedAt: null,
+      error: 'revoked'
+    })
+    expect(saved.test).toBeNull()
+  })
+
+  it('keeps data for errors that do not invalidate it', async () => {
+    let fail = false
+    const { feed } = setup({
+      fetch: async () => {
+        if (fail) throw new Error('timeout')
+        return [1, 2]
+      },
+      dropsData: e => (e as Error).message === 'revoked'
+    })
+    await feed.refresh()
+    fail = true
+    await feed.refresh()
+    expect(feed.getPayload()).toMatchObject({ items: [1, 2], stale: true })
   })
 })

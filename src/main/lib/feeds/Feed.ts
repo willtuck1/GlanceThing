@@ -21,6 +21,11 @@ export interface FeedOptions<T> {
   key: string
   fetch: () => Promise<T[]>
   interval: (items: T[]) => number
+  // Turns a fetch error into the message clients show.
+  describeError?: (e: unknown) => string
+  // True when the error means the data itself is no longer valid (e.g. the
+  // account was revoked), so the feed forgets it instead of marking it stale.
+  dropsData?: (e: unknown) => boolean
 }
 
 export class Feed<T> {
@@ -137,9 +142,18 @@ export class Feed<T> {
       })
     } catch (e) {
       if (generation !== this.generation) return
+      const raw = e instanceof Error ? e.message : String(e)
       this.lastFetchFailed = true
-      this.error = e instanceof Error ? e.message : String(e)
-      this.deps.log?.(`Fetch failed for ${this.options.key}: ${this.error}`)
+      this.error = this.options.describeError?.(e) ?? raw
+      this.deps.log?.(`Fetch failed for ${this.options.key}: ${raw}`)
+      if (
+        this.options.dropsData?.(e) &&
+        (this.items.length > 0 || this.fetchedAt !== null)
+      ) {
+        this.items = []
+        this.fetchedAt = null
+        this.deps.saveCache(this.options.key, null)
+      }
     }
 
     this.deps.publish(this.options.key, this.getPayload())

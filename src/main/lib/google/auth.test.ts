@@ -68,7 +68,8 @@ describe('setGoogleClient', () => {
       configured: true,
       clientSource: 'settings',
       clientId: 'client-id',
-      connected: false
+      connected: false,
+      revoked: false
     })
   })
 
@@ -78,6 +79,13 @@ describe('setGoogleClient', () => {
     expect(auth.getGoogleStatus().connected).toBe(true)
     auth.setGoogleClient('other-id', 'other-secret')
     expect(auth.getGoogleStatus().connected).toBe(false)
+  })
+
+  it('forgets a revoked account when the client changes', () => {
+    store.set('googleRevoked', true)
+    expect(auth.getGoogleStatus().revoked).toBe(true)
+    auth.setGoogleClient('other-id', 'other-secret')
+    expect(auth.getGoogleStatus().revoked).toBe(false)
   })
 
   it('clears to unconfigured', () => {
@@ -112,6 +120,22 @@ describe('connectGoogle', () => {
     expect(form.get('code_verifier')).toMatch(/^[A-Za-z0-9_-]{43}$/)
     expect(store.get('googleRefreshToken')).toBe('enc:r1')
     expect(auth.getGoogleStatus().connected).toBe(true)
+  })
+
+  it('clears the revoked flag once reconnected', async () => {
+    store.set('googleRevoked', true)
+    browserRedirect(state => `code=auth-code&state=${state}`)
+    post.mockResolvedValue({
+      status: 200,
+      data: { access_token: 'a1', refresh_token: 'r1', expires_in: 3600 }
+    })
+
+    await auth.connectGoogle()
+
+    expect(auth.getGoogleStatus()).toMatchObject({
+      connected: true,
+      revoked: false
+    })
   })
 
   it('ignores a callback with the wrong state and keeps waiting', async () => {

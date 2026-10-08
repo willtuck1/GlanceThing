@@ -58,4 +58,15 @@ describe('toggleTask', () => {
     })
     expect(refetch).not.toHaveBeenCalled()
   })
+
+  it('uses the described error when given one', async () => {
+    const ack = await toggleTask(req, {
+      setDone: async () => {
+        throw new Error('Request failed with status code 503')
+      },
+      refetch: vi.fn(),
+      describeError: () => 'Google is down'
+    })
+    expect(ack).toMatchObject({ ok: false, error: 'Google is down' })
+  })
 })

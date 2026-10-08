@@ -10,6 +10,10 @@ export const SOON_WINDOW = 10 * 60 * 1000
 // Games shown: anything live, plus games starting within this window on
 // either side of now (recent finals and the next few hours).
 export const SHOW_WINDOW = 12 * 60 * 60 * 1000
+// Most games sent to the device; keeps the list light on the Car Thing.
+export const MAX_GAMES = 40
+
+export const SPORTS_UNAVAILABLE = "Can't reach ESPN. Trying again soon"
 
 const TEAM_KEY = /^(nba|nfl):[A-Z0-9]{1,5}$/
 
@@ -30,7 +34,7 @@ interface EspnCompetitor {
 }
 
 interface EspnEvent {
-  id?: string
+  id?: string | number
   date?: string
   competitions?: {
     competitors?: EspnCompetitor[]
@@ -48,18 +52,23 @@ function toTeam(
   c: EspnCompetitor,
   state: Game['state']
 ): Team | null {
-  const abbr = c.team?.abbreviation?.toUpperCase()
+  const abbr =
+    typeof c.team?.abbreviation === 'string'
+      ? c.team.abbreviation.toUpperCase()
+      : ''
   if (!abbr) return null
 
   const raw = Number(c.score)
+  const name = c.team?.shortDisplayName ?? c.team?.displayName
   const team: Team = {
     key: `${league}:${abbr}`,
     abbr,
-    name: c.team?.shortDisplayName ?? c.team?.displayName ?? abbr,
+    name: typeof name === 'string' && name ? name : abbr,
     // ESPN reports "0" before kickoff; show no score until the game starts.
     score: state === 'pre' || !Number.isFinite(raw) ? null : raw
   }
-  if (c.team?.logo) team.logo = c.team.logo
+  if (typeof c.team?.logo === 'string' && c.team.logo)
+    team.logo = c.team.logo
   return team
 }
 
@@ -78,33 +87,51 @@ export function normalize(league: League, json: unknown): Game[] {
   const games: Game[] = []
 
   for (const event of events as EspnEvent[]) {
-    const competition = event?.competitions?.[0]
-    const status = competition?.status ?? event?.status
-    const state = toState(status?.type?.state)
-    const start = Date.parse(event?.date ?? '')
-    const competitors = competition?.competitors ?? []
-    const homeRaw = competitors.find(c => c.homeAway === 'home')
-    const awayRaw = competitors.find(c => c.homeAway === 'away')
-
-    if (!event?.id || !state || Number.isNaN(start)) continue
-    if (!homeRaw || !awayRaw) continue
-
-    const home = toTeam(league, homeRaw, state)
-    const away = toTeam(league, awayRaw, state)
-    if (!home || !away) continue
-
-    games.push({
-      id: `${league}:${event.id}`,
-      league,
-      home,
-      away,
-      state,
-      detail: status?.type?.shortDetail ?? '',
-      start
-    })
+    // A schema change in one event drops that event, never the league.
+    try {
+      const game = toGame(league, event)
+      if (game) games.push(game)
+    } catch {
+      continue
+    }
   }
 
   return games
+}
+
+function toGame(league: League, event: EspnEvent): Game | null {
+  const competition = Array.isArray(event?.competitions)
+    ? event.competitions[0]
+    : undefined
+  const status = competition?.status ?? event?.status
+  const state = toState(status?.type?.state)
+  const start = typeof event?.date === 'string' ? Date.parse(event.date) : NaN
+  const competitors = Array.isArray(competition?.competitors)
+    ? competition.competitors
+    : []
+  const homeRaw = competitors.find(c => c?.homeAway === 'home')
+  const awayRaw = competitors.find(c => c?.homeAway === 'away')
+
+  const id = event?.id
+  if ((typeof id !== 'string' && typeof id !== 'number') || id === '')
+    return null
+  if (!state || Number.isNaN(start)) return null
+  if (!homeRaw || !awayRaw) return null
+
+  const home = toTeam(league, homeRaw, state)
+  const away = toTeam(league, awayRaw, state)
+  if (!home || !away) return null
+
+  const detail = status?.type?.shortDetail
+  return {
+    id: `${league}:${id}`,
+    league,
+    home,
+    away,
+    state,
+    detail: typeof detail === 'string' ? detail : '',
+    start
+  }
 }
 
 const STATE_RANK: Record<Game['state'], number> = {
@@ -208,7 +235,7 @@ export function decorateSports(
   )
   return {
     ...payload,
-    items: sortGames(items, favorites),
+    items: sortGames(items, favorites).slice(0, MAX_GAMES),
     favorites
   }
 }
