@@ -10,4 +10,4 @@ Rules:
 - Client code must run on Chrome 69: no optional chaining assumptions beyond what the legacy plugin transpiles, no new browser-only APIs without checking.
 - Do not widen scope. If the step is unclear, stop and report.
 
-Before finishing run `npm run lint`, `npx tsc --noEmit` for the touched project, and `npx vitest run`. Report what passed and what you could not verify.
+Before finishing run `npm run lint`, `npx tsc --noEmit` for the touched project, and `npm test`. Report what passed and what you could not verify.
