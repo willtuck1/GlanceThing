@@ -1,6 +1,7 @@
 import React, { createContext, useEffect, useRef, useState } from 'react'
 
 import { getSocketPassword } from '@/lib/utils.ts'
+import { createReconnectingSocket } from '@/lib/reconnectingSocket.ts'
 
 interface SocketContextProps {
   ready: boolean
@@ -22,60 +23,60 @@ const SocketContextProvider = ({
   children
 }: SocketContextProviderProps) => {
   const [ready, setReady] = useState(false)
-  const ws = useRef<WebSocket | null>(null)
+  const [socket, setSocket] = useState<WebSocket | null>(null)
   const [firstLoad, setFirstLoad] = useState(true)
-
-  function connect() {
-    ws.current = new WebSocket('ws://localhost:1337')
-
-    ws.current.onopen = async () => {
-      const pass = await getSocketPassword()
-      if (pass)
-        ws.current?.send(
-          JSON.stringify({
-            type: 'auth',
-            data: pass
-          })
-        )
-      setReady(true)
-      setTimeout(() => {
-        setFirstLoad(false)
-      }, 500)
-    }
-
-    ws.current.onclose = () => {
-      setReady(false)
-      setTimeout(() => {
-        connect()
-      }, 1000)
-    }
-  }
+  const rs = useRef<ReturnType<
+    typeof createReconnectingSocket<WebSocket>
+  > | null>(null)
 
   useEffect(() => {
-    connect()
+    const manager = createReconnectingSocket<WebSocket>({
+      create: () => new WebSocket('ws://localhost:1337'),
+      onOpen: async ws => {
+        const pass = await getSocketPassword().catch(() => '')
+        // Dropped while fetching the password.
+        if (!manager.isCurrent(ws)) return
+        if (pass)
+          ws.send(
+            JSON.stringify({
+              type: 'auth',
+              data: pass
+            })
+          )
+        setSocket(ws)
+        setReady(true)
+        setTimeout(() => {
+          setFirstLoad(false)
+        }, 500)
+      },
+      onDown: () => {
+        setReady(false)
+        setSocket(null)
+      }
+    })
+    rs.current = manager
+    manager.start()
 
     return () => {
-      ws.current?.close()
+      manager.stop()
     }
-    // eslint-disable-next-line
   }, [])
 
   const missedPongsRef = useRef(0)
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (!ready) return
+    if (!ready || !socket) return
 
     const sendPing = () => {
-      if (ws.current!.readyState === WebSocket.OPEN) {
-        ws.current!.send(JSON.stringify({ type: 'ping' }))
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'ping' }))
 
         timeoutRef.current = setTimeout(() => {
           missedPongsRef.current += 1
           if (missedPongsRef.current >= 3) {
-            ws.current?.close()
-            ws.current?.onclose?.({} as CloseEvent)
             missedPongsRef.current = 0
+            rs.current?.restart()
           }
         }, 5000)
       }
@@ -89,22 +90,23 @@ const SocketContextProvider = ({
       missedPongsRef.current = 0
     }
 
-    ws.current!.addEventListener('message', listener)
+    socket.addEventListener('message', listener)
     const interval = setInterval(sendPing, 5000)
 
     return () => {
       clearInterval(interval)
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      ws.current!.removeEventListener('message', listener)
+      missedPongsRef.current = 0
+      socket.removeEventListener('message', listener)
     }
-  }, [ready])
+  }, [ready, socket])
 
   return (
     <SocketContext.Provider
       value={{
         ready,
         firstLoad,
-        socket: ws.current
+        socket
       }}
     >
       {children}
