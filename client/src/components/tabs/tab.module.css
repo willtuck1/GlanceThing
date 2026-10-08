@@ -1,0 +1,19 @@
+.tab {
+  position: relative;
+  height: 100%;
+  padding: 8px 12px;
+  overflow-y: auto;
+}
+
+.heading {
+  margin: 8px 4px 6px;
+  font-size: 0.6em;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.empty {
+  margin-top: 80px;
+  text-align: center;
+  color: #888;
+}
