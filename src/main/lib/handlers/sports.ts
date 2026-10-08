@@ -1,6 +1,6 @@
 import { respondWithFeed } from '../feeds/respond.js'
 import { getFeedPayload } from '../feeds/registry.js'
-import { toggleStoredFavorite } from '../sports/favorites.js'
+import { setStoredFavorite } from '../sports/favorites.js'
 import { isTeamKey } from '../sports/logic.js'
 import { serverManager } from '../server.js'
 import { log, LogLevel } from '../utils.js'
@@ -22,13 +22,16 @@ export const actions: HandlerAction[] = [
   {
     action: 'favorite',
     handle: async (_ws, data) => {
-      const teamKey = (data as { teamKey?: unknown } | null)?.teamKey
+      const { teamKey, on } =
+        (data as { teamKey?: unknown; on?: unknown } | null) ?? {}
       if (!isTeamKey(teamKey)) {
         log('Ignoring invalid team key', 'Sports', LogLevel.WARN)
         return
       }
 
-      toggleStoredFavorite(teamKey)
+      // `on` sets the exact state, so repeats are harmless. Without it the
+      // action toggles, as in the original protocol.
+      setStoredFavorite(teamKey, typeof on === 'boolean' ? on : undefined)
 
       // Every client sees the new order and stars, not just the sender.
       const payload = getFeedPayload('sports')

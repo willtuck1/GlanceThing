@@ -9,9 +9,11 @@ import {
   isTeamKey,
   mergeLeagues,
   normalize,
+  scheduleLabel,
   sortGames,
   sportsInterval,
-  toggleFavorite
+  applyFavorite,
+  visibleGames
 } from './logic.js'
 
 import { Game } from '../feeds/types.js'
@@ -95,7 +97,9 @@ describe('normalize', () => {
   it('upper-cases team abbreviations so keys stay valid', () => {
     const json = fixture('nba-scoreboard.json') as {
       events: {
-        competitions: { competitors: { team: { abbreviation: string } }[] }[]
+        competitions: {
+          competitors: { team: { abbreviation: string } }[]
+        }[]
       }[]
     }
     json.events[0].competitions[0].competitors[0].team.abbreviation = 'bos'
@@ -107,6 +111,50 @@ describe('normalize', () => {
   it('throws when the response has no events array', () => {
     expect(() => normalize('nfl', { error: 'x' })).toThrow()
     expect(() => normalize('nfl', null)).toThrow()
+  })
+})
+
+// Real ESPN responses captured 2026-10-08. Every game is still 'pre', so
+// live and final handling is covered by the hand-built fixtures above.
+describe('normalize (real ESPN captures)', () => {
+  const captures = [
+    { league: 'nba' as const, file: 'nba-live.json', count: 6 },
+    { league: 'nfl' as const, file: 'nfl-live.json', count: 15 }
+  ]
+
+  for (const { league, file, count } of captures) {
+    it(`maps every ${league.toUpperCase()} event`, () => {
+      const games = normalize(league, fixture(file))
+      expect(games).toHaveLength(count)
+      for (const g of games) {
+        expect(isTeamKey(g.home.key)).toBe(true)
+        expect(isTeamKey(g.away.key)).toBe(true)
+        expect(g.home.key).not.toBe(g.away.key)
+        expect(Number.isNaN(g.start)).toBe(false)
+        expect(g.detail).not.toBe('')
+        expect(g.state).toBe('pre')
+        expect(g.home.score).toBeNull()
+        expect(g.away.score).toBeNull()
+      }
+    })
+  }
+
+  it('reads a real game correctly', () => {
+    const games = normalize('nba', fixture('nba-live.json'))
+    const game = games.find(g => g.id === 'nba:401898392')
+    expect(game).toMatchObject({
+      league: 'nba',
+      home: {
+        key: 'nba:CLE',
+        abbr: 'CLE',
+        name: 'Cavaliers',
+        score: null
+      },
+      away: { key: 'nba:BOS', abbr: 'BOS', name: 'Celtics', score: null },
+      state: 'pre',
+      detail: '10/8 - 7:00 PM EDT',
+      start: Date.parse('2026-10-08T23:00Z')
+    })
   })
 })
 
@@ -176,9 +224,16 @@ describe('favorites', () => {
   })
 
   it('toggles a key on and off', () => {
-    const on = toggleFavorite([], 'nba:BOS')
+    const on = applyFavorite([], 'nba:BOS')
     expect(on).toEqual(['nba:BOS'])
-    expect(toggleFavorite(on, 'nba:BOS')).toEqual([])
+    expect(applyFavorite(on, 'nba:BOS')).toEqual([])
+  })
+
+  it('sets an explicit state, so repeats are harmless', () => {
+    const on = applyFavorite([], 'nba:BOS', true)
+    expect(applyFavorite(on, 'nba:BOS', true)).toBe(on)
+    expect(applyFavorite(on, 'nba:BOS', false)).toEqual([])
+    expect(applyFavorite([], 'nba:BOS', false)).toEqual([])
   })
 
   it('decorates a payload with sorted items and favorites', () => {
@@ -189,10 +244,101 @@ describe('favorites', () => {
       stale: false,
       error: null
     }
-    const out = decorateSports(payload, ['nba:MIA'])
+    const out = decorateSports(payload, ['nba:MIA'], {
+      now: Date.parse('2026-10-08T18:00Z'),
+      formatTime: () => 'T'
+    })
     expect(out.favorites).toEqual(['nba:MIA'])
     expect(out.items[0].id).toBe('nba:401700003')
     expect(out.fetchedAtLabel).toBe('12:00')
+  })
+
+  it('relabels only scheduled games', () => {
+    const payload = {
+      items: [...nba, ...nfl],
+      fetchedAt: 1,
+      fetchedAtLabel: '',
+      stale: false,
+      error: null
+    }
+    const out = decorateSports(payload, [], {
+      now: Date.parse('2026-10-08T18:00Z'),
+      formatTime: () => 'T'
+    })
+    for (const g of out.items) {
+      if (g.state === 'pre') expect(g.detail).toMatch(/^(\w{3} )?T$/)
+      else expect(g.detail).not.toMatch(/T$/)
+    }
+    expect(out.items.find(g => g.state === 'post')?.detail).toBe('Final')
+  })
+})
+
+describe('visibleGames', () => {
+  const now = Date.parse('2026-10-08T12:00Z')
+  const h = 60 * 60 * 1000
+
+  it('keeps games within 12 hours either side of now', () => {
+    const games = [
+      game({ id: 'old', state: 'post', start: now - 13 * h }),
+      game({ id: 'final', state: 'post', start: now - 11 * h }),
+      game({ id: 'soon', start: now + 11 * h }),
+      game({ id: 'far', start: now + 13 * h })
+    ]
+    expect(visibleGames(games, now).map(g => g.id)).toEqual([
+      'final',
+      'soon'
+    ])
+  })
+
+  it('always keeps fresh live games', () => {
+    const live = game({ id: 'live', state: 'in', start: now - 20 * h })
+    expect(visibleGames([live], now)).toHaveLength(1)
+  })
+
+  it('drops old live games left over from a failed refresh', () => {
+    const leftover = game({
+      id: 'x',
+      state: 'in',
+      start: now - 72 * h,
+      stale: true
+    })
+    expect(visibleGames([leftover], now)).toHaveLength(0)
+    expect(sportsInterval([leftover], now)).toBe(IDLE_INTERVAL)
+  })
+
+  it('hides the weekend NFL slate from a Thursday capture', () => {
+    const nflWeek = normalize('nfl', fixture('nfl-live.json'))
+    const thursday = Date.parse('2026-10-08T20:00Z')
+    const shown = visibleGames(nflWeek, thursday)
+    expect(shown.map(g => g.id)).toEqual(['nfl:401872980'])
+  })
+})
+
+describe('scheduleLabel', () => {
+  // Local-time dates, so the tests hold in any time zone.
+  const now = new Date(2026, 9, 8, 12, 0).getTime()
+  const fmt = (ts: number) => {
+    const d = new Date(ts)
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+
+  it('shows only the time for a game later today', () => {
+    expect(
+      scheduleLabel(new Date(2026, 9, 8, 19, 0).getTime(), now, fmt)
+    ).toBe('19:00')
+  })
+
+  it('adds the weekday for another day', () => {
+    // 11 Oct 2026 is a Sunday.
+    expect(
+      scheduleLabel(new Date(2026, 9, 11, 13, 0).getTime(), now, fmt)
+    ).toBe('Sun 13:00')
+  })
+
+  it('treats just after midnight as the next day', () => {
+    expect(
+      scheduleLabel(new Date(2026, 9, 9, 0, 15).getTime(), now, fmt)
+    ).toBe('Fri 0:15')
   })
 })
 
@@ -220,9 +366,9 @@ describe('mergeLeagues', () => {
       ],
       lastGood
     )
-    expect(games.filter(g => g.league === 'nba').every(g => !g.stale)).toBe(
-      true
-    )
+    expect(
+      games.filter(g => g.league === 'nba').every(g => !g.stale)
+    ).toBe(true)
     expect(games.filter(g => g.league === 'nfl')).toHaveLength(3)
     expect(games.filter(g => g.league === 'nfl').every(g => g.stale)).toBe(
       true

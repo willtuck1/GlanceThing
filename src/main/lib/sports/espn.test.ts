@@ -60,7 +60,10 @@ describe('createSportsFetcher', () => {
         stale: true
       }
     ]
-    const fetch = createSportsFetcher(fakeGet([SCOREBOARD_URLS.nfl]), cached)
+    const fetch = createSportsFetcher(
+      fakeGet([SCOREBOARD_URLS.nfl]),
+      cached
+    )
     const games = await fetch()
     const nfl = games.filter(g => g.league === 'nfl')
     expect(nfl).toEqual([{ ...cached[0], stale: true }])

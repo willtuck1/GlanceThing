@@ -61,7 +61,10 @@ function sources(): Source[] {
       fetch: fetchSports,
       interval: items => sportsInterval(items as Game[], Date.now()),
       decorate: payload =>
-        decorateSports(payload as FeedPayload<Game>, getFavorites())
+        decorateSports(payload as FeedPayload<Game>, getFavorites(), {
+          now: Date.now(),
+          formatTime: ts => formatDate(new Date(ts)).time
+        })
     }
   ]
 }

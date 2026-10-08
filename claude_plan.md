@@ -47,7 +47,7 @@ You want your jailbroken Car Thing to show glanceable personal data instead of j
 | `todo` | `toggle` | c→h | `{reqId, listId, id, done}` |
 | `todo` | `ack` | h→c | `{reqId, ok, task?}` → client clears pending or rolls back |
 | `sports` | — | both | `{items: Game[], favorites: string[], …feedMeta}` |
-| `sports` | `favorite` | c→h | `{teamKey}` (`nba:BOS`) → host toggles, persists, rebroadcasts |
+| `sports` | `favorite` | c→h | `{teamKey, on?}` (`nba:BOS`) → host sets `on` (toggles if absent), persists, rebroadcasts |
 
 Event: `{id, title, allDay, startLabel, endLabel, dayLabel, location?, calendarColor}` (labels formatted on host with the user's `timeFormat`). Game: `{id, league, home/away:{key, abbr, name, score, logo?}, state:'pre'|'in'|'post', detail}` (`detail` = ESPN `status.type.shortDetail`, e.g. "Q3 4:12", "Final", "7:30 PM").
 
