@@ -70,9 +70,12 @@ export type CallbackResult =
   | { kind: 'code'; code: string }
   | { kind: 'error'; error: string }
   | { kind: 'ignore' }
+  | { kind: 'badState' }
 
 // Reads the loopback redirect. Anything that is not the callback (e.g. a
-// favicon request) is ignored so the server keeps waiting.
+// favicon request) is ignored, and a callback with the wrong state is
+// rejected without ending the flow, so the server keeps waiting for the
+// real redirect.
 export function parseCallback(
   requestUrl: string,
   expectedState: string
@@ -81,7 +84,7 @@ export function parseCallback(
   if (url.pathname !== '/callback') return { kind: 'ignore' }
 
   if (url.searchParams.get('state') !== expectedState)
-    return { kind: 'error', error: 'State mismatch' }
+    return { kind: 'badState' }
 
   const error = url.searchParams.get('error')
   if (error) return { kind: 'error', error }

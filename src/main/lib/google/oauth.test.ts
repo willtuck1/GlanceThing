@@ -58,8 +58,10 @@ describe('parseCallback', () => {
 
   it('rejects a mismatched state', () => {
     expect(parseCallback('/callback?code=c1&state=x', 'st')).toEqual({
-      kind: 'error',
-      error: 'State mismatch'
+      kind: 'badState'
+    })
+    expect(parseCallback('/callback?error=access_denied', 'st')).toEqual({
+      kind: 'badState'
     })
   })
 

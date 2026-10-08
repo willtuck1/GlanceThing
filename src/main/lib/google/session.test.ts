@@ -62,6 +62,14 @@ describe('createGoogleSession', () => {
     )
   })
 
+  it('rejects API requests with the connect message when signed out', async () => {
+    const { session, adapter } = setup({ refreshToken: null })
+    const err = await session.http.get('https://example.test/a').catch(e => e)
+    expect(err).toBeInstanceOf(NotConnectedError)
+    expect(err.message).toBe('Connect Google in the desktop app')
+    expect(adapter).not.toHaveBeenCalled()
+  })
+
   it('attaches a bearer token and caches it', async () => {
     const { session, post } = setup()
     const res = await session.http.get('https://example.test/a')

@@ -137,7 +137,10 @@ export async function connectGoogle(): Promise<void> {
   let redirectUri = ''
 
   const code = await new Promise<string>((resolve, reject) => {
+    let done = false
     const finish = (err: Error | null, value?: string) => {
+      if (done) return
+      done = true
       clearTimeout(timer)
       cancelPending = null
       server.close()
@@ -152,9 +155,14 @@ export async function connectGoogle(): Promise<void> {
     cancelPending = () => finish(new Error('Sign-in was restarted'))
 
     server.on('request', (req, res) => {
+      res.setHeader('Connection', 'close')
       const result = parseCallback(req.url ?? '/', state)
       if (result.kind === 'ignore') {
         res.writeHead(404).end()
+        return
+      }
+      if (result.kind === 'badState') {
+        res.writeHead(400).end()
         return
       }
 
@@ -163,7 +171,7 @@ export async function connectGoogle(): Promise<void> {
       res.end(
         RESPONSE_PAGE(
           ok
-            ? 'Google connected. You can close this tab.'
+            ? 'Signed in. You can close this tab and return to GlanceThing.'
             : 'Google sign-in failed. You can close this tab and try again.'
         )
       )
