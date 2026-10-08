@@ -9,6 +9,7 @@ import {
 } from './storage.js'
 
 import { log, LogLevel, safeParse } from '../lib/utils.js'
+import { broadcastTo } from './broadcast.js'
 import { runServerSetup } from './setup/setup.js'
 import { handlers } from './handlers/handlers.js'
 
@@ -150,6 +151,16 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
 
   getServer(): WebSocketServer | null {
     return this.wss
+  }
+
+  broadcast(type: string, data: unknown, action?: string) {
+    if (!this.wss) return
+    broadcastTo(
+      this.wss.clients as Set<AuthenticatedWebSocket>,
+      type,
+      data,
+      action
+    )
   }
 }
 
