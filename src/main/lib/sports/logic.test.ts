@@ -108,6 +108,29 @@ describe('normalize', () => {
     expect(isTeamKey(first.home.key)).toBe(true)
   })
 
+  it('survives schema drift: skips bad events, coerces odd fields', () => {
+    const games = normalize('nba', fixture('nba-drift.json'))
+    expect(games.map(g => g.id)).toEqual(['nba:k1', 'nba:4012'])
+
+    const [odd, scheduled] = games
+    // Wrongly typed fields fall back instead of reaching the client.
+    expect(odd.home).toEqual({
+      key: 'nba:LAL',
+      abbr: 'LAL',
+      name: 'Los Angeles Lakers',
+      score: null
+    })
+    expect(odd.away).toMatchObject({ name: 'GSW', score: 99 })
+    expect(odd.detail).toBe('')
+    expect(scheduled).toMatchObject({ state: 'pre', detail: '10/8 - 8:30 PM EDT' })
+    expect(scheduled.home.score).toBeNull()
+
+    // Everything the client renders as text is a string.
+    for (const g of games)
+      for (const value of [g.detail, g.home.name, g.away.name, g.home.abbr])
+        expect(typeof value).toBe('string')
+  })
+
   it('throws when the response has no events array', () => {
     expect(() => normalize('nfl', { error: 'x' })).toThrow()
     expect(() => normalize('nfl', null)).toThrow()

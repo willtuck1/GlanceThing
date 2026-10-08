@@ -11,6 +11,7 @@ import {
   resolveSelection
 } from './calendar.js'
 import {
+  DEFAULT_COLOR,
   buildCalendarItems,
   dayLabel,
   normalizeCalendarList,
@@ -61,6 +62,20 @@ describe('normalizeCalendarList', () => {
     expect(list[0]).toMatchObject({ primary: true, color: '#9fe1e7' })
   })
 
+  it('falls back on odd names and colors', () => {
+    const [cal] = normalizeCalendarList({
+      items: [
+        { id: 'x', summary: 12, backgroundColor: 'url(evil)', primary: 'yes' }
+      ]
+    })
+    expect(cal).toEqual({
+      id: 'x',
+      name: 'x',
+      color: DEFAULT_COLOR,
+      primary: false
+    })
+  })
+
   it('returns nothing for malformed JSON', () => {
     expect(normalizeCalendarList(null)).toEqual([])
     expect(normalizeCalendarList({ items: 'x' })).toEqual([])
@@ -88,6 +103,33 @@ describe('normalizeEvents', () => {
 
   it('names untitled events', () => {
     expect(events.some(e => e.title === '(No title)')).toBe(true)
+  })
+
+  it('never passes non-string fields through', () => {
+    const json = {
+      items: [
+        null,
+        { id: 7, start: { dateTime: '2026-10-08T15:00:00Z' } },
+        { id: 'a', summary: { text: 'x' }, start: { dateTime: 42 } },
+        {
+          id: 'b',
+          summary: ['Standup'],
+          location: { lat: 1 },
+          start: { dateTime: '2026-10-08T15:00:00Z' },
+          end: { dateTime: 'soon' }
+        }
+      ]
+    }
+    const [only, ...rest] = normalizeEvents(json, { id: 'c', color: '#000' })
+    expect(rest).toEqual([])
+    expect(only).toEqual({
+      id: 'c:b',
+      title: '(No title)',
+      allDay: false,
+      start: Date.parse('2026-10-08T15:00:00Z'),
+      end: Date.parse('2026-10-08T15:00:00Z'),
+      color: '#000'
+    })
   })
 
   it('skips events without a start', () => {

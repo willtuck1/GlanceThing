@@ -17,49 +17,47 @@ export function isTeamKey(value: unknown): value is string {
   return typeof value === 'string' && TEAM_KEY.test(value)
 }
 
-// Minimal view of ESPN's scoreboard JSON: only the fields we read.
-interface EspnCompetitor {
-  homeAway?: string
-  score?: string | number
-  team?: {
-    abbreviation?: string
-    shortDisplayName?: string
-    displayName?: string
-    logo?: string
-  }
+// ESPN's scoreboard JSON is undocumented and changes without notice, so
+// every field is read as unknown and checked before use.
+
+function obj(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
 }
 
-interface EspnEvent {
-  id?: string
-  date?: string
-  competitions?: {
-    competitors?: EspnCompetitor[]
-    status?: EspnStatus
-  }[]
-  status?: EspnStatus
+function text(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
-interface EspnStatus {
-  type?: { state?: string; shortDetail?: string }
+function list(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
 }
 
 function toTeam(
   league: League,
-  c: EspnCompetitor,
+  raw: Record<string, unknown>,
   state: Game['state']
 ): Team | null {
-  const abbr = c.team?.abbreviation?.toUpperCase()
-  if (!abbr) return null
+  const info = obj(raw.team)
+  const abbr = text(info?.abbreviation)?.toUpperCase()
+  if (!abbr || !isTeamKey(`${league}:${abbr}`)) return null
 
-  const raw = Number(c.score)
+  const score = Number(
+    typeof raw.score === 'string' || typeof raw.score === 'number'
+      ? raw.score
+      : NaN
+  )
   const team: Team = {
     key: `${league}:${abbr}`,
     abbr,
-    name: c.team?.shortDisplayName ?? c.team?.displayName ?? abbr,
+    name:
+      text(info?.shortDisplayName) ?? text(info?.displayName) ?? abbr,
     // ESPN reports "0" before kickoff; show no score until the game starts.
-    score: state === 'pre' || !Number.isFinite(raw) ? null : raw
+    score: state === 'pre' || !Number.isFinite(score) ? null : score
   }
-  if (c.team?.logo) team.logo = c.team.logo
+  const logo = text(info?.logo)
+  if (logo) team.logo = logo
   return team
 }
 
@@ -69,41 +67,53 @@ function toState(value: unknown): Game['state'] | null {
     : null
 }
 
+function toGame(league: League, raw: unknown): Game | null {
+  const event = obj(raw)
+  const id =
+    typeof event?.id === 'number' ? String(event.id) : text(event?.id)
+  if (!event || !id) return null
+
+  const competition = obj(list(event.competitions)[0])
+  const status = obj(competition?.status) ?? obj(event.status)
+  const statusType = obj(status?.type)
+  const state = toState(statusType?.state)
+  const start = Date.parse(text(event.date) ?? '')
+  if (!state || Number.isNaN(start)) return null
+
+  const competitors = list(competition?.competitors)
+    .map(obj)
+    .filter(c => c !== null)
+  const homeRaw = competitors.find(c => c.homeAway === 'home')
+  const awayRaw = competitors.find(c => c.homeAway === 'away')
+  if (!homeRaw || !awayRaw) return null
+
+  const home = toTeam(league, homeRaw, state)
+  const away = toTeam(league, awayRaw, state)
+  if (!home || !away) return null
+
+  return {
+    id: `${league}:${id}`,
+    league,
+    home,
+    away,
+    state,
+    detail: text(statusType?.shortDetail) ?? '',
+    start
+  }
+}
+
 // Converts an ESPN scoreboard response into Games. Events missing required
-// fields are skipped rather than failing the whole league.
+// fields are skipped rather than failing the whole league; only a response
+// with no events array at all counts as a failed fetch.
 export function normalize(league: League, json: unknown): Game[] {
-  const events = (json as { events?: unknown })?.events
+  const events = obj(json)?.events
   if (!Array.isArray(events)) throw new Error(`Bad ${league} scoreboard`)
 
   const games: Game[] = []
-
-  for (const event of events as EspnEvent[]) {
-    const competition = event?.competitions?.[0]
-    const status = competition?.status ?? event?.status
-    const state = toState(status?.type?.state)
-    const start = Date.parse(event?.date ?? '')
-    const competitors = competition?.competitors ?? []
-    const homeRaw = competitors.find(c => c.homeAway === 'home')
-    const awayRaw = competitors.find(c => c.homeAway === 'away')
-
-    if (!event?.id || !state || Number.isNaN(start)) continue
-    if (!homeRaw || !awayRaw) continue
-
-    const home = toTeam(league, homeRaw, state)
-    const away = toTeam(league, awayRaw, state)
-    if (!home || !away) continue
-
-    games.push({
-      id: `${league}:${event.id}`,
-      league,
-      home,
-      away,
-      state,
-      detail: status?.type?.shortDetail ?? '',
-      start
-    })
+  for (const event of events) {
+    const game = toGame(league, event)
+    if (game) games.push(game)
   }
-
   return games
 }
 
