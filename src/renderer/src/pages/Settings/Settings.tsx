@@ -728,6 +728,10 @@ type GoogleCalendar = Extract<
   Awaited<ReturnType<typeof window.api.getGoogleCalendars>>,
   { ok: true }
 >['calendars'][number]
+type GoogleTaskList = Extract<
+  Awaited<ReturnType<typeof window.api.getGoogleTaskLists>>,
+  { ok: true }
+>['taskLists'][number]
 
 const GoogleTab: React.FC = () => {
   const [status, setStatus] = useState<GoogleStatus | null>(null)
@@ -740,6 +744,8 @@ const GoogleTab: React.FC = () => {
   } | null>(null)
   const [calendars, setCalendars] = useState<GoogleCalendar[] | null>(null)
   const [calendarError, setCalendarError] = useState<string | null>(null)
+  const [taskLists, setTaskLists] = useState<GoogleTaskList[] | null>(null)
+  const [taskListError, setTaskListError] = useState<string | null>(null)
 
   async function loadStatus() {
     const s = await window.api.getGoogleStatus()
@@ -755,6 +761,8 @@ const GoogleTab: React.FC = () => {
     if (!status?.connected) {
       setCalendars(null)
       setCalendarError(null)
+      setTaskLists(null)
+      setTaskListError(null)
       return
     }
 
@@ -766,6 +774,15 @@ const GoogleTab: React.FC = () => {
         setCalendarError(null)
       } else {
         setCalendarError(res.error)
+      }
+    })
+    window.api.getGoogleTaskLists().then(res => {
+      if (cancelled) return
+      if (res.ok) {
+        setTaskLists(res.taskLists)
+        setTaskListError(null)
+      } else {
+        setTaskListError(res.error)
       }
     })
     return () => {
@@ -812,6 +829,12 @@ const GoogleTab: React.FC = () => {
     const next = calendars.map(c => (c.id === id ? { ...c, selected } : c))
     setCalendars(next)
     window.api.setGoogleCalendars(next.filter(c => c.selected).map(c => c.id))
+  }
+
+  function selectTaskList(id: string) {
+    if (!taskLists) return
+    setTaskLists(taskLists.map(l => ({ ...l, selected: l.id === id })))
+    window.api.setGoogleTaskList(id)
   }
 
   if (!status) return null
@@ -869,7 +892,7 @@ const GoogleTab: React.FC = () => {
         <p>Google account</p>
         <p className={styles.description}>
           {status.connected
-            ? 'Connected. Calendar events show on the Car Thing.'
+            ? 'Connected. Calendar events and tasks show on the Car Thing.'
             : connecting
               ? 'Waiting for you to sign in from your browser...'
               : 'Not connected.'}
@@ -913,6 +936,36 @@ const GoogleTab: React.FC = () => {
                 style={{ backgroundColor: calendar.color }}
               />
               {calendar.name}
+            </label>
+          ))}
+        </div>
+      )}
+
+      {status.connected && (
+        <div className={styles.googleSection}>
+          <p>Task list</p>
+          <p className={styles.description}>
+            Tasks from this list show on the Car Thing. Ticking one there
+            completes it in Google Tasks.
+          </p>
+          {taskListError && (
+            <p className={styles.error}>{taskListError}</p>
+          )}
+          {!taskLists && !taskListError && (
+            <p className={styles.description}>Loading task lists...</p>
+          )}
+          {taskLists?.map(list => (
+            <label key={list.id} className={styles.taskListOption}>
+              <input
+                type="radio"
+                name="googleTaskList"
+                checked={list.selected}
+                onChange={() => selectTaskList(list.id)}
+              />
+              {list.name}
+              {list.isDefault && (
+                <span className={styles.note}>(default)</span>
+              )}
             </label>
           ))}
         </div>

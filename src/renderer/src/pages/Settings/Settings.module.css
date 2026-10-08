@@ -467,11 +467,17 @@
   padding: 8px 14px;
 }
 
-.calendarOption {
+.calendarOption,
+.taskListOption {
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
+}
+
+.taskListOption .note {
+  font-size: 14px;
+  color: #aaa;
 }
 
 .calendarOption .swatch {
