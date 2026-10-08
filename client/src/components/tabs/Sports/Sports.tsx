@@ -31,7 +31,9 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
       for (const key of Object.keys(p)) {
         if (serverFavorites.includes(key) !== p[key]) next[key] = p[key]
       }
-      return next
+      // Keep the same object when nothing changed, so the timeout below is
+      // not re-armed by unrelated pushes.
+      return Object.keys(next).length === Object.keys(p).length ? p : next
     })
   }, [serverFavorites])
 
@@ -68,10 +70,16 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
     else keys.forEach(k => send(k, true))
   }
 
-  const highlighted = useListNav(feed.items.length, active, i => {
-    const game = feed.items[i]
-    if (game) toggleGame(game)
-  })
+  const gameIds = useMemo(() => feed.items.map(g => g.id), [feed.items])
+  const highlighted = useListNav(
+    feed.items.length,
+    active,
+    i => {
+      const game = feed.items[i]
+      if (game) toggleGame(game)
+    },
+    gameIds
+  )
 
   return (
     <div className={styles.tab} data-scroll-container>

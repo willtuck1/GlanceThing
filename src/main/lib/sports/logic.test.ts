@@ -92,6 +92,18 @@ describe('normalize', () => {
     expect(normalize('nba', json)).toHaveLength(3)
   })
 
+  it('upper-cases team abbreviations so keys stay valid', () => {
+    const json = fixture('nba-scoreboard.json') as {
+      events: {
+        competitions: { competitors: { team: { abbreviation: string } }[] }[]
+      }[]
+    }
+    json.events[0].competitions[0].competitors[0].team.abbreviation = 'bos'
+    const [first] = normalize('nba', json)
+    expect(first.home.key).toBe('nba:BOS')
+    expect(isTeamKey(first.home.key)).toBe(true)
+  })
+
   it('throws when the response has no events array', () => {
     expect(() => normalize('nfl', { error: 'x' })).toThrow()
     expect(() => normalize('nfl', null)).toThrow()

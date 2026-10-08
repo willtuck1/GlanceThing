@@ -45,7 +45,7 @@ function toTeam(
   c: EspnCompetitor,
   state: Game['state']
 ): Team | null {
-  const abbr = c.team?.abbreviation
+  const abbr = c.team?.abbreviation?.toUpperCase()
   if (!abbr) return null
 
   const raw = Number(c.score)
