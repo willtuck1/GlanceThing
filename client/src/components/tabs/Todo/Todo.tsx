@@ -124,8 +124,10 @@ const Todo: React.FC<{ active: boolean }> = ({ active }) => {
     () => applyToggles(feed.items, toggles),
     [feed.items, toggles]
   )
-  const openTasks = items.filter(t => !t.done)
-  const doneTasks = items.filter(t => t.done)
+  // Sections follow the host's state, so a ticked row stays where it is
+  // (checked, struck through) until Google confirms, then moves.
+  const openTasks = items.filter((_, i) => !feed.items[i].done)
+  const doneTasks = items.filter((_, i) => feed.items[i].done)
 
   const rows: Row[] = openTasks.map(task => ({ kind: 'task', task }))
   if (doneTasks.length > 0) {
