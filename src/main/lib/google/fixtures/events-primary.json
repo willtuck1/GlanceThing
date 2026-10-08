@@ -1,0 +1,56 @@
+{
+  "kind": "calendar#events",
+  "timeZone": "America/New_York",
+  "items": [
+    {
+      "id": "conf1",
+      "status": "confirmed",
+      "summary": "Design conference",
+      "location": "Example Convention Center",
+      "start": { "date": "2026-10-07" },
+      "end": { "date": "2026-10-10" }
+    },
+    {
+      "id": "standup1",
+      "status": "confirmed",
+      "summary": "Standup",
+      "start": { "dateTime": "2026-10-08T13:30:00-04:00", "timeZone": "America/New_York" },
+      "end": { "dateTime": "2026-10-08T14:30:00-04:00", "timeZone": "America/New_York" }
+    },
+    {
+      "id": "done1",
+      "status": "confirmed",
+      "summary": "Breakfast",
+      "start": { "dateTime": "2026-10-08T08:00:00-04:00" },
+      "end": { "dateTime": "2026-10-08T09:00:00-04:00" }
+    },
+    {
+      "id": "late1",
+      "status": "confirmed",
+      "summary": "Late call",
+      "start": { "dateTime": "2026-10-09T03:30:00Z" },
+      "end": { "dateTime": "2026-10-09T04:00:00Z" }
+    },
+    {
+      "id": "cancel1",
+      "status": "cancelled",
+      "summary": "Cancelled meeting",
+      "start": { "dateTime": "2026-10-08T16:00:00-04:00" },
+      "end": { "dateTime": "2026-10-08T17:00:00-04:00" }
+    },
+    {
+      "id": "dentist1",
+      "status": "confirmed",
+      "summary": "Dentist",
+      "location": "12 Example Street",
+      "start": { "dateTime": "2026-10-09T09:00:00-04:00" },
+      "end": { "dateTime": "2026-10-09T10:00:00-04:00" }
+    },
+    {
+      "id": "notitle1",
+      "status": "confirmed",
+      "start": { "dateTime": "2026-10-10T10:00:00-04:00" },
+      "end": { "dateTime": "2026-10-10T11:00:00-04:00" }
+    }
+  ]
+}

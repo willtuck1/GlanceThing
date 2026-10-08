@@ -1,11 +1,18 @@
 import { Feed } from '../feeds/Feed.js'
-import { calendarFixture, todoFixture } from '../feeds/fixtures.js'
+import { todoFixture } from '../feeds/fixtures.js'
 import {
   decoratePayload,
   FeedDecorator,
   registerFeed,
   unregisterAll
 } from '../feeds/registry.js'
+import { getGoogleStatus } from '../google/auth.js'
+import { createCalendarFetcher } from '../google/calendar.js'
+import {
+  getSelectedCalendars,
+  googleGet
+} from '../google/calendarSettings.js'
+import { CALENDAR_INTERVAL } from '../google/calendarLogic.js'
 import { createSportsFetcher } from '../sports/espn.js'
 import { getFavorites } from '../sports/favorites.js'
 import { decorateSports, sportsInterval } from '../sports/logic.js'
@@ -45,12 +52,17 @@ function sources(): Source[] {
   )
 
   return [
-    // Calendar and To-do stay on fixtures until M2 and M3.
     {
       key: 'calendar',
-      fetch: async () => calendarFixture,
-      interval: () => STUB_INTERVAL
+      fetch: createCalendarFetcher({
+        get: googleGet,
+        getSelected: getSelectedCalendars,
+        now: () => Date.now(),
+        formatTime: ts => formatDate(new Date(ts)).time
+      }),
+      interval: () => CALENDAR_INTERVAL
     },
+    // To-do stays on fixtures until M3.
     {
       key: 'todo',
       fetch: async () => todoFixture,
@@ -70,6 +82,10 @@ function sources(): Source[] {
 }
 
 export const setup: SetupFunction = async () => {
+  // Without a Google account, don't show events cached from an earlier
+  // account (or from the M0 fixtures).
+  if (!getGoogleStatus().connected) setStorageValue('feedCache.calendar', null)
+
   const feeds = sources().map(({ key, fetch, interval, decorate }) => {
     const feed = new Feed<unknown>(
       { key, fetch, interval },

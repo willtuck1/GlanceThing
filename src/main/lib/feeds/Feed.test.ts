@@ -149,3 +149,43 @@ describe('Feed', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
   })
 })
+
+describe('Feed.reset', () => {
+  it('clears data and the cache', async () => {
+    const { feed, saved } = setup()
+    await feed.refresh()
+    feed.reset()
+    expect(feed.getPayload()).toMatchObject({
+      items: [],
+      fetchedAt: null,
+      error: null
+    })
+    expect(saved.test).toBeNull()
+  })
+
+  it('discards a fetch that started before the reset', async () => {
+    let resolve: (items: number[]) => void = () => {}
+    const { feed, published, saved } = setup({
+      fetch: () => new Promise(r => (resolve = r))
+    })
+    const pending = feed.refresh()
+    feed.reset()
+    resolve([9])
+    await pending
+    expect(feed.getPayload().items).toEqual([])
+    expect(published).toHaveLength(0)
+    expect(saved.test).toBeNull()
+  })
+
+  it('lets a new refresh run right after a reset', async () => {
+    let calls = 0
+    const { feed } = setup({
+      fetch: () =>
+        ++calls === 1 ? new Promise<number[]>(() => {}) : Promise.resolve([7])
+    })
+    void feed.refresh()
+    feed.reset()
+    await feed.refresh()
+    expect(feed.getPayload().items).toEqual([7])
+  })
+})

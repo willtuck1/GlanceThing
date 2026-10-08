@@ -16,7 +16,9 @@ const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
     <div className={styles.tab} data-scroll-container>
       <StaleBadge stale={feed.stale} label={feed.fetchedAtLabel} />
       {feed.loaded && feed.items.length === 0 && (
-        <div className={styles.empty}>Nothing coming up</div>
+        // The host's error says what to do, e.g. "Connect Google in the
+        // desktop app".
+        <div className={styles.empty}>{feed.error ?? 'Nothing coming up'}</div>
       )}
       {feed.items.map((event, i) => {
         const showDay =

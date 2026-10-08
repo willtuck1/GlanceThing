@@ -1,0 +1,20 @@
+{
+  "kind": "calendar#events",
+  "timeZone": "America/New_York",
+  "items": [
+    {
+      "id": "school1",
+      "status": "confirmed",
+      "summary": "School run",
+      "start": { "dateTime": "2026-10-09T08:00:00-04:00" },
+      "end": { "dateTime": "2026-10-09T08:30:00-04:00" }
+    },
+    {
+      "id": "bday1",
+      "status": "confirmed",
+      "summary": "Birthday: Sam",
+      "start": { "date": "2026-10-09" },
+      "end": { "date": "2026-10-10" }
+    }
+  ]
+}

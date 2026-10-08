@@ -78,6 +78,7 @@ import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import * as google from './lib/google/service.js'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -248,7 +249,13 @@ enum IPCHandler {
   GetChannel = 'getChannel',
   CheckUpdate = 'checkUpdate',
   FindOpenPort = 'findOpenPort',
-  IsPortOpen = 'isPortOpen'
+  IsPortOpen = 'isPortOpen',
+  GetGoogleStatus = 'getGoogleStatus',
+  SetGoogleClient = 'setGoogleClient',
+  ConnectGoogle = 'connectGoogle',
+  DisconnectGoogle = 'disconnectGoogle',
+  GetGoogleCalendars = 'getGoogleCalendars',
+  SetGoogleCalendars = 'setGoogleCalendars'
 }
 
 async function setupIpcHandlers() {
@@ -514,6 +521,33 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.IsPortOpen, async (_event, port) => {
     return await isPortOpen(port as number)
+  })
+
+  ipcMain.handle(IPCHandler.GetGoogleStatus, () => {
+    return google.googleStatus()
+  })
+
+  ipcMain.handle(
+    IPCHandler.SetGoogleClient,
+    (_event, clientId, clientSecret) => {
+      return google.saveGoogleClient(clientId, clientSecret)
+    }
+  )
+
+  ipcMain.handle(IPCHandler.ConnectGoogle, async () => {
+    return await google.connect()
+  })
+
+  ipcMain.handle(IPCHandler.DisconnectGoogle, async () => {
+    await google.disconnect()
+  })
+
+  ipcMain.handle(IPCHandler.GetGoogleCalendars, async () => {
+    return await google.calendars()
+  })
+
+  ipcMain.handle(IPCHandler.SetGoogleCalendars, (_event, ids) => {
+    google.saveCalendars(ids)
   })
 }
 
