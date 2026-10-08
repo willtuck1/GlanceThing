@@ -15,6 +15,8 @@ Your CarThing as a glanceable action pad!
 
 ## Getting started
 
+This fork adds Calendar, To-do and Sports tabs. Follow [docs/SETUP.md](docs/SETUP.md) for the full setup, including connecting Google and a device checklist.
+
 The application only works on Windows and Mac for now. Linux support is planned!
 
 1. Download GlanceThing from [Releases](../../releases/).

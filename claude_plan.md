@@ -84,7 +84,7 @@ Event: `{id, title, allDay, startLabel, endLabel, dayLabel, location?, calendarC
 - Offline paths: host offline, Google 5xx, token revoked (tab shows "Reconnect Google in the desktop app"), ESPN schema drift (normalizer drops bad events, never crashes).
 - Perf on device: no animation libs, `will-change: transform` only on the pager track, lists capped (sports ≤ 40 games, calendar ≤ 60 events), avoid re-rendering hidden tabs on every push (memo per tab).
 - **Recipient-ready release:** an unsigned-build note in SETUP.md, since the Windows SmartScreen and macOS Gatekeeper warnings will show. The first launch opens the Setup wizard, which already handles flash → install. An in-app "Google not configured" screen links to the guide.
-- Tag `v0.0.16-tabs.1` and confirm the Release page has the installer and client zip.
+- Tag `v0.0.16-tabs.3` (tabs.1 and tabs.2 already exist) and confirm the Release page has the installer and client zip.
 - **Device check (human):** a checklist in SETUP.md, run by you or a recipient.
 
 ## Setup guide (the fork's `docs/SETUP.md`, written for a recipient with no dev tools)
