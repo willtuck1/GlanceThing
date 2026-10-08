@@ -2,12 +2,15 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { DevModeContext } from '@/contexts/DevModeContext.js'
+import { ModalContext } from '@/contexts/ModalContext.js'
 
 import icon from '@/assets/icon.png'
 import iconNightly from '@/assets/icon-nightly.png'
 
 import styles from './Home.module.css'
 import { ChannelContext } from '@/contexts/ChannelContext.js'
+
+type GoogleStatus = Awaited<ReturnType<typeof window.api.getGoogleStatus>>
 
 enum CarThingState {
   NotFound = 'not_found',
@@ -20,6 +23,11 @@ const Home: React.FC = () => {
   const navigate = useNavigate()
   const { devMode } = useContext(DevModeContext)
   const { channel } = useContext(ChannelContext)
+  const { openModals, setModalOpen } = useContext(ModalContext)
+  const settingsOpen = openModals.includes('settings')
+  const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(
+    null
+  )
   const [hasCustomClient, setHasCustomClient] = useState(false)
 
   const [carThingState, setCarThingState] = useState<CarThingState | null>(
@@ -70,6 +78,11 @@ const Home: React.FC = () => {
     }
   }, [])
 
+  // Re-read after Settings closes, where the client and account are set.
+  useEffect(() => {
+    if (!settingsOpen) window.api.getGoogleStatus().then(setGoogleStatus)
+  }, [settingsOpen])
+
   const updateHasCustomClient = async () =>
     setHasCustomClient(await window.api.hasCustomClient())
 
@@ -115,6 +128,29 @@ const Home: React.FC = () => {
           <button onClick={() => navigate('/setup?step=3')}>
             Set up now
           </button>
+        </div>
+      ) : null}
+      {googleStatus && !googleStatus.connected ? (
+        <div className={styles.notice} data-type="warning">
+          <p>
+            <span className="material-icons">event_busy</span>
+            {googleStatus.configured
+              ? 'Google account not connected. Calendar and To-do stay empty until you connect it in Settings.'
+              : 'Google is not set up. Calendar and To-do need a Google OAuth client, which takes about 5 minutes to create.'}
+          </p>
+          <div className={styles.actions}>
+            {!googleStatus.configured && (
+              <button
+                onClick={() => window.open(googleStatus.setupGuideUrl)}
+              >
+                Setup guide{' '}
+                <span className="material-icons">open_in_new</span>
+              </button>
+            )}
+            <button onClick={() => setModalOpen('settings', true)}>
+              Open Settings
+            </button>
+          </div>
         </div>
       ) : null}
       {devMode && hasCustomClient ? (

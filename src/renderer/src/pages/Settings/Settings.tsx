@@ -846,7 +846,14 @@ const GoogleTab: React.FC = () => {
         <p className={styles.description}>
           {status.clientSource === 'build'
             ? 'This app has a built-in Google client. Enter your own to use it instead.'
-            : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}
+            : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}{' '}
+          <a
+            href={status.setupGuideUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Setup guide
+          </a>
         </p>
         <input
           type="text"
