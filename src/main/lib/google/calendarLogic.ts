@@ -5,6 +5,8 @@ import { CalendarEvent } from '../feeds/types.js'
 export const CALENDAR_INTERVAL = 5 * 60 * 1000
 export const WINDOW_DAYS = 7
 export const DEFAULT_COLOR = '#4285f4'
+// Most events sent to the device; more is slow to render on the Car Thing.
+export const MAX_EVENTS = 60
 
 // Minimal view of Google Calendar's JSON: only the fields we read.
 export interface GoogleCalendarListEntry {
@@ -126,7 +128,8 @@ export function dayLabel(day: number, now: number) {
 
 // Merges events from all calendars into the tab's list: ended events are
 // dropped, events already running show under today, and each day lists
-// all-day events first, then by start time.
+// all-day events first, then by start time. Only the first MAX_EVENTS are
+// kept.
 export function buildCalendarItems(
   events: RawEvent[],
   now: number,
@@ -147,6 +150,7 @@ export function buildCalendarItems(
         a.e.start - b.e.start ||
         a.e.title.localeCompare(b.e.title)
     )
+    .slice(0, MAX_EVENTS)
     .map(({ e, day }) => ({
       id: e.id,
       title: e.title,

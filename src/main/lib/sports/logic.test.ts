@@ -5,6 +5,7 @@ import {
   IDLE_INTERVAL,
   LIVE_INTERVAL,
   League,
+  MAX_GAMES,
   decorateSports,
   isTeamKey,
   mergeLeagues,
@@ -274,6 +275,33 @@ describe('favorites', () => {
     expect(out.favorites).toEqual(['nba:MIA'])
     expect(out.items[0].id).toBe('nba:401700003')
     expect(out.fetchedAtLabel).toBe('12:00')
+  })
+
+  it('sends at most MAX_GAMES, keeping favorites and live games', () => {
+    const now = Date.parse('2026-10-08T18:00Z')
+    const many = Array.from({ length: 60 }, (_, i) =>
+      game({ id: `nba:${i}`, start: now + i * 60_000 })
+    )
+    const live = game({ id: 'nba:live', state: 'in', start: now + 3600_000 })
+    const fav = game({
+      id: 'nba:fav',
+      start: now + 2 * 3600_000,
+      home: { key: 'nba:MIA', abbr: 'MIA', name: 'Heat', score: null }
+    })
+    const out = decorateSports(
+      {
+        items: [...many, live, fav],
+        fetchedAt: 1,
+        fetchedAtLabel: '',
+        stale: false,
+        error: null
+      },
+      ['nba:MIA'],
+      { now, formatTime: () => 'T' }
+    )
+    expect(out.items).toHaveLength(MAX_GAMES)
+    expect(out.items[0].id).toBe('nba:fav')
+    expect(out.items[1].id).toBe('nba:live')
   })
 
   it('relabels only scheduled games', () => {

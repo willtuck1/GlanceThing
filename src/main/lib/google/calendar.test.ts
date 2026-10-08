@@ -12,6 +12,7 @@ import {
 } from './calendar.js'
 import {
   DEFAULT_COLOR,
+  MAX_EVENTS,
   buildCalendarItems,
   dayLabel,
   normalizeCalendarList,
@@ -186,6 +187,24 @@ describe('buildCalendarItems', () => {
     expect(items.find(i => i.title === 'School run')!.calendarColor).toBe(
       '#bbb'
     )
+  })
+})
+
+describe('buildCalendarItems cap', () => {
+  it('keeps only the first MAX_EVENTS in display order', () => {
+    const raw = Array.from({ length: 100 }, (_, i) => ({
+      id: `c:${i}`,
+      title: `Event ${i}`,
+      allDay: false,
+      start: NOW + (100 - i) * 60_000,
+      end: NOW + (100 - i) * 60_000 + 30 * 60_000,
+      color: '#aaa'
+    }))
+    const items = buildCalendarItems(raw, NOW, formatTime)
+    expect(items).toHaveLength(MAX_EVENTS)
+    // The soonest events survive.
+    expect(items[0].id).toBe('c:99')
+    expect(items[MAX_EVENTS - 1].id).toBe(`c:${100 - MAX_EVENTS}`)
   })
 })
 

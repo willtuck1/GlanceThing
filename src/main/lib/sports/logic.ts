@@ -7,6 +7,8 @@ export const LEAGUES: League[] = ['nba', 'nfl']
 export const LIVE_INTERVAL = 30 * 1000
 export const IDLE_INTERVAL = 5 * 60 * 1000
 export const SOON_WINDOW = 10 * 60 * 1000
+// Most games sent to the device; more is slow to render on the Car Thing.
+export const MAX_GAMES = 40
 // Games shown: anything live, plus games starting within this window on
 // either side of now (recent finals and the next few hours).
 export const SHOW_WINDOW = 12 * 60 * 60 * 1000
@@ -218,7 +220,8 @@ export function decorateSports(
   )
   return {
     ...payload,
-    items: sortGames(items, favorites),
+    // Capped after sorting, so favorites and live games always make it.
+    items: sortGames(items, favorites).slice(0, MAX_GAMES),
     favorites
   }
 }
