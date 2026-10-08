@@ -16,3 +16,11 @@ export function broadcastTo(
     client.send(message)
   }
 }
+
+export function hasOpenClient(clients: Iterable<AuthenticatedWebSocket>) {
+  for (const client of clients) {
+    if (client.authenticated && client.readyState === WebSocket.OPEN)
+      return true
+  }
+  return false
+}

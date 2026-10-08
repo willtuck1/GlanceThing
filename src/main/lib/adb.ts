@@ -131,7 +131,7 @@ export async function findCarThing() {
   return null
 }
 
-async function restartChromium(device: string | null) {
+export async function restartChromium(device: string | null) {
   if (!device) device = await findCarThing()
   if (!device) throw new Error('No valid CarThing found')
 
@@ -312,4 +312,33 @@ export async function forwardSocketServer(device: string | null) {
   await execAsync(`${adb} -s ${device} reverse tcp:1337 tcp:${info.port}`)
 
   log('Forwarded socket server!', 'adb', LogLevel.DEBUG)
+}
+
+// Raw `adb devices` output, including offline and unauthorized devices
+// that findCarThing skips.
+export async function listAdbDevices() {
+  const adb = await getAdbExecutable()
+  return await execAsync(`${adb} devices`)
+}
+
+export async function reconnectOfflineDevices() {
+  const adb = await getAdbExecutable()
+  await execAsync(`${adb} reconnect offline`)
+}
+
+export async function restartAdbServer() {
+  const adb = await getAdbExecutable()
+  await execAsync(`${adb} kill-server`).catch(() => null)
+  await execAsync(`${adb} start-server`)
+}
+
+// Rebuilds the reverse tunnel and reloads the device's browser, for when
+// the device is on USB but its client never reconnects.
+export async function resetSocketConnection(device: string) {
+  const adb = await getAdbExecutable()
+  await execAsync(`${adb} -s ${device} reverse --remove-all`).catch(
+    () => null
+  )
+  await forwardSocketServer(device)
+  await restartChromium(device)
 }
