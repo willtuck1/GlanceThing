@@ -102,6 +102,14 @@ export class Feed<T> {
     this.deps.saveCache(this.options.key, null)
   }
 
+  // Fetches now and ignores any fetch already in flight, whose data may
+  // predate a change the caller just made (e.g. a task toggled on Google).
+  refetch(): Promise<void> {
+    this.generation++
+    this.inFlight = null
+    return this.refresh()
+  }
+
   refresh(): Promise<void> {
     if (this.inFlight) return this.inFlight
 

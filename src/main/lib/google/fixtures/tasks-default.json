@@ -1,0 +1,86 @@
+{
+  "kind": "tasks#tasks",
+  "etag": "\"example-etag\"",
+  "items": [
+    {
+      "kind": "tasks#task",
+      "id": "taskInvoice",
+      "title": "Send invoice",
+      "status": "needsAction",
+      "due": "2026-10-09T00:00:00.000Z",
+      "position": "00000000000000000001",
+      "updated": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskGroceries",
+      "title": "Buy groceries",
+      "status": "needsAction",
+      "position": "00000000000000000000",
+      "updated": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskMilk",
+      "title": "Milk",
+      "status": "needsAction",
+      "parent": "taskGroceries",
+      "position": "00000000000000000001",
+      "updated": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskBread",
+      "title": "Bread",
+      "status": "needsAction",
+      "parent": "taskGroceries",
+      "position": "00000000000000000000",
+      "updated": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskTaxes",
+      "title": "File taxes",
+      "status": "needsAction",
+      "due": "2026-10-06T00:00:00.000Z",
+      "position": "00000000000000000002",
+      "updated": "2026-10-01T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskBlank",
+      "title": "",
+      "status": "needsAction",
+      "position": "00000000000000000003",
+      "updated": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskDeleted",
+      "title": "Deleted task",
+      "status": "needsAction",
+      "deleted": true,
+      "position": "00000000000000000004",
+      "updated": "2026-10-08T12:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskPassport",
+      "title": "Renew passport",
+      "status": "completed",
+      "completed": "2026-10-07T10:00:00.000Z",
+      "position": "00000000000000000005",
+      "updated": "2026-10-07T10:00:00.000Z"
+    },
+    {
+      "kind": "tasks#task",
+      "id": "taskFlights",
+      "title": "Book flights",
+      "status": "completed",
+      "completed": "2026-10-08T09:00:00.000Z",
+      "hidden": true,
+      "position": "00000000000000000006",
+      "updated": "2026-10-08T09:00:00.000Z"
+    }
+  ]
+}

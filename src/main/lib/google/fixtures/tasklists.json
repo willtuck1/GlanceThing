@@ -1,0 +1,22 @@
+{
+  "kind": "tasks#taskLists",
+  "etag": "\"example-etag\"",
+  "items": [
+    {
+      "kind": "tasks#taskList",
+      "id": "MDefaultListExample",
+      "etag": "\"example-etag-1\"",
+      "title": "My Tasks",
+      "updated": "2026-10-08T15:02:11.000Z",
+      "selfLink": "https://www.googleapis.com/tasks/v1/users/@me/lists/MDefaultListExample"
+    },
+    {
+      "kind": "tasks#taskList",
+      "id": "MShoppingListExample",
+      "etag": "\"example-etag-2\"",
+      "title": "Shopping",
+      "updated": "2026-10-07T09:44:00.000Z",
+      "selfLink": "https://www.googleapis.com/tasks/v1/users/@me/lists/MShoppingListExample"
+    }
+  ]
+}
