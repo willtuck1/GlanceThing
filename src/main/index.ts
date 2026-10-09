@@ -79,6 +79,12 @@ import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
 import { isProtectedStorageKey } from './lib/connectors/store.js'
+import {
+  ipcDeleteConnector,
+  ipcListConnectors,
+  ipcSaveConnector,
+  ipcTestConnector
+} from './lib/connectors/ipc.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
 import { allModules } from './lib/modules/registry.js'
 import {
@@ -283,7 +289,11 @@ enum IPCHandler {
   SetTabSettings = 'setTabSettings',
   SearchWeatherLocations = 'searchWeatherLocations',
   GetWeatherSettings = 'getWeatherSettings',
-  SetWeatherSettings = 'setWeatherSettings'
+  SetWeatherSettings = 'setWeatherSettings',
+  ListConnectors = 'listConnectors',
+  SaveConnector = 'saveConnector',
+  DeleteConnector = 'deleteConnector',
+  TestConnector = 'testConnector'
 }
 
 async function setupIpcHandlers() {
@@ -652,6 +662,20 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.SetWeatherSettings, (_event, value) =>
     applyWeatherSettings(value, getFeed('weather'))
+  )
+
+  ipcMain.handle(IPCHandler.ListConnectors, () => ipcListConnectors())
+
+  ipcMain.handle(IPCHandler.SaveConnector, (_event, draft) =>
+    ipcSaveConnector(draft)
+  )
+
+  ipcMain.handle(IPCHandler.DeleteConnector, (_event, id) =>
+    ipcDeleteConnector(id)
+  )
+
+  ipcMain.handle(IPCHandler.TestConnector, (_event, draft) =>
+    ipcTestConnector(draft)
   )
 }
 

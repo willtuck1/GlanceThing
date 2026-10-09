@@ -41,6 +41,58 @@ interface FantasyLeagues {
   season: string
 }
 
+// JSON connectors (M9B); shapes copied from src/main/lib/connectors.
+// Responses never carry a header value, only its name and `headerSet`.
+type ConnectorLayout = 'list' | 'number' | 'keyvalue' | 'grid'
+
+type ConnectorMapping =
+  | {
+      itemsPath: string
+      primary: string
+      secondary?: string
+      value?: string
+    }
+  | { itemsPath: string; label: string; value: string }
+  | { value: string; caption?: string; unit?: string; decimals?: number }
+  | { pairs: { label: string; path: string }[] }
+
+interface ConnectorForSettings {
+  id: string
+  label: string
+  layout: ConnectorLayout
+  mapping: ConnectorMapping
+  intervalMin: number
+  source: { kind: 'json'; url: string; header?: { name: string } }
+  headerSet: boolean
+}
+
+interface ConnectorDraft {
+  // Omit for a new connector.
+  id?: string
+  label: string
+  layout: ConnectorLayout
+  mapping: ConnectorMapping
+  intervalMin: number
+  url: string
+  // undefined = keep, null = clear, {name, value} = set both,
+  // {name} = rename and keep the stored value.
+  header?: { name: string; value?: string } | null
+}
+
+type ConnectorView =
+  | {
+      layout: 'list'
+      rows: { primary: string; secondary?: string; value?: string }[]
+      more: number
+    }
+  | {
+      layout: 'grid'
+      cells: { label: string; value: string }[]
+      more: number
+    }
+  | { layout: 'number'; value: string; unit?: string; caption?: string }
+  | { layout: 'keyvalue'; pairs: { label: string; value: string }[] }
+
 declare global {
   interface Window {
     api: {
@@ -191,6 +243,16 @@ declare global {
         } | null
         units: 'imperial' | 'metric'
       }>
+      listConnectors: () => Promise<ConnectorForSettings[]>
+      // Rejects with a readable message when the draft is invalid.
+      saveConnector: (
+        draft: ConnectorDraft
+      ) => Promise<ConnectorForSettings>
+      deleteConnector: (id: string) => Promise<boolean>
+      // Never rejects.
+      testConnector: (
+        draft: ConnectorDraft
+      ) => Promise<{ view?: ConnectorView; error?: string }>
     }
   }
 }
