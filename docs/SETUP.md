@@ -254,6 +254,8 @@ Anyone can build and share their own copy without installing anything:
    `git tag v0.0.16-tabs.4 && git push origin v0.0.16-tabs.4`. The tag must
    match the version, because the app downloads
    `glancething-client-v<version>.zip` from the release with that tag.
+   You can also create the release on GitHub's Releases page with a new tag
+   instead; either way the build runs once.
 5. GitHub Actions builds the Windows installer, the macOS `.dmg` and the
    client zip and attaches them to that tag's release. Share the Releases
    link and this guide.
