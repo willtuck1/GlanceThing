@@ -78,6 +78,7 @@ import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import { isProtectedStorageKey } from './lib/connectors/store.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
 import { modules } from './lib/modules/registry.js'
 import { getTabSettings, setTabSettings } from './lib/modules/tabs.js'
@@ -334,10 +335,12 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.GetStorageValue, (_event, key) => {
+    if (isProtectedStorageKey(key)) return null
     return getStorageValue(key)
   })
 
   ipcMain.handle(IPCHandler.SetStorageValue, (_event, key, value) => {
+    if (isProtectedStorageKey(key)) throw new Error('Not allowed')
     return setStorageValue(key, value)
   })
 
