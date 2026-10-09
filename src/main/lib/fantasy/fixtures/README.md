@@ -11,7 +11,8 @@ up. Player IDs and names are real public NFL players from `/players/nfl`.
 - `leagues.json`: `/user/<user_id>/leagues/nfl/2026`, two leagues.
 - `league.json`, `league-predraft.json`: `/league/<league_id>`, in season
   and before the draft. Roster positions include `FLEX`, `SUPER_FLEX`, `K`,
-  `DEF`, bench and `IR`.
+  `DEF`, bench and `IR`. `league.json` also has `scoring_settings` with
+  Sleeper's default full-PPR keys (`rec: 1`, hand-written).
 - `rosters.json`: `/league/<league_id>/rosters`. Roster 1 is the user's (one
   player on IR), roster 3 has a co-owner, roster 4 has no owner.
 - `users.json`: `/league/<league_id>/users`. User 1 has a `team_name`, the
@@ -23,3 +24,10 @@ up. Player IDs and names are real public NFL players from `/players/nfl`.
 - `matchups-bye.json`: roster 1 is missing from the week.
 - `players-sample.json`: the entries of `/players/nfl` for every player in
   the matchups, with a subset of fields. The real file is ~15 MB.
+- `projections-<POS>.json` for QB, RB, WR, TE, K and DEF: real responses
+  from the unofficial
+  `https://api.sleeper.app/projections/nfl/2026/5?season_type=regular&position[]=<POS>`,
+  captured 2026-10-09, trimmed to the players in the matchups plus one
+  off-position entry each (the position filter is loose). Each entry's
+  `player` object is cut down to a few fields. KC is on bye in week 5, so it
+  has no DEF projection. Player 4881's line is only `adp_dd_ppr`.

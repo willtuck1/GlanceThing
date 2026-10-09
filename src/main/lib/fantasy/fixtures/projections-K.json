@@ -1,0 +1,125 @@
+[
+  {
+    "status": null,
+    "date": "2026-10-08",
+    "stats": {
+      "adp_dd_ppr": 999.0,
+      "fga": 2.56,
+      "fgm": 2.22,
+      "fgm_20_29": 0.38,
+      "fgm_30_39": 0.49,
+      "fgm_40_49": 0.49,
+      "fgm_50p": 0.43,
+      "fgm_yds": 75.55,
+      "fgmiss_30_39": 0.04,
+      "fgmiss_40_49": 0.04,
+      "fgmiss_50p": 0.13,
+      "gp": 1.0,
+      "pos_adp_dd_ppr": 999.0,
+      "pts_half_ppr": 9.41,
+      "pts_ppr": 9.41,
+      "pts_std": 9.41,
+      "xpa": 2.96,
+      "xpm": 2.83,
+      "xpmiss": 0.13
+    },
+    "category": "proj",
+    "last_modified": 1791515452425,
+    "week": 5,
+    "sport": "nfl",
+    "season_type": "regular",
+    "season": "2026",
+    "player": {
+      "first_name": "Brandon",
+      "last_name": "Aubrey",
+      "position": "K",
+      "team": "DAL",
+      "injury_status": null,
+      "fantasy_positions": [
+        "K"
+      ]
+    },
+    "team": "DAL",
+    "player_id": "11533",
+    "opponent": "TB",
+    "updated_at": 1791515452425,
+    "game_id": "202610509",
+    "week_shard": "5_5",
+    "company": "rotowire"
+  },
+  {
+    "status": null,
+    "date": "2026-10-11",
+    "stats": {
+      "adp_dd_ppr": 999.0,
+      "fga": 1.86,
+      "fgm": 1.61,
+      "fgm_20_29": 0.3,
+      "fgm_30_39": 0.42,
+      "fgm_40_49": 0.38,
+      "fgm_50p": 0.25,
+      "fgm_yds": 56.4,
+      "fgmiss_30_39": 0.03,
+      "fgmiss_40_49": 0.03,
+      "fgmiss_50p": 0.09,
+      "gp": 1.0,
+      "pos_adp_dd_ppr": 999.0,
+      "pts_half_ppr": 6.95,
+      "pts_ppr": 6.95,
+      "pts_std": 6.95,
+      "xpa": 2.21,
+      "xpm": 2.11,
+      "xpmiss": 0.1
+    },
+    "category": "proj",
+    "last_modified": 1791515453055,
+    "week": 5,
+    "sport": "nfl",
+    "season_type": "regular",
+    "season": "2026",
+    "player": {
+      "first_name": "Cameron",
+      "last_name": "Dicker",
+      "position": "K",
+      "team": "LAC",
+      "injury_status": null,
+      "fantasy_positions": [
+        "K"
+      ]
+    },
+    "team": "LAC",
+    "player_id": "8259",
+    "opponent": "DEN",
+    "updated_at": 1791515453055,
+    "game_id": "202610529",
+    "week_shard": "5_3",
+    "company": "rotowire"
+  },
+  {
+    "date": null,
+    "stats": {
+      "adp_dd_ppr": 1000.0
+    },
+    "category": "proj",
+    "week": 5,
+    "sport": "nfl",
+    "season_type": "regular",
+    "season": "2026",
+    "player": {
+      "first_name": "Ty",
+      "last_name": "Long",
+      "position": "P",
+      "team": null,
+      "injury_status": null,
+      "fantasy_positions": [
+        "K",
+        "P"
+      ]
+    },
+    "team": null,
+    "player_id": "2650",
+    "opponent": null,
+    "game_id": null,
+    "company": "rotowire"
+  }
+]
