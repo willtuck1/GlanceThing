@@ -1,0 +1,27 @@
+{
+ "items": [
+  {
+   "id": "t1",
+   "listId": "l",
+   "title": "Buy groceries",
+   "done": false,
+   "dueLabel": "Today"
+  },
+  {
+   "id": "t2",
+   "listId": "l",
+   "title": "Call plumber",
+   "done": false
+  },
+  {
+   "id": "t3",
+   "listId": "l",
+   "title": "Renew registration",
+   "done": true
+  }
+ ],
+ "fetchedAt": 1760000000000,
+ "fetchedAtLabel": "3:04 PM",
+ "stale": false,
+ "error": null
+}

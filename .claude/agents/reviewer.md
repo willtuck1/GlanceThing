@@ -4,11 +4,11 @@ description: Use after code changes to review the diff for correctness, security
 model: claude-opus-5-5
 tools: Read, Grep, Glob, Bash
 ---
-Run `git diff` against the base branch and review it. Look for:
+Review `git diff origin/main...HEAD` (run `git diff --stat` first and open only the files that matter). Look for:
 - Bugs and unhandled edge cases.
 - Host/client ws message shape mismatches.
-- Secrets or tokens written to plain storage or logs.
+- Secrets or tokens in plain storage or logs.
 - Chrome 69 incompatibilities in `client/`.
-- Missing tests for new logic.
+- New logic without tests.
 
-Report findings ranked by severity, each with `path:line` and a concrete failure scenario. Say "no issues found" if there are none. Do not edit files.
+Report at most 8 findings, most severe first, each with `path:line`, a concrete failing scenario and a suggested fix, in under 400 words. Say "no issues found" if there are none. Don't edit files.

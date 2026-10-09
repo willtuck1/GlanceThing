@@ -1,0 +1,78 @@
+{
+ "items": [
+  {
+   "id": "g1",
+   "league": "nfl",
+   "home": {
+    "key": "nfl:kc",
+    "abbr": "KC",
+    "name": "Chiefs",
+    "score": 21,
+    "color": "#e31837"
+   },
+   "away": {
+    "key": "nfl:buf",
+    "abbr": "BUF",
+    "name": "Bills",
+    "score": 17,
+    "color": "#00338d"
+   },
+   "state": "in",
+   "detail": "Q3 4:12",
+   "start": 1760000000000,
+   "period": 3,
+   "clock": 252,
+   "week": 5
+  },
+  {
+   "id": "g2",
+   "league": "nfl",
+   "home": {
+    "key": "nfl:dal",
+    "abbr": "DAL",
+    "name": "Cowboys",
+    "score": null,
+    "color": "#003594"
+   },
+   "away": {
+    "key": "nfl:phi",
+    "abbr": "PHI",
+    "name": "Eagles",
+    "score": null,
+    "color": "#004c54"
+   },
+   "state": "pre",
+   "detail": "Sun 4:25 PM",
+   "start": 1760010000000,
+   "week": 5
+  },
+  {
+   "id": "g3",
+   "league": "nba",
+   "home": {
+    "key": "nba:cle",
+    "abbr": "CLE",
+    "name": "Cavaliers",
+    "score": 112,
+    "color": "#860038"
+   },
+   "away": {
+    "key": "nba:bos",
+    "abbr": "BOS",
+    "name": "Celtics",
+    "score": 108,
+    "color": "#007a33"
+   },
+   "state": "post",
+   "detail": "Final",
+   "start": 1759990000000
+  }
+ ],
+ "fetchedAt": 1760000000000,
+ "fetchedAtLabel": "3:04 PM",
+ "stale": false,
+ "error": null,
+ "favorites": [
+  "nfl:kc"
+ ]
+}

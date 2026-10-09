@@ -1,5 +1,7 @@
 # GlanceThing fork: Calendar / To-do / Sports / Spotify tabs
 
+> Historical: the original M0–M4 spec, all merged. Current repo facts and rules are in `CLAUDE.md`.
+
 ## Context
 You want your jailbroken Car Thing to show glanceable personal data instead of just Spotify controls. GlanceThing v0.0.16 (BluDood/GlanceThing) has **no plugin API**: client widgets are hardcoded in `client/src/components/Widgets/Widgets.tsx` and host handlers are a static array in `src/main/lib/handlers/handlers.ts`. So this is a **fork** touching both halves. Decisions taken: Google Tasks for to-dos, Google Calendar only, the original Spotify home kept as a **4th tab**, GitHub fork that is **portable to any GitHub owner** (no hardcoded `BluDood/...`).
 
