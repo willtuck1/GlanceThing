@@ -1,9 +1,10 @@
 # GlanceThing (tabs edition): setup guide
 
-This turns a Spotify Car Thing into a small dashboard with four tabs you
-swipe between: **Calendar**, **To-do**, **Sports** and the original
-**Spotify** controls. Calendar and To-do come from your own Google account.
-Sports scores come from ESPN and need no account.
+This turns a Spotify Car Thing into a small dashboard with five tabs you
+swipe between: **Calendar**, **To-do**, **Sports**, **Fantasy** and the
+original **Spotify** controls. Calendar and To-do come from your own Google
+account. Sports scores come from ESPN and need no account. Fantasy shows
+your Sleeper fantasy football matchup and only needs your Sleeper username.
 
 You need:
 
@@ -113,13 +114,32 @@ with a link to this guide until this step is done.
 
 Changes show on the Car Thing within a few seconds.
 
+### Fantasy football (Sleeper, optional)
+
+The **Fantasy** tab (swipe left from Sports) shows this week's Sleeper
+matchup: your team against your opponent, with points for every player.
+Sleeper's data is public and read-only, so there is no sign-in and no
+password.
+
+1. In GlanceThing, open **Settings → Fantasy**.
+2. Type your Sleeper **username** (the one under your profile in the
+   Sleeper app, not your email) and click **Save**. The app checks it with
+   Sleeper.
+3. If you're in more than one league this season, pick the league to show
+   under **League**. With one league, it's picked for you.
+
+The tab refreshes every 30 seconds while an NFL game is on, otherwise every
+10 minutes, and whenever you switch to it. Tap **Show bench** (or turn the
+dial to it and press) to see your bench. To stop using the tab, clear the
+username and click **Save**.
+
 ## 5. Device checklist
 
 Run through this once after setup to confirm everything works. Tick each
 box as you go.
 
-- [ ] **Swipe** left and right through all four tabs: Calendar, To-do,
-      Sports, Spotify. The dots at the bottom follow.
+- [ ] **Swipe** left and right through all five tabs: Calendar, To-do,
+      Sports, Fantasy, Spotify. The dots at the bottom follow.
 - [ ] **Buttons 1, 2 and 3** (top row, from the left) jump to Calendar,
       To-do and Sports.
 - [ ] **Dial turn** moves the highlight down and up a list. **Dial press**
@@ -135,6 +155,8 @@ box as you go.
       about 30 seconds.
 - [ ] **Sports**: tap a team to star it. Its games move to the top.
       Long-press a game to star or unstar both teams.
+- [ ] **Fantasy**: the totals match the Sleeper app. Turn the dial to
+      **Show bench** and press it, and the bench opens.
 - [ ] **Offline**: turn off the computer's Wi-Fi or unplug its network
       cable. Within a few minutes the tabs show an orange "Updated <time>"
       badge and keep the last data. Turn the network back on, and the badge
@@ -152,6 +174,9 @@ box as you go.
 | "Google access was revoked. Reconnect Google in the desktop app" | Google stopped accepting the sign-in (you removed access, changed your password, or the app is still in "Testing" after 7 days). | **Settings → Google → Connect**. If it happens weekly, publish the app (step 3, item 5). |
 | "Google refused access (403). Check the Calendar and Tasks APIs are enabled" | The Google Cloud project is missing an API. | Step 3, item 3. |
 | "ESPN is having problems" / "No games today" | No scores to show right now. | Nothing. |
+| "Enter your Sleeper username in the desktop app" | The Fantasy tab has no username. | **Settings → Fantasy**. |
+| "Sleeper user ... was not found" | Sleeper doesn't know that username. | Check the spelling in **Settings → Fantasy**. |
+| "No matchup this week" / "NFL offseason" | Bye week, out of the playoffs, or no games yet. | Nothing. |
 | Full screen "Reconnecting..." | The Car Thing lost the desktop app. | Make sure GlanceThing is running and the USB cable is connected. |
 | A ticked task jumps back with "Couldn't update" | Google didn't accept the change. | Check the message. Try again once the problem is fixed. |
 
