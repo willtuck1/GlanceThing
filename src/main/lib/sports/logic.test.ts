@@ -5,6 +5,7 @@ import {
   IDLE_INTERVAL,
   LIVE_INTERVAL,
   League,
+  MAX_GAMES,
   decorateSports,
   isTeamKey,
   mergeLeagues,
@@ -92,6 +93,46 @@ describe('normalize', () => {
       ]
     }
     expect(normalize('nba', json)).toHaveLength(3)
+  })
+
+  it('survives fields changing type or shape', () => {
+    const good = (fixture('nba-scoreboard.json') as { events: unknown[] })
+      .events
+    const json = {
+      events: [
+        null,
+        'event',
+        { id: '1', date: '2026-10-08T23:00Z', competitions: 'oops' },
+        {
+          id: '2',
+          date: '2026-10-08T23:00Z',
+          competitions: [{ competitors: { home: {} } }]
+        },
+        {
+          id: '3',
+          date: '2026-10-08T23:00Z',
+          status: { type: { state: 'pre' } },
+          competitions: [
+            {
+              competitors: [
+                { homeAway: 'home', team: { abbreviation: 42 } },
+                { homeAway: 'away', team: { abbreviation: 'BOS' } }
+              ]
+            }
+          ]
+        },
+        ...good
+      ]
+    }
+    expect(normalize('nba', json)).toHaveLength(good.length)
+  })
+
+  it('accepts numeric event ids', () => {
+    const json = fixture('nba-scoreboard.json') as {
+      events: { id: unknown }[]
+    }
+    json.events[0].id = 401700001
+    expect(normalize('nba', json)[0].id).toBe('nba:401700001')
   })
 
   it('upper-cases team abbreviations so keys stay valid', () => {
@@ -316,6 +357,20 @@ describe('favorites', () => {
     expect(out.favorites).toEqual(['nba:MIA'])
     expect(out.items[0].id).toBe('nba:401700003')
     expect(out.fetchedAtLabel).toBe('12:00')
+  })
+
+  it(`sends at most ${MAX_GAMES} games`, () => {
+    const now = Date.parse('2026-10-08T18:00Z')
+    const items = Array.from({ length: MAX_GAMES + 10 }, (_, i) =>
+      game({ id: `nba:${i}`, start: now + i * 60_000 })
+    )
+    const out = decorateSports(
+      { items, fetchedAt: 1, fetchedAtLabel: '', stale: false, error: null },
+      [],
+      { now, formatTime: () => 'T' }
+    )
+    expect(out.items).toHaveLength(MAX_GAMES)
+    expect(out.items[0].id).toBe('nba:0')
   })
 
   it('relabels only scheduled games', () => {

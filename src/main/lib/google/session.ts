@@ -2,8 +2,10 @@ import axios, { AxiosError, AxiosInstance, CreateAxiosDefaults } from 'axios'
 
 import { GoogleClient, PostForm, refreshTokens, TokenError } from './oauth.js'
 
+export const NOT_CONFIGURED = "Set up Google in the desktop app's Settings"
 export const NOT_CONNECTED = 'Connect Google in the desktop app'
-export const REVOKED = 'Google access was revoked. Reconnect in the desktop app'
+export const REVOKED =
+  'Google access was revoked. Reconnect Google in the desktop app'
 
 // Refresh this long before Google's stated expiry to avoid racing it.
 const EXPIRY_MARGIN = 60_000
@@ -19,6 +21,10 @@ export interface SessionDeps {
   getClient: () => GoogleClient | null
   getRefreshToken: () => string | null
   setRefreshToken: (token: string | null) => void
+  // Remembers that Google revoked the last token, so the tabs keep asking
+  // to reconnect rather than to connect.
+  isRevoked?: () => boolean
+  setRevoked?: (revoked: boolean) => void
   post: PostForm
   now?: () => number
   axiosConfig?: CreateAxiosDefaults
@@ -43,7 +49,11 @@ export function createGoogleSession(deps: SessionDeps): GoogleSession {
   async function refresh() {
     const client = deps.getClient()
     const refreshToken = deps.getRefreshToken()
-    if (!client || !refreshToken) throw new NotConnectedError()
+    if (!client) throw new NotConnectedError(NOT_CONFIGURED)
+    if (!refreshToken)
+      throw new NotConnectedError(
+        deps.isRevoked?.() ? REVOKED : NOT_CONNECTED
+      )
 
     try {
       const tokens = await refreshTokens(
@@ -59,6 +69,7 @@ export function createGoogleSession(deps: SessionDeps): GoogleSession {
     } catch (e) {
       if (e instanceof TokenError && e.revoked) {
         deps.setRefreshToken(null)
+        deps.setRevoked?.(true)
         access = null
         throw new NotConnectedError(REVOKED)
       }

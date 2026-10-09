@@ -1,3 +1,5 @@
+import { memo } from 'react'
+
 import { useFeed } from '@/hooks/useFeed.ts'
 import { useListNav } from '@/hooks/useListNav.ts'
 
@@ -42,4 +44,5 @@ const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
   )
 }
 
-export default Calendar
+// Memoized so drags and pushes for other tabs don't re-render this one.
+export default memo(Calendar)

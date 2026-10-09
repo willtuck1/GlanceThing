@@ -2,7 +2,12 @@ import { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
 import { describe, expect, it, vi } from 'vitest'
 
 import { PostForm } from './oauth.js'
-import { createGoogleSession, NotConnectedError, REVOKED } from './session.js'
+import {
+  createGoogleSession,
+  NOT_CONFIGURED,
+  NotConnectedError,
+  REVOKED
+} from './session.js'
 
 const client = { clientId: 'id', clientSecret: 'secret' }
 
@@ -31,9 +36,12 @@ function fakeApi(validToken: () => string) {
   })
 }
 
-function setup(opts: { refreshToken?: string | null } = {}) {
+function setup(
+  opts: { refreshToken?: string | null; hasClient?: boolean } = {}
+) {
   let stored: string | null =
     opts.refreshToken === undefined ? 'refresh-1' : opts.refreshToken
+  let revoked = false
   let issued = 0
   const post = vi.fn<PostForm>(async () => ({
     status: 200,
@@ -44,9 +52,13 @@ function setup(opts: { refreshToken?: string | null } = {}) {
     stored = t
   })
   const session = createGoogleSession({
-    getClient: () => client,
+    getClient: () => (opts.hasClient === false ? null : client),
     getRefreshToken: () => stored,
     setRefreshToken,
+    isRevoked: () => revoked,
+    setRevoked: r => {
+      revoked = r
+    },
     post,
     now: () => 0,
     axiosConfig: { adapter }
@@ -119,5 +131,24 @@ describe('createGoogleSession', () => {
     expect(err).toBeInstanceOf(NotConnectedError)
     expect(err.message).toBe(REVOKED)
     expect(setRefreshToken).toHaveBeenCalledWith(null)
+  })
+
+  it('asks to set Google up when there is no OAuth client', async () => {
+    const { session } = setup({ hasClient: false })
+    const err = await session.getAccessToken().catch(e => e)
+    expect(err).toBeInstanceOf(NotConnectedError)
+    expect(err.message).toBe(NOT_CONFIGURED)
+  })
+
+  it('keeps asking to reconnect after a revoke', async () => {
+    const { session, post } = setup()
+    post.mockResolvedValueOnce({
+      status: 400,
+      data: { error: 'invalid_grant' }
+    })
+    await session.getAccessToken().catch(() => {})
+    const err = await session.getAccessToken().catch(e => e)
+    expect(err).toBeInstanceOf(NotConnectedError)
+    expect(err.message).toBe(REVOKED)
   })
 })

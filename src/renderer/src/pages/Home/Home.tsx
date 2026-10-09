@@ -2,6 +2,8 @@ import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { DevModeContext } from '@/contexts/DevModeContext.js'
+import { ModalContext } from '@/contexts/ModalContext.js'
+import { GOOGLE_SETUP_URL } from '@/lib/setupGuide.js'
 
 import icon from '@/assets/icon.png'
 import iconNightly from '@/assets/icon-nightly.png'
@@ -20,7 +22,11 @@ const Home: React.FC = () => {
   const navigate = useNavigate()
   const { devMode } = useContext(DevModeContext)
   const { channel } = useContext(ChannelContext)
+  const { openModals, setModalOpen } = useContext(ModalContext)
   const [hasCustomClient, setHasCustomClient] = useState(false)
+  const [googleStatus, setGoogleStatus] = useState<Awaited<
+    ReturnType<typeof window.api.getGoogleStatus>
+  > | null>(null)
 
   const [carThingState, setCarThingState] = useState<CarThingState | null>(
     null
@@ -70,6 +76,17 @@ const Home: React.FC = () => {
     }
   }, [])
 
+  // Re-read when Settings closes, since that is where Google is set up,
+  // and every minute to catch a revoke found by the feeds.
+  const settingsOpen = openModals.includes('settings')
+  useEffect(() => {
+    if (settingsOpen) return
+    const load = () => window.api.getGoogleStatus().then(setGoogleStatus)
+    load()
+    const interval = setInterval(load, 60 * 1000)
+    return () => clearInterval(interval)
+  }, [settingsOpen])
+
   const updateHasCustomClient = async () =>
     setHasCustomClient(await window.api.hasCustomClient())
 
@@ -115,6 +132,29 @@ const Home: React.FC = () => {
           <button onClick={() => navigate('/setup?step=3')}>
             Set up now
           </button>
+        </div>
+      ) : null}
+      {googleStatus && !googleStatus.connected ? (
+        <div className={styles.notice} data-type="warning">
+          <p>
+            <span className="material-icons">warning</span>
+            {!googleStatus.configured
+              ? 'Google is not set up. The Calendar and To-do tabs stay empty until it is.'
+              : googleStatus.revoked
+                ? 'Google access was revoked or expired. Reconnect it in Settings.'
+                : 'Connect your Google account in Settings to see events and tasks.'}
+          </p>
+          <div className={styles.noticeActions}>
+            {!googleStatus.configured && (
+              <button onClick={() => window.open(GOOGLE_SETUP_URL)}>
+                Setup guide{' '}
+                <span className="material-icons">open_in_new</span>
+              </button>
+            )}
+            <button onClick={() => setModalOpen('settings', true)}>
+              Settings
+            </button>
+          </div>
         </div>
       ) : null}
       {devMode && hasCustomClient ? (

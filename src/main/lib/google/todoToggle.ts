@@ -15,6 +15,8 @@ export interface ToggleDeps {
   setDone: (listId: string, id: string, done: boolean) => Promise<Task>
   // Re-reads the list and pushes it to every client.
   refetch: () => void
+  // Turns a failure into the message the device flashes.
+  describeError?: (e: unknown) => string
 }
 
 const isText = (v: unknown): v is string =>
@@ -45,7 +47,9 @@ export async function toggleTask(
     return {
       reqId: req.reqId,
       ok: false,
-      error: e instanceof Error ? e.message : String(e)
+      error:
+        deps.describeError?.(e) ??
+        (e instanceof Error ? e.message : String(e))
     }
   }
 }

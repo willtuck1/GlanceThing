@@ -1,5 +1,6 @@
 import { respondWithFeed } from '../feeds/respond.js'
 import { getFeed } from '../feeds/registry.js'
+import { googleErrorMessage } from '../google/errors.js'
 import { setTaskDone } from '../google/tasks.js'
 import { googlePatch } from '../google/tasksSettings.js'
 import { parseToggle, toggleTask } from '../google/todoToggle.js'
@@ -34,7 +35,8 @@ export const actions: HandlerAction[] = [
           : await toggleTask(req, {
               setDone: (listId, id, done) =>
                 setTaskDone(googlePatch, listId, id, done, Date.now()),
-              refetch: () => void getFeed('todo')?.refetch()
+              refetch: () => void getFeed('todo')?.refetch(),
+              describeError: googleErrorMessage
             })
 
       if (!ack.ok)

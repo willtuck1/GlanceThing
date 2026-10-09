@@ -1,6 +1,6 @@
 {
   "name": "glancethingclient",
-  "version": "0.0.16-tabs.2",
+  "version": "0.0.16-tabs.3",
   "type": "module",
   "scripts": {
     "dev": "vite",

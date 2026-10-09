@@ -10,6 +10,7 @@ interface GoogleStatus {
   clientSource: 'settings' | 'build' | null
   clientId: string
   connected: boolean
+  revoked: boolean
 }
 
 interface GoogleCalendarOption {
