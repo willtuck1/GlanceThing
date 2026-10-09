@@ -1,4 +1,4 @@
-import type { FantasyPlayer, FantasyTeam } from '../../../types/Feeds.ts'
+import type { FantasyPlayer, FantasyTeam } from '@/types/Feeds.ts'
 
 // One line of the matchup grid: my player on the left, my opponent's on the
 // right, the shared slot label in the middle.

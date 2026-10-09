@@ -12,7 +12,7 @@ import {
   Toggles
 } from './toggles.ts'
 
-import type { Task } from '../../../types/Feeds.ts'
+import type { Task } from '@/types/Feeds.ts'
 
 const open: Task = {
   id: 't1',

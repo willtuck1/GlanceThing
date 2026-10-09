@@ -92,7 +92,9 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
       <StaleBadge stale={feed.stale} label={feed.fetchedAtLabel} />
       {feed.loaded && feed.items.length === 0 && (
         // Without any cached games, say why (e.g. the computer is offline).
-        <div className={styles.empty}>{feed.error ?? 'No games today'}</div>
+        <div className={styles.empty}>
+          {feed.error ?? 'No games today'}
+        </div>
       )}
       {feed.items.map((game, i) => (
         <GameRow

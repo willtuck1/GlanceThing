@@ -22,7 +22,9 @@ const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
       {feed.loaded && feed.items.length === 0 && (
         // The host's error says what to do, e.g. "Connect Google in the
         // desktop app".
-        <div className={styles.empty}>{feed.error ?? 'Nothing coming up'}</div>
+        <div className={styles.empty}>
+          {feed.error ?? 'Nothing coming up'}
+        </div>
       )}
       {feed.items.map((event, i) => {
         const showDay =

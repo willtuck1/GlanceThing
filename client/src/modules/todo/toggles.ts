@@ -1,4 +1,4 @@
-import type { Task } from '../../../types/Feeds.ts'
+import type { Task } from '@/types/Feeds.ts'
 
 // Optimistic task toggles. A row flips as soon as it is tapped and keeps
 // the local value until the host answers:

@@ -11,7 +11,7 @@ import {
   starterRows
 } from './rows.ts'
 
-import type { FantasyPlayer, FantasyTeam } from '../../../types/Feeds.ts'
+import type { FantasyPlayer, FantasyTeam } from '@/types/Feeds.ts'
 
 function player(id: string, slot: string, points = 0): FantasyPlayer {
   return { id, name: id, position: 'WR', team: 'MIN', slot, points }
@@ -52,7 +52,9 @@ describe('benchRows', () => {
       team([], [player('a', 'BN')]),
       team([], [player('x', 'BN'), player('y', 'BN')])
     )
-    expect(rows.map(r => [r.key, r.mine?.id ?? null, r.theirs?.id])).toEqual([
+    expect(
+      rows.map(r => [r.key, r.mine?.id ?? null, r.theirs?.id])
+    ).toEqual([
       ['b0', 'a', 'x'],
       ['b1', null, 'y']
     ])
@@ -69,7 +71,13 @@ describe('formatting', () => {
   it('joins position and team', () => {
     expect(playerDetail(player('a', 'QB'))).toBe('WR · MIN')
     expect(
-      playerDetail({ id: '0', name: 'Empty', position: '', slot: 'K', points: 0 })
+      playerDetail({
+        id: '0',
+        name: 'Empty',
+        position: '',
+        slot: 'K',
+        points: 0
+      })
     ).toBe('')
   })
 
@@ -82,9 +90,9 @@ describe('formatting', () => {
 
 describe('formatProjected', () => {
   it('shows one decimal, or a dash without a projection', () => {
-    expect(formatProjected({ ...player('a', 'WR'), projected: 14.26 })).toBe(
-      '14.3'
-    )
+    expect(
+      formatProjected({ ...player('a', 'WR'), projected: 14.26 })
+    ).toBe('14.3')
     expect(formatProjected({ ...player('a', 'WR'), projected: 0 })).toBe(
       '0.0'
     )
@@ -94,7 +102,9 @@ describe('formatProjected', () => {
 
 describe('estimateLabel', () => {
   it('labels the estimate "Est."', () => {
-    expect(estimateLabel({ ...team([]), estimate: 112.4 })).toBe('Est. 112.40')
+    expect(estimateLabel({ ...team([]), estimate: 112.4 })).toBe(
+      'Est. 112.40'
+    )
     expect(estimateLabel(team([]))).toBeNull()
   })
 })
