@@ -5,7 +5,7 @@
 //
 // <keys> is a comma-separated list of key names (Playwright names: 1, 2, 3,
 // 4, Enter, Escape, m) and `swipeL` / `swipeR` / `wheel` / `wheelUp`.
-// Example: node scripts/preview/shoot.mjs out sports=3 fantasy=3,swipeL
+// Example: node scripts/preview/shoot.mjs out sports=2,2,2 calendar=3
 import { createRequire } from 'node:module'
 import { execSync } from 'node:child_process'
 import fs from 'node:fs'

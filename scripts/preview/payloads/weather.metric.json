@@ -1,0 +1,86 @@
+{
+ "items": [
+  {
+   "kind": "forecast",
+   "locationName": "Chicago",
+   "units": "metric",
+   "current": {
+    "tempLabel": "22°C",
+    "code": 2,
+    "label": "Partly cloudy",
+    "icon": "partly"
+   },
+   "highLabel": "25°",
+   "lowLabel": "14°",
+   "sunriseLabel": "6:12 AM",
+   "sunsetLabel": "7:48 PM",
+   "precipUnit": "mm",
+   "hours": [
+    {
+     "timeLabel": "Now",
+     "tempLabel": "22°",
+     "precipPct": 0
+    },
+    {
+     "timeLabel": "1 PM",
+     "tempLabel": "21°",
+     "precipPct": 0
+    },
+    {
+     "timeLabel": "2 PM",
+     "tempLabel": "20°",
+     "precipPct": 5
+    },
+    {
+     "timeLabel": "3 PM",
+     "tempLabel": "19°",
+     "precipPct": 10
+    },
+    {
+     "timeLabel": "4 PM",
+     "tempLabel": "19°",
+     "precipPct": 20
+    },
+    {
+     "timeLabel": "5 PM",
+     "tempLabel": "19°",
+     "precipPct": 35
+    },
+    {
+     "timeLabel": "6 PM",
+     "tempLabel": "19°",
+     "precipPct": 60
+    },
+    {
+     "timeLabel": "7 PM",
+     "tempLabel": "20°",
+     "precipPct": 80
+    },
+    {
+     "timeLabel": "8 PM",
+     "tempLabel": "20°",
+     "precipPct": 70
+    },
+    {
+     "timeLabel": "9 PM",
+     "tempLabel": "20°",
+     "precipPct": 45
+    },
+    {
+     "timeLabel": "10 PM",
+     "tempLabel": "19°",
+     "precipPct": 20
+    },
+    {
+     "timeLabel": "11 PM",
+     "tempLabel": "19°",
+     "precipPct": 10
+    }
+   ]
+  }
+ ],
+ "fetchedAt": 1760000000000,
+ "fetchedAtLabel": "3:04 PM",
+ "stale": false,
+ "error": null
+}

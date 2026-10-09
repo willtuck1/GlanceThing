@@ -25,7 +25,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 ## Commands
 - `npm run gate`: every CI check, printing one line each (plus the tail of any failure). `npm run gate -- fast` skips the two builds; use it between steps.
 - Single test file: `npx vitest run <path>`.
-- Screenshots of the client at 800×480 with fake data: see `scripts/preview/README.md`.
+- Screenshots of the client at 800×480 with fake data: see `scripts/preview/README.md`. Tab indices start at Weather (0). `VARIANT_<type>=<name>` serves `payloads/<type>.<name>.json` (weather: `metric`, `none`).
 
 ## Roadmap (planned, not built)
 In this order. Effort is relative to M5/M6.

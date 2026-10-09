@@ -4,6 +4,8 @@
 // every request.
 //
 //   node scripts/preview/server.mjs [payloadDir]
+//   VARIANT_weather=metric node ... serves weather.metric.json instead of weather.json
+//   (any feed: VARIANT_<type>=<name> -> <type>.<name>.json)
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -50,7 +52,11 @@ http
   .listen(HTTP_PORT)
 
 function payload(type) {
-  const file = path.join(payloads, `${type}.json`)
+  const variant = process.env[`VARIANT_${type}`]
+  const file = path.join(
+    payloads,
+    variant ? `${type}.${variant}.json` : `${type}.json`
+  )
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null
 }
 
