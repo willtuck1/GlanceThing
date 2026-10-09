@@ -11,7 +11,7 @@ import {
 import { log, LogLevel, safeParse } from '../lib/utils.js'
 import { broadcastTo, hasOpenClient } from './broadcast.js'
 import { runServerSetup } from './setup/setup.js'
-import { getHandlers } from './handlers/handlers.js'
+import { findHandler } from './handlers/handlers.js'
 
 import { AuthenticatedWebSocket } from '../types/WebSocketServer.js'
 
@@ -76,7 +76,7 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
               })
             )
 
-          const handler = getHandlers().find(h => h.name === type)
+          const handler = findHandler(type)
           if (!handler) return
 
           if (!handler.hasActions) {

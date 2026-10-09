@@ -4,6 +4,7 @@ export type FeedKey =
   | 'sports'
   | 'fantasy'
   | 'weather'
+  | `json:${string}`
 
 export interface FeedPayload<T> {
   items: T[]

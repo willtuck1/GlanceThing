@@ -27,7 +27,8 @@ import {
   getTabSettings,
   normalizeTabSettings,
   syncFeeds,
-  setTabSettings
+  setTabSettings,
+  tabsPayload
 } from './tabs.js'
 
 const ids = ['a', 'b', 'c']
@@ -144,5 +145,72 @@ describe('syncFeeds', () => {
     expect(s.start).toHaveBeenCalledTimes(2)
     expect(w.start).toHaveBeenCalledTimes(1)
     expect(running.size).toBe(2)
+  })
+})
+
+describe('connector tabs', () => {
+  const connector = (id: string, label = 'Price') => ({
+    id,
+    label,
+    layout: 'number',
+    mapping: { value: 'price' },
+    intervalMin: 5,
+    source: {
+      kind: 'json',
+      url: 'https://example.com/secret-path',
+      header: { name: 'X-Key' }
+    }
+  })
+  const staticIds = modules.map(m => m.id)
+
+  it('appends a new connector visible', () => {
+    store.set('tabSettings', { order: staticIds, hidden: ['todo'] })
+    store.set('connectors', [connector('aaaa1111')])
+    expect(getTabSettings()).toEqual({
+      order: [...staticIds, 'json:aaaa1111'],
+      hidden: ['todo']
+    })
+  })
+
+  it('drops a deleted connector from order and hidden', () => {
+    store.set('tabSettings', {
+      order: [...staticIds, 'json:aaaa1111'],
+      hidden: ['json:aaaa1111']
+    })
+    expect(getTabSettings()).toEqual({ order: staticIds, hidden: [] })
+  })
+
+  it('unhides the first tab when deleting leaves all hidden', () => {
+    store.set('tabSettings', {
+      order: ['json:aaaa1111', ...staticIds],
+      hidden: staticIds
+    })
+    store.set('connectors', [connector('aaaa1111')])
+    expect(getTabSettings().hidden).toEqual(staticIds)
+    store.set('connectors', [])
+    expect(getTabSettings()).toEqual({ order: staticIds, hidden: [] })
+  })
+
+  it('drops unknown json ids when saving', () => {
+    store.set('connectors', [connector('aaaa1111')])
+    const saved = setTabSettings({
+      order: ['json:zzzz9999', 'json:aaaa1111'],
+      hidden: ['json:zzzz9999']
+    })
+    expect(saved.order[0]).toBe('json:aaaa1111')
+    expect(saved.order).not.toContain('json:zzzz9999')
+    expect(saved.hidden).toEqual([])
+  })
+
+  it('sends only id, label and layout of each connector', () => {
+    store.set('connectors', [connector('aaaa1111', 'BTC')])
+    const payload = tabsPayload()
+    expect(payload.connectors).toEqual([
+      { id: 'json:aaaa1111', label: 'BTC', layout: 'number' }
+    ])
+    const text = JSON.stringify(payload)
+    expect(text).not.toContain('example.com')
+    expect(text).not.toContain('X-Key')
+    expect(text).not.toContain('price')
   })
 })

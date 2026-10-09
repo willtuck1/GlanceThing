@@ -1,4 +1,4 @@
-import { getTabSettings } from '../modules/tabs.js'
+import { tabsPayload } from '../modules/tabs.js'
 
 import { HandlerFunction } from '../../types/WebSocketHandler.js'
 
@@ -10,7 +10,7 @@ export const handle: HandlerFunction = async ws => {
   ws.send(
     JSON.stringify({
       type: 'tabs',
-      data: getTabSettings()
+      data: tabsPayload()
     })
   )
 }

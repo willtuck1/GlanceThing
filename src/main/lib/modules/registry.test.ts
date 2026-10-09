@@ -17,7 +17,8 @@ vi.mock('../storage.js', () => ({
 }))
 
 import { coreHandlers, getHandlers } from '../handlers/handlers.js'
-import { getModule, modules } from './registry.js'
+import { findHandler } from '../handlers/handlers.js'
+import { allModules, getModule, modules } from './registry.js'
 
 describe('module registry', () => {
   it('lists unique ids in the default tab order', () => {
@@ -51,5 +52,16 @@ describe('module registry', () => {
       expect(m.feedKeys).toEqual(m.feeds().map(f => f.key))
     const all = modules.flatMap(m => m.feedKeys)
     expect(new Set(all).size).toBe(all.length)
+  })
+
+  it('lists only static modules when there are no connectors', () => {
+    expect(allModules().map(m => m.id)).toEqual(modules.map(m => m.id))
+  })
+
+  it('finds core and module handlers, but no json handler without a connector', () => {
+    expect(findHandler('tabs')?.name).toBe('tabs')
+    expect(findHandler('weather')?.name).toBe('weather')
+    expect(findHandler('json:abcd1234')).toBeUndefined()
+    expect(getHandlers().some(h => h.name.startsWith('json:'))).toBe(false)
   })
 })

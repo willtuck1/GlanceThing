@@ -80,8 +80,12 @@ import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
 import { isProtectedStorageKey } from './lib/connectors/store.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
-import { modules } from './lib/modules/registry.js'
-import { getTabSettings, setTabSettings } from './lib/modules/tabs.js'
+import { allModules } from './lib/modules/registry.js'
+import {
+  getTabSettings,
+  setTabSettings,
+  tabsPayload
+} from './lib/modules/tabs.js'
 import { applyTabSettings } from './lib/setup/feeds.js'
 import { getFeed } from './lib/feeds/registry.js'
 import { searchLocations } from './lib/weather/openMeteo.js'
@@ -621,12 +625,12 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.GetTabSettings, () => ({
     settings: getTabSettings(),
-    modules: modules.map(({ id, label }) => ({ id, label }))
+    modules: allModules().map(({ id, label }) => ({ id, label }))
   }))
 
   ipcMain.handle(IPCHandler.SetTabSettings, (_event, value) => {
     const settings = setTabSettings(value)
-    serverManager.broadcast('tabs', settings)
+    serverManager.broadcast('tabs', tabsPayload())
     applyTabSettings(settings)
     return settings
   })
