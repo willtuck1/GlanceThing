@@ -1,0 +1,44 @@
+# GlanceThing fork
+
+Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over a websocket to a React client (`client/`) running on a Car Thing: **Chrome 69, 800×480 landscape**. Tabs, in order: Calendar, To-do, Sports, Fantasy, Spotify. Current release line: `v0.0.16-tabs.N` (see `package.json`).
+
+## Where things are
+- Host ws server: `src/main/lib/server.ts` routes `{type, action, data}` to `src/main/lib/handlers/*.ts` (`name`, `hasActions`, `actions`, `handle(ws, data)`).
+- Feeds (poll + cache + stale): `src/main/lib/feeds/Feed.ts`, wired in `src/main/lib/setup/feeds.ts`. Data sources: `lib/google/` (Calendar, Tasks; OAuth in `google/oauth.ts`), `lib/sports/` (ESPN), `lib/fantasy/` (Sleeper, including projections and game status). Each has a `fixtures/` folder.
+- Client tabs: `client/src/components/tabs/<Tab>/`, registered in `client/src/App.tsx`. Pager and button keys: `client/src/components/TabPager/TabPager.tsx`. Data: `client/src/hooks/useFeed.ts`. Payload types: `client/src/types/Feeds.ts`. Row colors: `client/src/lib/tint.ts`.
+- Sleep screen: `client/src/components/Screensaver/`. Long-press helper: `client/src/hooks/useLongPress.ts`.
+- Desktop settings UI: `src/renderer/src/pages/Settings/Settings.tsx`.
+- Client self-update: on connect the client asks for `version` and sends `update` if it differs from its own, and the host reinstalls it (`handlers/version.ts`, `handlers/update.ts`).
+- Device inputs arrive as DOM events: buttons `'1'`–`'4'` (only 1–3 are wired; `'4'` is unverified on the device), M → `'m'`, Back → `Escape`, dial → `wheel`, dial press → `Enter`.
+- `claude_plan.md` is the original M0–M4 spec, all done. Read only the section you need. Don't read `docs/m*-screenshots/`.
+
+## Rules
+- Client must run on Chrome 69: no flexbox `gap`, `aspect-ratio` or `:is()`. The legacy Vite plugin handles JS syntax, not new browser APIs.
+- The host owns all network calls. The device never sees tokens. Secrets go through `setStorageValue(key, value, true)`.
+- The device clock is unreliable: send preformatted times from the host.
+- The Car Thing has no speaker. Alerts on the device are visual; sound has to come from the desktop.
+- Tests use committed fixtures and mocked HTTP, never live calls.
+- Releases: bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N` in the milestone PR. Tag `v0.0.16-tabs.N`, or create the release on GitHub, after merging. A release marked as a pre-release is invisible to the in-app update check and the "latest" link.
+
+## Commands
+- `npm run gate`: every CI check, printing one line each (plus the tail of any failure). `npm run gate -- fast` skips the two builds; use it between steps.
+- Single test file: `npx vitest run <path>`.
+- Screenshots of the client at 800×480 with fake data: see `scripts/preview/README.md`.
+
+## Roadmap (planned, not built)
+In this order. Effort is relative to M5/M6.
+1. **Polish** (small): one team color per sports row (favorite, else the left team); button 4 → Fantasy; separate opacity sliders for sports and calendar colors.
+2. **Weather tab** (≈ M1): Open-Meteo (no key), hourly temperature and precipitation, sunrise and sunset, location set in Settings.
+3. **Clock tab with timer, plus button macros** (small–medium): timer alerts are visual only. Prefer long-press over double-tap, because double-tap delays every single press by about 300 ms.
+4. **Notifications** (medium–large): the host compares each update to the last one against rules (close game, final, fantasy swings, upcoming event), then sends a `notify` message that the client shows over any tab or the sleep screen. Per-type toggles in Settings. Optional desktop notification for sound.
+5. **Sleep screen clock with widgets** (medium): uses the existing feeds plus weather.
+6. **Gmail tab** (medium–large): needs the restricted `gmail.readonly` scope. Every user has to sign in to Google again, and logins from an OAuth client in test mode expire every 7 days. "Important" means `is:important is:unread`. Build after Notifications.
+
+## Keeping this file current (required)
+This file is the shared memory for every agent and session. Whenever a change makes anything here wrong or incomplete, update this file in the same commit:
+- new or moved files, tabs, feeds, handlers or message types
+- new rules, gotchas or device facts learned (including from device testing)
+- commands or scripts
+- roadmap items started, finished, changed or dropped
+
+Keep it short: facts and pointers, no history. If nothing here changed, say "AGENTS.md: no update needed" in the PR body. A Stop hook in Claude Code checks this (see `CLAUDE.md`).

@@ -4,12 +4,13 @@ description: Use first for any non-trivial change. Breaks a task into small, fil
 model: claude-opus-5-5
 tools: Read, Grep, Glob
 ---
-You plan changes to GlanceThing, an Electron host (`src/main`, `src/preload`, `src/renderer`) plus a React client (`client/`) that targets Chrome 69 on an 800x480 display.
+AGENTS.md has the repo map, rules and roadmap. Read the code the task touches; read `claude_plan.md` only for the section you need.
 
-Read `claude_plan.md` and the relevant code before planning. Return:
+Return, in under 400 words:
 1. The goal in one sentence.
-2. Ordered steps, each naming the files touched and what changes.
-3. Which steps are independent and can run in parallel.
-4. Risks: Chrome 69 compatibility, ws protocol changes affecting both halves, secrets handling.
+2. Ordered steps, each naming the files touched, what changes and the test that proves it.
+3. Which steps can run in parallel.
+4. What AGENTS.md needs to say afterwards (a final docs step if anything).
+5. Risks: Chrome 69, ws message shapes shared by host and client, secrets, anything that can't be verified in the cloud.
 
-Do not write code. Keep the plan short.
+Don't write code.

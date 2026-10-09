@@ -1,0 +1,150 @@
+{
+ "items": [
+  {
+   "kind": "matchup",
+   "leagueName": "Office League",
+   "week": 5,
+   "projections": true,
+   "me": {
+    "rosterId": 1,
+    "name": "Team Taco",
+    "points": 71.4,
+    "estimate": 118.2,
+    "starters": [
+     {
+      "id": "1",
+      "name": "Josh Allen",
+      "position": "QB",
+      "team": "BUF",
+      "slot": "QB",
+      "points": 18.2,
+      "projected": 22.5,
+      "game": {
+       "state": "in",
+       "label": "Q3 4:12"
+      }
+     },
+     {
+      "id": "2",
+      "name": "Bijan Robinson",
+      "position": "RB",
+      "team": "ATL",
+      "slot": "RB",
+      "points": 0,
+      "projected": 17.1,
+      "game": {
+       "state": "pre",
+       "label": "Sun 4:25 PM"
+      }
+     },
+     {
+      "id": "3",
+      "name": "Ja'Marr Chase",
+      "position": "WR",
+      "team": "CIN",
+      "slot": "WR",
+      "points": 24.6,
+      "projected": 18.0,
+      "game": {
+       "state": "post",
+       "label": "Final"
+      }
+     },
+     {
+      "id": "4",
+      "name": "Travis Kelce",
+      "position": "TE",
+      "team": "KC",
+      "slot": "TE",
+      "points": 8.6,
+      "projected": 11.2,
+      "game": {
+       "state": "in",
+       "label": "Q3 4:12"
+      }
+     }
+    ],
+    "bench": [
+     {
+      "id": "5",
+      "name": "Zay Flowers",
+      "position": "WR",
+      "team": "BAL",
+      "slot": "BN",
+      "points": 12.0,
+      "projected": 10.4,
+      "game": {
+       "state": "post",
+       "label": "Final"
+      }
+     }
+    ]
+   },
+   "opponent": {
+    "rosterId": 2,
+    "name": "Gridiron Gang",
+    "points": 64.0,
+    "estimate": 109.7,
+    "starters": [
+     {
+      "id": "11",
+      "name": "Lamar Jackson",
+      "position": "QB",
+      "team": "BAL",
+      "slot": "QB",
+      "points": 26.1,
+      "projected": 24.0,
+      "game": {
+       "state": "post",
+       "label": "Final"
+      }
+     },
+     {
+      "id": "12",
+      "name": "Saquon Barkley",
+      "position": "RB",
+      "team": "PHI",
+      "slot": "RB",
+      "points": 0,
+      "projected": 18.3,
+      "game": {
+       "state": "pre",
+       "label": "Sun 4:25 PM"
+      }
+     },
+     {
+      "id": "13",
+      "name": "CeeDee Lamb",
+      "position": "WR",
+      "team": "DAL",
+      "slot": "WR",
+      "points": 0,
+      "projected": 17.6,
+      "game": {
+       "state": "pre",
+       "label": "Sun 4:25 PM"
+      }
+     },
+     {
+      "id": "14",
+      "name": "Sam LaPorta",
+      "position": "TE",
+      "team": "DET",
+      "slot": "TE",
+      "points": 9.9,
+      "projected": 9.5,
+      "game": {
+       "state": "post",
+       "label": "Final"
+      }
+     }
+    ],
+    "bench": []
+   }
+  }
+ ],
+ "fetchedAt": 1760000000000,
+ "fetchedAtLabel": "3:04 PM",
+ "stale": false,
+ "error": null
+}
