@@ -1,0 +1,12 @@
+{
+ "items": [
+  {
+   "kind": "none",
+   "message": "Set a location in Settings"
+  }
+ ],
+ "fetchedAt": 1760000000000,
+ "fetchedAtLabel": "3:04 PM",
+ "stale": false,
+ "error": null
+}

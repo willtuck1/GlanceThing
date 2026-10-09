@@ -1,16 +1,22 @@
-export const FANTASY_KEY = 'fantasy'
+export const CALENDAR_KEY = 'calendar'
 
-// Maps a Car Thing hardware button to a page index. Buttons 1-3 select by
-// position; button 4 jumps to the Fantasy tab.
-export function keyToIndex(key: string, pageKeys: string[]): number | null {
-  if (key === '1' || key === '2' || key === '3') {
-    return Math.min(Number(key) - 1, pageKeys.length - 1)
-  }
+// Maps a Car Thing hardware button to a page index. Button 1 goes to the
+// previous tab and 2 to the next (both wrap); 3 jumps to the Calendar tab.
+export function keyToIndex(
+  key: string,
+  current: number,
+  pageKeys: string[]
+): number | null {
+  const count = pageKeys.length
 
-  if (key === '4') {
-    const i = pageKeys.indexOf(FANTASY_KEY)
+  if (key === '1' && count > 0) return (current - 1 + count) % count
+  if (key === '2' && count > 0) return (current + 1) % count
+
+  if (key === '3') {
+    const i = pageKeys.indexOf(CALENDAR_KEY)
     return i === -1 ? null : i
   }
 
+  // Button 4: reserved for sleep-to-clock (roadmap item 5).
   return null
 }

@@ -79,6 +79,10 @@ import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
+import { getFeed } from './lib/feeds/registry.js'
+import { searchLocations } from './lib/weather/openMeteo.js'
+import { applyWeatherSettings } from './lib/weather/service.js'
+import { getWeatherSettings } from './lib/weather/settings.js'
 import * as fantasy from './lib/fantasy/service.js'
 import * as google from './lib/google/service.js'
 import { watchCarThing } from './lib/watchdog.js'
@@ -266,7 +270,10 @@ enum IPCHandler {
   GetFantasyLeagues = 'getFantasyLeagues',
   SetFantasyLeague = 'setFantasyLeague',
   GetDisplaySettings = 'getDisplaySettings',
-  SetDisplaySettings = 'setDisplaySettings'
+  SetDisplaySettings = 'setDisplaySettings',
+  SearchWeatherLocations = 'searchWeatherLocations',
+  GetWeatherSettings = 'getWeatherSettings',
+  SetWeatherSettings = 'setWeatherSettings'
 }
 
 async function setupIpcHandlers() {
@@ -579,9 +586,12 @@ async function setupIpcHandlers() {
     return fantasy.fantasyStatus()
   })
 
-  ipcMain.handle(IPCHandler.SetFantasyUsername, async (_event, username) => {
-    return await fantasy.saveUsername(username)
-  })
+  ipcMain.handle(
+    IPCHandler.SetFantasyUsername,
+    async (_event, username) => {
+      return await fantasy.saveUsername(username)
+    }
+  )
 
   ipcMain.handle(IPCHandler.GetFantasyLeagues, async () => {
     return await fantasy.leagues()
@@ -600,6 +610,25 @@ async function setupIpcHandlers() {
     serverManager.broadcast('display', settings)
     return settings
   })
+
+  ipcMain.handle(
+    IPCHandler.SearchWeatherLocations,
+    async (_event, query: unknown) => {
+      try {
+        return await searchLocations(String(query ?? ''))
+      } catch {
+        // The original error message may contain request details (the search
+        // text), so throw a generic one that never reaches logs.
+        throw new Error('Could not search for locations')
+      }
+    }
+  )
+
+  ipcMain.handle(IPCHandler.GetWeatherSettings, () => getWeatherSettings())
+
+  ipcMain.handle(IPCHandler.SetWeatherSettings, (_event, value) =>
+    applyWeatherSettings(value, getFeed('weather'))
+  )
 }
 
 async function setupTray() {

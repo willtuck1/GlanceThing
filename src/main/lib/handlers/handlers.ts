@@ -17,6 +17,7 @@ import * as todo from './todo.js'
 import * as update from './update.js'
 import * as version from './version.js'
 import * as wake from './wake.js'
+import * as weather from './weather.js'
 
 export const handlers: Handler[] = [
   apps,
@@ -35,5 +36,6 @@ export const handlers: Handler[] = [
   todo,
   update,
   version,
-  wake
+  wake,
+  weather
 ]

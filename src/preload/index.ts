@@ -61,7 +61,10 @@ enum IPCHandler {
   GetFantasyLeagues = 'getFantasyLeagues',
   SetFantasyLeague = 'setFantasyLeague',
   GetDisplaySettings = 'getDisplaySettings',
-  SetDisplaySettings = 'setDisplaySettings'
+  SetDisplaySettings = 'setDisplaySettings',
+  SearchWeatherLocations = 'searchWeatherLocations',
+  GetWeatherSettings = 'getWeatherSettings',
+  SetWeatherSettings = 'setWeatherSettings'
 }
 
 // Custom APIs for renderer
@@ -155,14 +158,24 @@ const api = {
   getFantasyStatus: () => ipcRenderer.invoke(IPCHandler.GetFantasyStatus),
   setFantasyUsername: (username: string) =>
     ipcRenderer.invoke(IPCHandler.SetFantasyUsername, username),
-  getFantasyLeagues: () => ipcRenderer.invoke(IPCHandler.GetFantasyLeagues),
+  getFantasyLeagues: () =>
+    ipcRenderer.invoke(IPCHandler.GetFantasyLeagues),
   setFantasyLeague: (id: string) =>
     ipcRenderer.invoke(IPCHandler.SetFantasyLeague, id),
-  getDisplaySettings: () => ipcRenderer.invoke(IPCHandler.GetDisplaySettings),
+  getDisplaySettings: () =>
+    ipcRenderer.invoke(IPCHandler.GetDisplaySettings),
   setDisplaySettings: (settings: {
     sportsTintOpacity?: number
     calendarTintOpacity?: number
-  }) => ipcRenderer.invoke(IPCHandler.SetDisplaySettings, settings)
+  }) => ipcRenderer.invoke(IPCHandler.SetDisplaySettings, settings),
+  searchWeatherLocations: (query: string) =>
+    ipcRenderer.invoke(IPCHandler.SearchWeatherLocations, query),
+  getWeatherSettings: () =>
+    ipcRenderer.invoke(IPCHandler.GetWeatherSettings),
+  setWeatherSettings: (settings: {
+    location?: { name: string; latitude: number; longitude: number } | null
+    units?: 'imperial' | 'metric'
+  }) => ipcRenderer.invoke(IPCHandler.SetWeatherSettings, settings)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

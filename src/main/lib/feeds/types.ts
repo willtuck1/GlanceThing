@@ -1,4 +1,9 @@
-export type FeedKey = 'calendar' | 'todo' | 'sports' | 'fantasy'
+export type FeedKey =
+  | 'calendar'
+  | 'todo'
+  | 'sports'
+  | 'fantasy'
+  | 'weather'
 
 export interface FeedPayload<T> {
   items: T[]
@@ -114,5 +119,31 @@ export type FantasyView =
       kind: 'none'
       leagueName?: string
       week?: number
+      message: string
+    }
+
+// The one item of the weather feed: the forecast for the location set in
+// Settings, or a prompt to set one. Times are preformatted in the
+// location's own timezone.
+export type WeatherView =
+  | {
+      kind: 'forecast'
+      locationName: string
+      units: 'imperial' | 'metric'
+      current: {
+        tempLabel: string
+        code: number
+        label: string
+        icon: string
+      }
+      highLabel: string
+      lowLabel: string
+      sunriseLabel: string
+      sunsetLabel: string
+      precipLabel: string
+      hours: { timeLabel: string; tempLabel: string; precipPct: number }[]
+    }
+  | {
+      kind: 'none'
       message: string
     }
