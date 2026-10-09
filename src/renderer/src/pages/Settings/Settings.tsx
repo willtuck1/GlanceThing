@@ -20,6 +20,7 @@ enum Tab {
   Startup,
   Google,
   Fantasy,
+  Weather,
   Advanced,
   Logs,
   About
@@ -102,6 +103,13 @@ const Settings: React.FC = () => {
               <span className="material-icons">sports_football</span>
               Fantasy
             </button>
+            <button
+              onClick={() => setCurrentTab(Tab.Weather)}
+              data-active={currentTab === Tab.Weather}
+            >
+              <span className="material-icons">wb_sunny</span>
+              Weather
+            </button>
             {devMode ? (
               <>
                 <button
@@ -141,6 +149,8 @@ const Settings: React.FC = () => {
               <GoogleTab />
             ) : currentTab === Tab.Fantasy ? (
               <FantasyTab />
+            ) : currentTab === Tab.Weather ? (
+              <WeatherTab />
             ) : currentTab === Tab.Advanced ? (
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
@@ -1187,6 +1197,159 @@ const FantasyTab: React.FC = () => {
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+type WeatherLocation = {
+  name: string
+  latitude: number
+  longitude: number
+}
+type WeatherUnits = 'imperial' | 'metric'
+
+const WeatherTab: React.FC = () => {
+  const [loaded, setLoaded] = useState(false)
+  const [location, setLocation] = useState<WeatherLocation | null>(null)
+  const [units, setUnits] = useState<WeatherUnits>('imperial')
+  const [query, setQuery] = useState('')
+  const [searching, setSearching] = useState(false)
+  const [results, setResults] = useState<
+    | { name: string; label: string; latitude: number; longitude: number }[]
+    | null
+  >(null)
+  const [error, setError] = useState(false)
+  const searchId = useRef(0)
+
+  useEffect(() => {
+    let cancelled = false
+    window.api.getWeatherSettings().then(settings => {
+      if (cancelled) return
+      setLocation(settings.location)
+      setUnits(settings.units)
+      setLoaded(true)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function search() {
+    const q = query.trim()
+    if (!q) return
+    const id = ++searchId.current
+    setSearching(true)
+    setError(false)
+    setResults(null)
+    try {
+      const found = await window.api.searchWeatherLocations(q)
+      if (id !== searchId.current) return
+      setResults(found)
+    } catch {
+      if (id !== searchId.current) return
+      setError(true)
+    }
+    setSearching(false)
+  }
+
+  async function chooseLocation(result: {
+    label: string
+    latitude: number
+    longitude: number
+  }) {
+    searchId.current++
+    setSearching(false)
+    setResults(null)
+    setError(false)
+    const saved = await window.api.setWeatherSettings({
+      location: {
+        name: result.label,
+        latitude: result.latitude,
+        longitude: result.longitude
+      }
+    })
+    setLocation(saved.location)
+  }
+
+  async function clearLocation() {
+    const saved = await window.api.setWeatherSettings({ location: null })
+    setLocation(saved.location)
+  }
+
+  async function changeUnits(next: WeatherUnits) {
+    setUnits(next)
+    const saved = await window.api.setWeatherSettings({ units: next })
+    setUnits(saved.units)
+  }
+
+  if (!loaded) return null
+
+  return (
+    <div className={styles.settingsTab}>
+      <div className={styles.googleSection}>
+        <p>Location</p>
+        <p className={styles.description}>
+          {location ? `Location: ${location.name}` : 'No location set'}
+        </p>
+        <input
+          type="text"
+          placeholder="Search for a city"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') search()
+          }}
+        />
+        <div className={styles.actions}>
+          <button disabled={searching || !query.trim()} onClick={search}>
+            Search
+          </button>
+          {location && (
+            <button onClick={clearLocation}>Clear location</button>
+          )}
+        </div>
+        {searching && <p className={styles.description}>Searching...</p>}
+        {error && (
+          <p className={styles.error}>Could not search for locations</p>
+        )}
+        {results && results.length === 0 && (
+          <p className={styles.description}>No results</p>
+        )}
+        {results && results.length > 0 && (
+          <div className={styles.actions}>
+            {results.map(result => (
+              <button
+                key={`${result.latitude},${result.longitude}`}
+                onClick={() => chooseLocation(result)}
+              >
+                {result.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className={styles.googleSection}>
+        <p>Units</p>
+        <label className={styles.taskListOption}>
+          <input
+            type="radio"
+            name="weatherUnits"
+            checked={units === 'imperial'}
+            onChange={() => changeUnits('imperial')}
+          />
+          °F / in
+        </label>
+        <label className={styles.taskListOption}>
+          <input
+            type="radio"
+            name="weatherUnits"
+            checked={units === 'metric'}
+            onChange={() => changeUnits('metric')}
+          />
+          °C / mm
+        </label>
+      </div>
     </div>
   )
 }
