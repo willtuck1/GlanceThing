@@ -1,3 +1,4 @@
+import type { DisplaySettings } from '@/types/Feeds.ts'
 import { TEAM_TINT_ALPHA, TINT_ALPHA } from './tint.ts'
 
 export interface DisplayAlphas {
@@ -18,10 +19,9 @@ function toAlpha(percent: unknown, fallback: number) {
 
 // Host percent (0-100) to alpha (0-1), each field on its own.
 export function parseDisplay(data: unknown): DisplayAlphas {
-  const d = (data && typeof data === 'object' ? data : {}) as Record<
-    string,
-    unknown
-  >
+  const d = (
+    data && typeof data === 'object' ? data : {}
+  ) as Partial<Record<keyof DisplaySettings, unknown>>
   return {
     sportsAlpha: toAlpha(
       d.sportsTintOpacity,
