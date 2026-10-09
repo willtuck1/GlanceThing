@@ -21,6 +21,7 @@ enum Tab {
   Google,
   Fantasy,
   Weather,
+  Tabs,
   Advanced,
   Logs,
   About
@@ -110,6 +111,13 @@ const Settings: React.FC = () => {
               <span className="material-icons">wb_sunny</span>
               Weather
             </button>
+            <button
+              onClick={() => setCurrentTab(Tab.Tabs)}
+              data-active={currentTab === Tab.Tabs}
+            >
+              <span className="material-icons">tab</span>
+              Tabs
+            </button>
             {devMode ? (
               <>
                 <button
@@ -151,6 +159,8 @@ const Settings: React.FC = () => {
               <FantasyTab />
             ) : currentTab === Tab.Weather ? (
               <WeatherTab />
+            ) : currentTab === Tab.Tabs ? (
+              <TabsTab />
             ) : currentTab === Tab.Advanced ? (
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
@@ -469,7 +479,8 @@ const ClientTab: React.FC = () => {
     const value = pendingTint.current[key]
     delete pendingTint.current[key]
     delete tintTimers.current[key]
-    if (value !== undefined) window.api.setDisplaySettings({ [key]: value })
+    if (value !== undefined)
+      window.api.setDisplaySettings({ [key]: value })
   }
 
   function queueTint(
@@ -918,7 +929,9 @@ const GoogleTab: React.FC = () => {
     if (!calendars) return
     const next = calendars.map(c => (c.id === id ? { ...c, selected } : c))
     setCalendars(next)
-    window.api.setGoogleCalendars(next.filter(c => c.selected).map(c => c.id))
+    window.api.setGoogleCalendars(
+      next.filter(c => c.selected).map(c => c.id)
+    )
   }
 
   function selectTaskList(id: string) {
@@ -937,11 +950,7 @@ const GoogleTab: React.FC = () => {
           {status.clientSource === 'build'
             ? 'This app has a built-in Google client. Enter your own to use it instead.'
             : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}{' '}
-          <a
-            href={status.setupGuideUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={status.setupGuideUrl} target="_blank" rel="noreferrer">
             Setup guide
           </a>
         </p>
@@ -1017,7 +1026,9 @@ const GoogleTab: React.FC = () => {
           <p className={styles.description}>
             Events from the checked calendars show on the Car Thing.
           </p>
-          {calendarError && <p className={styles.error}>{calendarError}</p>}
+          {calendarError && (
+            <p className={styles.error}>{calendarError}</p>
+          )}
           {!calendars && !calendarError && (
             <p className={styles.description}>Loading calendars...</p>
           )}
@@ -1026,7 +1037,9 @@ const GoogleTab: React.FC = () => {
               <input
                 type="checkbox"
                 checked={calendar.selected}
-                onChange={e => toggleCalendar(calendar.id, e.target.checked)}
+                onChange={e =>
+                  toggleCalendar(calendar.id, e.target.checked)
+                }
               />
               <span
                 className={styles.swatch}
@@ -1129,7 +1142,9 @@ const FantasyTab: React.FC = () => {
     setLeagueId(res.leagueId)
     setSeason(res.season)
     setMessage({
-      text: res.username ? 'Sleeper username saved.' : 'Sleeper username cleared.',
+      text: res.username
+        ? 'Sleeper username saved.'
+        : 'Sleeper username cleared.',
       type: 'success'
     })
   }
@@ -1215,7 +1230,12 @@ const WeatherTab: React.FC = () => {
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<
-    | { name: string; label: string; latitude: number; longitude: number }[]
+    | {
+        name: string
+        label: string
+        latitude: number
+        longitude: number
+      }[]
     | null
   >(null)
   const [error, setError] = useState(false)
@@ -1349,6 +1369,93 @@ const WeatherTab: React.FC = () => {
           />
           °C / mm
         </label>
+      </div>
+    </div>
+  )
+}
+
+const TabsTab: React.FC = () => {
+  const [settings, setSettings] = useState<{
+    order: string[]
+    hidden: string[]
+  } | null>(null)
+  const [modules, setModules] = useState<{ id: string; label: string }[]>(
+    []
+  )
+
+  useEffect(() => {
+    window.api.getTabSettings().then(res => {
+      setSettings(res.settings)
+      setModules(res.modules)
+    })
+  }, [])
+
+  if (!settings) return null
+
+  const current = settings
+  const shown = current.order.filter(id => !current.hidden.includes(id))
+
+  async function save(order: string[], hidden: string[]) {
+    setSettings(await window.api.setTabSettings({ order, hidden }))
+  }
+
+  function toggle(id: string) {
+    save(
+      current.order,
+      current.hidden.includes(id)
+        ? current.hidden.filter(h => h !== id)
+        : [...current.hidden, id]
+    )
+  }
+
+  function move(index: number, delta: number) {
+    const order = [...current.order]
+    const [id] = order.splice(index, 1)
+    order.splice(index + delta, 0, id)
+    save(order, current.hidden)
+  }
+
+  return (
+    <div className={styles.settingsTab}>
+      <div className={styles.googleSection}>
+        <p>Tabs</p>
+        <p className={styles.description}>
+          Choose which tabs show on the Car Thing and their order.
+        </p>
+        {current.order.map((id, index) => {
+          const isShown = !current.hidden.includes(id)
+          const lastShown = isShown && shown.length === 1
+          return (
+            <div key={id} className={styles.actions}>
+              <label
+                className={styles.taskListOption}
+                title={
+                  lastShown ? 'At least one tab must stay on' : undefined
+                }
+              >
+                <input
+                  type="checkbox"
+                  checked={isShown}
+                  disabled={lastShown}
+                  onChange={() => toggle(id)}
+                />
+                {modules.find(m => m.id === id)?.label ?? id}
+              </label>
+              <button
+                disabled={index === 0}
+                onClick={() => move(index, -1)}
+              >
+                Up
+              </button>
+              <button
+                disabled={index === current.order.length - 1}
+                onClick={() => move(index, 1)}
+              >
+                Down
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
