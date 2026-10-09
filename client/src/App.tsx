@@ -9,6 +9,7 @@ import UpdateScreen from './components/UpdateScreen/UpdateScreen.tsx'
 import Statusbar from '@/components/Statusbar/Statusbar.tsx'
 import Widgets from '@/components/Widgets/Widgets.tsx'
 import TabPager, { TabPage } from '@/components/TabPager/TabPager.tsx'
+import Weather from '@/components/tabs/Weather/Weather.tsx'
 import Calendar from '@/components/tabs/Calendar/Calendar.tsx'
 import Todo from '@/components/tabs/Todo/Todo.tsx'
 import Sports from '@/components/tabs/Sports/Sports.tsx'
@@ -18,6 +19,7 @@ import Menu from '@/components/Menu/Menu.tsx'
 import styles from './App.module.css'
 
 const pages: TabPage[] = [
+  { key: 'weather', render: active => <Weather active={active} /> },
   { key: 'calendar', render: active => <Calendar active={active} /> },
   { key: 'todo', render: active => <Todo active={active} /> },
   { key: 'sports', render: active => <Sports active={active} /> },

@@ -1,0 +1,116 @@
+.tab {
+  position: relative;
+  height: 100%;
+  padding: 8px 16px 28px;
+  display: flex;
+  flex-direction: column;
+}
+
+.top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  min-height: 0;
+}
+
+.main {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-right: 40px;
+}
+
+.temp {
+  font-size: 3.6em;
+  font-weight: 700;
+  line-height: 1;
+  margin-right: 16px;
+}
+
+.iconWrap {
+  width: 96px;
+  height: 96px;
+}
+
+.details {
+  flex: 1;
+  min-width: 0;
+}
+
+.location {
+  font-size: 0.7em;
+  color: #aaa;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.condition {
+  font-size: 1em;
+  margin-bottom: 6px;
+}
+
+.meta {
+  font-size: 0.65em;
+  color: #ccc;
+  margin-bottom: 2px;
+}
+
+.meta span {
+  color: #888;
+  margin-right: 4px;
+}
+
+.strip {
+  display: flex;
+  flex-direction: row;
+  height: 150px;
+  border-top: 1px solid #333;
+  padding-top: 6px;
+}
+
+.hour {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.55em;
+}
+
+.hourTime {
+  color: #aaa;
+}
+
+.hourTemp {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin: 2px 0 6px;
+}
+
+.barArea {
+  flex: 1;
+  width: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  background-color: #4aa3ff;
+}
+
+.pct {
+  margin-top: 3px;
+  color: #6ab7ff;
+}
+
+.empty {
+  margin-top: 150px;
+  text-align: center;
+  color: #888;
+}
