@@ -39,17 +39,16 @@ import {
 import { createSportsFetcher } from '../sports/espn.js'
 import { getFavorites } from '../sports/favorites.js'
 import { decorateSports, sportsInterval } from '../sports/logic.js'
+import {
+  createWeatherFetcher,
+  WEATHER_INTERVAL
+} from '../weather/service.js'
 import { getStorageValue, setStorageValue } from '../storage.js'
 import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
 import { log, LogLevel } from '../utils.js'
 
-import {
-  FantasyView,
-  FeedKey,
-  FeedPayload,
-  Game
-} from '../feeds/types.js'
+import { FantasyView, FeedKey, FeedPayload, Game } from '../feeds/types.js'
 import { SetupFunction } from '../../types/WebSocketSetup.js'
 
 export const name = 'feeds'
@@ -138,6 +137,12 @@ function sources(): Source[] {
           sportsSnapshot(getFeed('sports')),
           { formatTime: ts => formatDate(new Date(ts)).time }
         )
+    },
+    {
+      key: 'weather',
+      fetch: createWeatherFetcher(),
+      interval: () => WEATHER_INTERVAL,
+      describeError: e => describeFetchError(e, 'Open-Meteo')
     }
   ]
 }
@@ -154,27 +159,24 @@ export const setup: SetupFunction = async () => {
     setStorageValue('feedCache.fantasy', null)
 
   const feeds = sources().map(({ decorate, ...options }) => {
-    const feed = new Feed<unknown>(
-      options,
-      {
-        now: () => Date.now(),
-        formatTime: ts => formatDate(new Date(ts)).time,
-        loadCache,
-        saveCache: (k, value) => setStorageValue(`feedCache.${k}`, value),
-        publish: (k, payload) => {
-          serverManager.broadcast(
-            k,
-            decoratePayload(k as FeedKey, payload as FeedPayload<unknown>)
-          )
-          afterPublish(k, {
-            getFantasyPayload: () =>
-              getFeedPayload('fantasy') as FeedPayload<FantasyView> | null,
-            broadcast: (type, data) => serverManager.broadcast(type, data)
-          })
-        },
-        log: message => log(message, 'Feeds', LogLevel.WARN)
-      }
-    )
+    const feed = new Feed<unknown>(options, {
+      now: () => Date.now(),
+      formatTime: ts => formatDate(new Date(ts)).time,
+      loadCache,
+      saveCache: (k, value) => setStorageValue(`feedCache.${k}`, value),
+      publish: (k, payload) => {
+        serverManager.broadcast(
+          k,
+          decoratePayload(k as FeedKey, payload as FeedPayload<unknown>)
+        )
+        afterPublish(k, {
+          getFantasyPayload: () =>
+            getFeedPayload('fantasy') as FeedPayload<FantasyView> | null,
+          broadcast: (type, data) => serverManager.broadcast(type, data)
+        })
+      },
+      log: message => log(message, 'Feeds', LogLevel.WARN)
+    })
     registerFeed(options.key, feed, decorate)
     return feed
   })

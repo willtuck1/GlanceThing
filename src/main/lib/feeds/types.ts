@@ -1,4 +1,9 @@
-export type FeedKey = 'calendar' | 'todo' | 'sports' | 'fantasy'
+export type FeedKey =
+  | 'calendar'
+  | 'todo'
+  | 'sports'
+  | 'fantasy'
+  | 'weather'
 
 export interface FeedPayload<T> {
   items: T[]

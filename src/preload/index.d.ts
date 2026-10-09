@@ -131,7 +131,9 @@ declare global {
       >
       setGoogleTaskList: (id: string) => Promise<void>
       getFantasyStatus: () => Promise<FantasyStatus>
-      setFantasyUsername: (username: string) => Promise<
+      setFantasyUsername: (
+        username: string
+      ) => Promise<
         | ({ ok: true; username: string | null } & FantasyLeagues)
         | { ok: false; error: string }
       >
@@ -149,6 +151,37 @@ declare global {
       }) => Promise<{
         sportsTintOpacity: number
         calendarTintOpacity: number
+      }>
+      searchWeatherLocations: (query: string) => Promise<
+        {
+          name: string
+          label: string
+          latitude: number
+          longitude: number
+        }[]
+      >
+      getWeatherSettings: () => Promise<{
+        location: {
+          name: string
+          latitude: number
+          longitude: number
+        } | null
+        units: 'imperial' | 'metric'
+      }>
+      setWeatherSettings: (settings: {
+        location?: {
+          name: string
+          latitude: number
+          longitude: number
+        } | null
+        units?: 'imperial' | 'metric'
+      }) => Promise<{
+        location: {
+          name: string
+          latitude: number
+          longitude: number
+        } | null
+        units: 'imperial' | 'metric'
       }>
     }
   }
