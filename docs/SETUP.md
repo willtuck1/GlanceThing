@@ -179,6 +179,11 @@ Good to know:
   status can be missing for a day.
 - `OUT` and `Inactive` come from Sleeper's player list, which the app
   downloads once a day. Game-day inactives can take up to a day to show.
+  Once a game is on, a player marked `OUT` who scores is shown (and
+  estimated) as playing, since the mark may be out of date.
+- `Bye` shows only when ESPN has no game for the team and Sleeper's
+  projections list no opponent for it. Without projections, a team with no
+  game on ESPN shows no status.
 
 ## 5. Device checklist
 

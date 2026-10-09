@@ -22,6 +22,7 @@ import { getSelectedTaskList } from '../google/tasksSettings.js'
 import { decorateFantasy } from '../fantasy/gameStatus.js'
 import { fantasyInterval } from '../fantasy/logic.js'
 import { getPlayers } from '../fantasy/playersDisk.js'
+import { afterPublish, sportsSnapshot } from '../fantasy/sportsLink.js'
 import {
   createProjectionStore,
   projectionsGet
@@ -68,15 +69,6 @@ interface Source {
   interval: (items: unknown[]) => number
   describeError: (e: unknown) => FeedError
   decorate?: FeedDecorator
-}
-
-// The Sports feed's games as they are now, for the Fantasy tab's game
-// status. Null before the Sports feed exists.
-function currentGames() {
-  const payload = getFeed('sports')?.getPayload()
-  return payload
-    ? { items: payload.items as Game[], stale: payload.stale }
-    : null
 }
 
 function sources(): Source[] {
@@ -143,17 +135,11 @@ function sources(): Source[] {
       decorate: payload =>
         decorateFantasy(
           payload as FeedPayload<FantasyView>,
-          currentGames(),
+          sportsSnapshot(getFeed('sports')),
           { formatTime: ts => formatDate(new Date(ts)).time }
         )
     }
   ]
-}
-
-function rebroadcastFantasy() {
-  const payload = getFeedPayload('fantasy') as FeedPayload<FantasyView> | null
-  if (payload && payload.items.length > 0)
-    serverManager.broadcast('fantasy', payload)
 }
 
 export const setup: SetupFunction = async () => {
@@ -180,9 +166,11 @@ export const setup: SetupFunction = async () => {
             k,
             decoratePayload(k as FeedKey, payload as FeedPayload<unknown>)
           )
-          // Fantasy game status follows the Sports feed's live cadence, so
-          // each ESPN update also refreshes the Fantasy tab.
-          if (k === 'sports') rebroadcastFantasy()
+          afterPublish(k, {
+            getFantasyPayload: () =>
+              getFeedPayload('fantasy') as FeedPayload<FantasyView> | null,
+            broadcast: (type, data) => serverManager.broadcast(type, data)
+          })
         },
         log: message => log(message, 'Feeds', LogLevel.WARN)
       }

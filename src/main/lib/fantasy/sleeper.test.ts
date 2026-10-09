@@ -80,7 +80,8 @@ describe('createFantasyFetcher', () => {
 
   it("asks for this week's projections and adds them", async () => {
     const getProjections = vi.fn(async () => ({
-      '4984': { pass_td: 2, pass_yd: 250 }
+      players: { '4984': { pass_td: 2, pass_yd: 250 } },
+      teams: ['BUF']
     }))
     const [view] = await fetcher(api(), {}, getProjections).fetch()
     expect(getProjections).toHaveBeenCalledWith('2026', 5)

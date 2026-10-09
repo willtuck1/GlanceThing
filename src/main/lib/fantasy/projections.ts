@@ -98,13 +98,38 @@ export function receptionField(scoring: Scoring | null) {
   return 'pts_std'
 }
 
+// Totals that leagues score but projections only carry split up. Each is
+// added only when the stat line doesn't have it already.
+const DERIVED: Record<string, RegExp> = {
+  // Missed field goals: projections have fgmiss_30_39, fgmiss_40_49, ...
+  fgmiss: /^fgmiss_/
+}
+
+function withDerived(stats: ProjectionStats): ProjectionStats {
+  let out = stats
+  for (const [key, parts] of Object.entries(DERIVED)) {
+    if (stats[key] !== undefined) continue
+    let sum = 0
+    let found = false
+    for (const [k, v] of Object.entries(stats))
+      if (parts.test(k)) {
+        sum += v
+        found = true
+      }
+    if (found) out = { ...out, [key]: sum }
+  }
+  return out
+}
+
 // Projected fantasy points for one player's stat line.
 // Preferred: score the projected stats with the league's own settings,
 // Σ stats[key] × scoring_settings[key] over keys both have, so custom
-// scoring (TE premium, 6-pt passing TDs, ...) is reflected. If the line has
-// no stat the league scores, fall back to Sleeper's pts_ppr / pts_half_ppr /
-// pts_std, picked by the league's reception setting. Null when neither
-// exists.
+// scoring is reflected. Sleeper's lines carry the position bonuses
+// (bonus_rec_te for TE premium, bonus_rec_rb, bonus_rec_wr) and split
+// missed field goals by distance, which are summed into fgmiss. If the line
+// has no stat the league scores, fall back to Sleeper's pts_ppr /
+// pts_half_ppr / pts_std, picked by the league's reception setting. Null
+// when neither exists.
 export function projectedPoints(
   stats: ProjectionStats | undefined,
   scoring: Scoring | null
@@ -113,7 +138,7 @@ export function projectedPoints(
   if (scoring) {
     let total = 0
     let scored = false
-    for (const [key, value] of Object.entries(stats)) {
+    for (const [key, value] of Object.entries(withDerived(stats))) {
       const weight = scoring[key]
       if (weight === undefined) continue
       total += value * weight
@@ -125,74 +150,109 @@ export function projectedPoints(
   return fallback === undefined ? null : round(fallback)
 }
 
+// Sleeper teams with a game this week: any projection that names an
+// opponent. Teams on bye have none.
+export function playingTeams(json: unknown): string[] {
+  const teams = new Set<string>()
+  for (const value of Array.isArray(json) ? json : []) {
+    const entry = obj(value)
+    const team = entry?.team
+    const opponent = entry?.opponent
+    if (typeof team === 'string' && team && typeof opponent === 'string' && opponent)
+      teams.add(team)
+  }
+  return [...teams]
+}
+
+// One week's projections.
+export interface Projections {
+  players: ProjectionMap
+  // Sleeper abbreviations of the teams that play this week.
+  teams: string[]
+}
+
 export interface ProjectionStoreDeps {
   get: GetUrl
   now: () => number
   log?: (message: string) => void
 }
 
-interface CachedProjections {
-  season: string
-  week: number
+interface CachedProjections extends Projections {
+  key: string
   fetchedAt: number
-  map: ProjectionMap
+  // A partial download is retried sooner than a complete one.
+  complete: boolean
 }
 
 // Returns a getter for one week's projections, cached in memory on the host
-// and refreshed at most every PROJECTIONS_MAX_AGE. Never throws: when
-// Sleeper fails it returns the last good copy for the same week, or null
-// when there is none.
+// and refreshed at most every PROJECTIONS_MAX_AGE (PROJECTIONS_RETRY_MS when
+// some positions failed). Never throws: when Sleeper fails it returns the
+// last good copy for the same week, or null when there is none.
 export function createProjectionStore(deps: ProjectionStoreDeps) {
   let cache: CachedProjections | null = null
-  let lastFailure = Number.NEGATIVE_INFINITY
-  let inFlight: Promise<ProjectionMap | null> | null = null
+  // Per season and week, so one week's failure or download never answers
+  // for another.
+  const lastFailure = new Map<string, number>()
+  const inFlight = new Map<string, Promise<Projections | null>>()
 
-  function sameWeek(season: string, week: number) {
-    return cache !== null && cache.season === season && cache.week === week
+  function cached(key: string): Projections | null {
+    return cache?.key === key ? { players: cache.players, teams: cache.teams } : null
   }
 
-  async function download(season: string, week: number) {
+  async function download(key: string, season: string, week: number) {
     const results = await Promise.allSettled(
-      PROJECTION_POSITIONS.map(async pos =>
-        parseProjections(await deps.get(projectionsUrl(season, week, pos)))
-      )
+      PROJECTION_POSITIONS.map(async pos => {
+        const json = await deps.get(projectionsUrl(season, week, pos))
+        return { players: parseProjections(json), teams: playingTeams(json) }
+      })
     )
 
     const failed = results.filter(r => r.status === 'rejected')
     for (const r of failed)
       deps.log?.(`Sleeper projections failed: ${String(r.reason)}`)
 
-    const old = sameWeek(season, week) ? cache : null
-    if (failed.length === results.length) {
-      lastFailure = deps.now()
-      return old?.map ?? null
-    }
+    const old = cached(key)
+    if (failed.length > 0) lastFailure.set(key, deps.now())
+    if (failed.length === results.length) return old
 
     // A position that failed keeps its old entries for this week.
-    const map: ProjectionMap = { ...(old?.map ?? {}) }
-    for (const r of results)
-      if (r.status === 'fulfilled') Object.assign(map, r.value)
+    const players: ProjectionMap = { ...(old?.players ?? {}) }
+    const teams = new Set(old?.teams ?? [])
+    for (const r of results) {
+      if (r.status !== 'fulfilled') continue
+      Object.assign(players, r.value.players)
+      r.value.teams.forEach(t => teams.add(t))
+    }
 
-    cache = { season, week, fetchedAt: deps.now(), map }
-    if (failed.length > 0) lastFailure = deps.now()
-    return map
+    cache = {
+      key,
+      players,
+      teams: [...teams],
+      fetchedAt: deps.now(),
+      complete: failed.length === 0
+    }
+    return cached(key)
   }
 
   return async function getProjections(
     season: string,
     week: number
-  ): Promise<ProjectionMap | null> {
+  ): Promise<Projections | null> {
+    const key = `${season}:${week}`
     const now = deps.now()
-    const current = sameWeek(season, week) ? cache : null
-    if (current && now - current.fetchedAt < PROJECTIONS_MAX_AGE)
-      return current.map
-    if (now - lastFailure < PROJECTIONS_RETRY_MS) return current?.map ?? null
-    if (!inFlight)
-      inFlight = download(season, week)
-        .catch(() => current?.map ?? null)
-        .finally(() => {
-          inFlight = null
-        })
-    return inFlight
+    const current = cached(key)
+    const maxAge = cache?.complete ? PROJECTIONS_MAX_AGE : PROJECTIONS_RETRY_MS
+    if (current && now - (cache as CachedProjections).fetchedAt < maxAge)
+      return current
+    const failedAt = lastFailure.get(key) ?? Number.NEGATIVE_INFINITY
+    if (now - failedAt < PROJECTIONS_RETRY_MS) return current
+    let pending = inFlight.get(key)
+    if (!pending) {
+      pending = download(key, season, week)
+        .catch(() => current)
+        .finally(() => inFlight.delete(key))
+      inFlight.set(key, pending)
+    }
+    return pending
   }
 }

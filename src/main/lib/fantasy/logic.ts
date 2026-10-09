@@ -4,6 +4,7 @@ import {
   parseScoring,
   projectedPoints,
   ProjectionMap,
+  Projections,
   Scoring
 } from './projections.js'
 
@@ -310,7 +311,7 @@ export interface ViewInput {
   matchups: unknown
   players: PlayerMap
   // Null when Sleeper's projections are unavailable.
-  projections?: ProjectionMap | null
+  projections?: Projections | null
   week: number
 }
 
@@ -336,9 +337,11 @@ export function buildView(input: ViewInput): FantasyView {
   const projections = input.projections ?? null
   const ctx: PlayerContext = {
     players: input.players,
-    projections,
+    projections: projections?.players ?? null,
     scoring: parseScoring(league)
   }
+  const hasProjections =
+    projections !== null && Object.keys(projections.players).length > 0
 
   const team = (entry: MatchupEntry): FantasyTeam => ({
     rosterId: entry.rosterId,
@@ -356,7 +359,10 @@ export function buildView(input: ViewInput): FantasyView {
     kind: 'matchup',
     leagueName,
     week,
-    projections: projections !== null && Object.keys(projections).length > 0,
+    projections: hasProjections,
+    ...(hasProjections && projections
+      ? { playingTeams: projections.teams }
+      : {}),
     me: team(pair.me),
     opponent: team(pair.opponent)
   }

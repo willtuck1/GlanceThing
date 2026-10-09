@@ -104,6 +104,9 @@ export type FantasyView =
       // False when Sleeper's projections couldn't be loaded; the tab then
       // hides the projection column and the estimate.
       projections?: boolean
+      // Host only, removed before sending: Sleeper teams with a game this
+      // week, from the projections. A team missing here is on bye.
+      playingTeams?: string[]
       me: FantasyTeam
       opponent: FantasyTeam
     }

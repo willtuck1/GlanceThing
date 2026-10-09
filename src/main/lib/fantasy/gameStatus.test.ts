@@ -5,16 +5,22 @@ import {
   decorateFantasy,
   espnTeam,
   fractionRemaining,
+  honoursOut,
   kickoffLabel,
   liveLabel,
   playerEstimate,
   playerGameStatus,
+  playingSet,
   SLEEPER_TO_ESPN,
   teamEstimate,
   weekGames
 } from './gameStatus.js'
 import { buildView, slimPlayers } from './logic.js'
-import { parseProjections, ProjectionMap } from './projections.js'
+import {
+  parseProjections,
+  playingTeams,
+  Projections
+} from './projections.js'
 import { normalize } from '../sports/logic.js'
 
 import {
@@ -39,6 +45,10 @@ const week5Raw = espn('nfl-live-2.json') as {
 }
 const week5 = normalize('nfl', week5Raw)
 const games5 = weekGames(week5, 5)
+// Every team except the week 5 byes, as Sleeper's projections list them.
+const playing5 = playingSet(
+  week5.flatMap(g => [g.home.abbr, g.away.abbr]).map(t => (t === 'WSH' ? 'WAS' : t))
+) as Set<string>
 
 // 'H:MM' in local time, so the tests hold in any time zone.
 const fmt = (ts: number) => {
@@ -195,7 +205,9 @@ describe('playerGameStatus', () => {
       state: 'post',
       label: 'Final'
     })
-    expect(playerGameStatus(player({ team: 'KC' }), games5, fmt)).toEqual({
+    expect(
+      playerGameStatus(player({ team: 'KC' }), games5, fmt, playing5)
+    ).toEqual({
       state: 'bye',
       label: 'Bye'
     })
@@ -204,19 +216,54 @@ describe('playerGameStatus', () => {
   it('works for DEF, whose team is the player id', () => {
     const players = slimPlayers(sleeper('players-sample.json'))
     const kc = { ...player(), ...players.KC, id: 'KC' }
-    expect(playerGameStatus(kc, games5, fmt)?.label).toBe('Bye')
+    expect(playerGameStatus(kc, games5, fmt, playing5)?.label).toBe('Bye')
+  })
+
+  it('shows no Bye for a game ESPN dropped, unless Sleeper agrees', () => {
+    // BUF plays this week (Sleeper lists an opponent), but its game is
+    // missing from ESPN's list, e.g. dropped as unreadable.
+    const noBuf = new Map([...(games5 ?? [])].filter(([t]) => t !== 'BUF'))
+    expect(
+      playerGameStatus(player({ team: 'BUF' }), noBuf, fmt, playing5)
+    ).toBeUndefined()
+    // Without projections there's no second opinion: no status.
+    expect(
+      playerGameStatus(player({ team: 'KC' }), games5, fmt, null)
+    ).toBeUndefined()
+  })
+
+  it('builds the playing set in ESPN abbreviations', () => {
+    expect(playing5.has('KC')).toBe(false)
+    expect(playing5.has('BUF')).toBe(true)
+    // Sleeper's WAS becomes ESPN's WSH.
+    expect(playingSet(['WAS'])?.has('WSH')).toBe(true)
+    expect(playingSet(undefined)).toBeNull()
   })
 
   it('shows OUT or Inactive when Sleeper marks the player so', () => {
-    expect(playerGameStatus(player({ out: 'OUT' }), games5, fmt)).toEqual({
-      state: 'out',
-      label: 'OUT'
-    })
+    expect(
+      playerGameStatus(player({ team: 'WAS', out: 'OUT' }), games5, fmt)
+    ).toEqual({ state: 'out', label: 'OUT' })
     // Sleeper's word stands even without ESPN.
     expect(playerGameStatus(player({ out: 'Inactive' }), null, fmt)).toEqual({
       state: 'out',
       label: 'Inactive'
     })
+  })
+
+  it('lets a live or final game override a stale OUT once he scores', () => {
+    // Sleeper's list is a day old; the player is playing (DAL is live).
+    expect(
+      playerGameStatus(player({ out: 'OUT', points: 6 }), games5, fmt)
+    ).toEqual({ state: 'in', label: 'Half' })
+    // Still no points in a live game: keep OUT.
+    expect(
+      playerGameStatus(player({ out: 'OUT', points: 0 }), games5, fmt)?.label
+    ).toBe('OUT')
+    const finals = weekGames([nflGame({ state: 'post' })], 5)
+    expect(
+      playerGameStatus(player({ out: 'OUT', points: 3 }), finals, fmt)?.label
+    ).toBe('Final')
   })
 
   it('shows nothing when the team is unknown or ESPN is unusable', () => {
@@ -255,6 +302,27 @@ describe('playerEstimate', () => {
   it('bye or inactive: actual points', () => {
     expect(playerEstimate(p, undefined)).toBe(8)
     expect(playerEstimate({ ...p, out: 'OUT' }, nflGame({ state: 'pre' }))).toBe(8)
+    // Live with no points yet: still OUT.
+    expect(
+      playerEstimate(
+        { ...p, points: 0, out: 'OUT' },
+        nflGame({ period: 2, clock: 0 })
+      )
+    ).toBe(0)
+  })
+
+  it('a stale OUT does not drop a live scorer\'s remaining projection', () => {
+    expect(
+      playerEstimate({ ...p, out: 'OUT' }, nflGame({ period: 2, clock: 0 }))
+    ).toBe(18)
+  })
+
+  it('honoursOut', () => {
+    expect(honoursOut(p)).toBe(false)
+    expect(honoursOut({ ...p, out: 'OUT' })).toBe(true)
+    expect(honoursOut({ ...p, out: 'OUT' }, nflGame({ state: 'pre' }))).toBe(true)
+    expect(honoursOut({ ...p, out: 'OUT' }, nflGame())).toBe(false)
+    expect(honoursOut({ ...p, points: 0, out: 'OUT' }, nflGame())).toBe(true)
   })
 
   it('missing data: actual points', () => {
@@ -292,12 +360,17 @@ describe('teamEstimate', () => {
 })
 
 describe('decorateFantasy', () => {
-  const projections: ProjectionMap = Object.assign(
-    {},
-    ...['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(pos =>
-      parseProjections(sleeper(`projections-${pos}.json`))
+  const projections: Projections = {
+    players: Object.assign(
+      {},
+      ...['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(pos =>
+        parseProjections(sleeper(`projections-${pos}.json`))
+      )
+    ),
+    teams: ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].flatMap(pos =>
+      playingTeams(sleeper(`projections-${pos}.json`))
     )
-  )
+  }
   const view = buildView({
     userId: '900000000000000001',
     league: sleeper('league.json'),
@@ -369,6 +442,12 @@ describe('decorateFantasy', () => {
     const twice = matchup(decorateFantasy(once, null, { formatTime: fmt }))
     expect(twice.me.starters[0].game).toBeUndefined()
     expect(twice.me.estimate).toBeUndefined()
+  })
+
+  it('never sends the host-only playing teams list', () => {
+    expect(view.kind === 'matchup' && view.playingTeams?.length).toBeTruthy()
+    const v = matchup(decorateFantasy(payload(), sports, { formatTime: fmt }))
+    expect(v.playingTeams).toBeUndefined()
   })
 
   it('passes notices through', () => {

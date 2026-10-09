@@ -5,6 +5,7 @@ import {
   createProjectionStore,
   parseProjections,
   parseScoring,
+  playingTeams,
   PROJECTION_POSITIONS,
   projectedPoints,
   projectionsUrl,
@@ -69,6 +70,27 @@ describe('parseProjections (real Sleeper samples)', () => {
   })
 })
 
+describe('playingTeams', () => {
+  it('lists teams with an opponent this week', () => {
+    const teams = PROJECTION_POSITIONS.flatMap(p => playingTeams(byPosition[p]))
+    expect(teams).toContain('BUF')
+    // KC is on bye in week 5.
+    expect(teams).not.toContain('KC')
+  })
+
+  it('ignores entries without team or opponent, and junk', () => {
+    expect(
+      playingTeams([
+        { team: 'BUF', opponent: 'NE' },
+        { team: 'KC', opponent: null },
+        { opponent: 'X' },
+        null
+      ])
+    ).toEqual(['BUF'])
+    expect(playingTeams({})).toEqual([])
+  })
+})
+
 describe('parseScoring', () => {
   it("reads the league's scoring_settings", () => {
     expect(scoring.rec).toBe(1)
@@ -105,15 +127,36 @@ describe('projectedPoints', () => {
   })
 
   it("matches Sleeper's own PPR totals on real samples", () => {
+    // Sleeper's precomputed totals don't charge missed field goals (they
+    // do charge missed extra points).
+    const noMisses = { ...scoring }
+    delete noMisses.fgmiss
     for (const pos of PROJECTION_POSITIONS) {
       const map = parseProjections(byPosition[pos])
       for (const stats of Object.values(map)) {
         if (stats.pts_ppr === undefined) continue
-        const pts = projectedPoints(stats, scoring) as number
+        const pts = projectedPoints(stats, noMisses) as number
         // Sleeper rounds its stat lines, so totals differ by cents.
         expect(Math.abs(pts - stats.pts_ppr)).toBeLessThan(0.1)
       }
     }
+  })
+
+  it('sums missed field goals by distance into fgmiss', () => {
+    const stats = { fgm: 2, fgmiss_30_39: 0.25, fgmiss_50p: 0.5 }
+    expect(projectedPoints(stats, { fgm: 3, fgmiss: -2 })).toBe(4.5)
+    // An explicit total wins over the split.
+    expect(
+      projectedPoints({ ...stats, fgmiss: 1 }, { fgm: 3, fgmiss: -2 })
+    ).toBe(4)
+  })
+
+  it('scores TE premium from the bonus Sleeper projects (real sample)', () => {
+    const te = parseProjections(byPosition.TE)['11604']
+    expect(te.bonus_rec_te).toBe(te.rec)
+    const base = projectedPoints(te, scoring) as number
+    const premium = projectedPoints(te, { ...scoring, bonus_rec_te: 0.5 })
+    expect(premium).toBeCloseTo(base + te.rec * 0.5, 2)
   })
 
   it('scores DEF from points-allowed and yards-allowed brackets', () => {
@@ -164,9 +207,9 @@ describe('createProjectionStore', () => {
     const { store, get } = setup()
     const map = await store('2026', 5)
     expect(get).toHaveBeenCalledTimes(PROJECTION_POSITIONS.length)
-    expect(map?.['4984']).toBeDefined()
-    expect(map?.['9221']).toBeDefined()
-    expect(map?.BUF).toBeDefined()
+    expect(map?.players['4984']).toBeDefined()
+    expect(map?.players['9221']).toBeDefined()
+    expect(map?.players.BUF).toBeDefined()
   })
 
   it('caches for 15 minutes, then refreshes', async () => {
@@ -196,9 +239,60 @@ describe('createProjectionStore', () => {
   it('keeps the positions that worked when some fail', async () => {
     const { store, log } = setup(fakeGet(['K', 'DEF']))
     const map = await store('2026', 5)
-    expect(map?.['4984']).toBeDefined()
-    expect(map?.BUF).toBeUndefined()
+    expect(map?.players['4984']).toBeDefined()
+    expect(map?.players.BUF).toBeUndefined()
+    expect(map?.teams).toContain('BUF')
     expect(log).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries a partial download after the retry delay, not 15 minutes', async () => {
+    let fail = ['DEF']
+    const ok = fakeGet()
+    const get = vi.fn(async (url: string) => {
+      if (fail.some(p => url.endsWith(`=${p}`))) throw new Error('down')
+      return ok(url)
+    })
+    const { store, advance } = setup(get)
+    expect((await store('2026', 5))?.players.BUF).toBeUndefined()
+    advance(PROJECTIONS_RETRY_MS - 1)
+    await store('2026', 5)
+    expect(get).toHaveBeenCalledTimes(6)
+    fail = []
+    advance(1)
+    expect((await store('2026', 5))?.players.BUF).toBeDefined()
+    expect(get).toHaveBeenCalledTimes(12)
+    // Complete now: back to the 15-minute cadence.
+    advance(PROJECTIONS_RETRY_MS)
+    await store('2026', 5)
+    expect(get).toHaveBeenCalledTimes(12)
+  })
+
+  it("never answers one week with another week's download", async () => {
+    let release: () => void = () => {}
+    const gate = new Promise<void>(r => (release = r))
+    const ok = fakeGet()
+    const get = vi.fn(async (url: string) => {
+      if (url.includes('/2026/5?')) await gate
+      return ok(url)
+    })
+    const { store } = setup(get)
+    const week5 = store('2026', 5)
+    const week6 = await store('2026', 6)
+    expect(get.mock.calls.some(c => c[0].includes('/2026/6?'))).toBe(true)
+    expect(week6).not.toBeNull()
+    release()
+    await week5
+  })
+
+  it("doesn't let one week's failure block the next", async () => {
+    const ok = fakeGet()
+    const get = vi.fn(async (url: string) => {
+      if (url.includes('/2026/5?')) throw new Error('down')
+      return ok(url)
+    })
+    const { store } = setup(get)
+    expect(await store('2026', 5)).toBeNull()
+    expect(await store('2026', 6)).not.toBeNull()
   })
 
   it('returns null, never throws, when everything fails', async () => {

@@ -105,18 +105,47 @@ export function liveLabel(game: Game) {
   return `${quarter} ${clockLabel(game.clock)}`
 }
 
+// Sleeper's OUT/Inactive comes from its player list, downloaded once a
+// day, so it can be stale by game time. It counts before kickoff, and once
+// the game is on only while the player still has no points.
+export function honoursOut(player: FantasyPlayer, game?: Game) {
+  if (!player.out) return false
+  return !game || game.state === 'pre' || player.points === 0
+}
+
+// ESPN abbreviations of the teams that play this week, from Sleeper's
+// projections. Null when projections are unavailable.
+export function playingSet(teams: string[] | undefined) {
+  if (!teams) return null
+  const set = new Set<string>()
+  for (const t of teams) {
+    const espn = espnTeam(t)
+    if (espn) set.add(espn)
+  }
+  return set
+}
+
 // The status shown on a player's row. Undefined when unknown: no team,
-// an unmapped team, or no trustworthy scoreboard.
+// an unmapped team, no trustworthy scoreboard, or a team missing from
+// ESPN that Sleeper doesn't list as on bye.
 export function playerGameStatus(
   player: FantasyPlayer,
   games: Map<string, Game> | null,
-  formatTime: (ts: number) => string
+  formatTime: (ts: number) => string,
+  playing: Set<string> | null = null
 ): FantasyGameStatus | undefined {
-  if (player.out) return { state: 'out', label: player.out }
   const team = espnTeam(player.team)
+  const game = team && games ? games.get(team) : undefined
+  if (player.out && honoursOut(player, game))
+    return { state: 'out', label: player.out }
   if (!team || !games) return undefined
-  const game = games.get(team)
-  if (!game) return { state: 'bye', label: 'Bye' }
+  if (!game)
+    // ESPN can drop an unreadable event, so a missing game alone isn't a
+    // bye: Sleeper's projections must also show the team without an
+    // opponent.
+    return playing && !playing.has(team)
+      ? { state: 'bye', label: 'Bye' }
+      : undefined
   if (game.state === 'pre')
     return { state: 'pre', label: kickoffLabel(game.start, formatTime) }
   if (game.state === 'post') return { state: 'post', label: 'Final' }
@@ -128,7 +157,7 @@ function round(n: number) {
 }
 
 // One starter's share of the estimated final score:
-// - game final, bye, out or unknown: actual points
+// - game final, bye, out (see honoursOut) or unknown: actual points
 // - game not started: projected points (actual if there's no projection)
 // - game live: actual + projected × fraction of the game remaining, where
 //   the fraction is ((4 − quarter) × 15 min + clock) / 60 min and overtime
@@ -136,7 +165,8 @@ function round(n: number) {
 export function playerEstimate(player: FantasyPlayer, game?: Game) {
   const actual = player.points
   const projected = player.projected
-  if (!game || player.out || projected === undefined) return actual
+  if (!game || projected === undefined) return actual
+  if (honoursOut(player, game)) return actual
   if (game.state === 'pre') return projected
   if (game.state === 'post') return actual
   if (game.period === undefined || game.clock === undefined) return actual
@@ -165,13 +195,14 @@ export interface DecorateFantasyOptions {
 function decorateTeam(
   team: FantasyTeam,
   games: Map<string, Game> | null,
+  playing: Set<string> | null,
   withEstimate: boolean,
   { formatTime }: DecorateFantasyOptions
 ): FantasyTeam {
   const add = (p: FantasyPlayer): FantasyPlayer => {
     const clean = { ...p }
     delete clean.game
-    const game = playerGameStatus(clean, games, formatTime)
+    const game = playerGameStatus(clean, games, formatTime, playing)
     return game ? { ...clean, game } : clean
   }
   const out: FantasyTeam = {
@@ -200,11 +231,20 @@ export function decorateFantasy(
       const games =
         sports && !sports.stale ? weekGames(sports.items, view.week) : null
       const withEstimate = view.projections === true
-      return {
+      const playing = playingSet(view.playingTeams)
+      const out = {
         ...view,
-        me: decorateTeam(view.me, games, withEstimate, options),
-        opponent: decorateTeam(view.opponent, games, withEstimate, options)
+        me: decorateTeam(view.me, games, playing, withEstimate, options),
+        opponent: decorateTeam(
+          view.opponent,
+          games,
+          playing,
+          withEstimate,
+          options
+        )
       }
+      delete out.playingTeams
+      return out
     })
   }
 }

@@ -32,7 +32,11 @@ import {
   teamTotal,
   ViewInput
 } from './logic.js'
-import { parseProjections, ProjectionMap } from './projections.js'
+import {
+  parseProjections,
+  playingTeams,
+  Projections
+} from './projections.js'
 
 import { FantasyPlayer, Game } from '../feeds/types.js'
 
@@ -41,12 +45,17 @@ function fixture(name: string): unknown {
   return JSON.parse(readFileSync(url, 'utf8'))
 }
 
-const projections: ProjectionMap = Object.assign(
-  {},
-  ...['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(pos =>
-    parseProjections(fixture(`projections-${pos}.json`))
+const projections: Projections = {
+  players: Object.assign(
+    {},
+    ...['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(pos =>
+      parseProjections(fixture(`projections-${pos}.json`))
+    )
+  ),
+  teams: ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].flatMap(pos =>
+    playingTeams(fixture(`projections-${pos}.json`))
   )
-)
+}
 
 const MY_ID = '900000000000000001'
 const players = slimPlayers(fixture('players-sample.json'))
@@ -339,7 +348,7 @@ describe('buildView', () => {
   })
 
   it('hides projections when Sleeper had none', () => {
-    for (const p of [null, undefined, {}]) {
+    for (const p of [null, undefined, { players: {}, teams: [] }]) {
       const view = buildView(input({ projections: p }))
       if (view.kind !== 'matchup') throw new Error('expected a matchup')
       expect(view.projections).toBe(false)

@@ -12,7 +12,7 @@ import {
   seasonNotice
 } from './logic.js'
 
-import { ProjectionMap } from './projections.js'
+import { Projections } from './projections.js'
 
 import { FantasyView } from '../feeds/types.js'
 
@@ -95,7 +95,7 @@ export interface FantasyFetcherDeps {
   getProjections?: (
     season: string,
     week: number
-  ) => Promise<ProjectionMap | null>
+  ) => Promise<Projections | null>
 }
 
 // Projections come from an unofficial endpoint; any failure just leaves
