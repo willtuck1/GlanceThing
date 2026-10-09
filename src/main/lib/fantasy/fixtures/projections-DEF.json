@@ -1,0 +1,53 @@
+[
+  {
+    "status": null,
+    "date": "2026-10-12",
+    "stats": {
+      "adp_dd_ppr": 999.0,
+      "blk_kick": 0.06,
+      "def_fum_td": 0.06,
+      "def_kr_yd": 92.58,
+      "def_pr_yd": 107.73,
+      "def_td": 0.11,
+      "ff": 0.68,
+      "fum_rec": 0.51,
+      "gp": 1.0,
+      "int": 0.68,
+      "pass_int_td": 0.06,
+      "pos_adp_dd_ppr": 999.0,
+      "pr_yd": 15.15,
+      "pts_allow": 28.75,
+      "pts_allow_28_34": 1.0,
+      "pts_half_ppr": 5.15,
+      "pts_ppr": 5.15,
+      "pts_std": 5.15,
+      "sack": 2.28,
+      "tkl_loss": 4.27,
+      "yds_allow": 392.0,
+      "yds_allow_350_399": 1.0
+    },
+    "category": "proj",
+    "last_modified": 1791515453130,
+    "week": 5,
+    "season": "2026",
+    "season_type": "regular",
+    "sport": "nfl",
+    "player_id": "BUF",
+    "player": {
+      "first_name": "Buffalo",
+      "last_name": "Bills",
+      "position": "DEF",
+      "team": "BUF",
+      "injury_status": null,
+      "fantasy_positions": [
+        "DEF"
+      ]
+    },
+    "team": "BUF",
+    "opponent": "LAR",
+    "game_id": "202610532",
+    "updated_at": 1791515453130,
+    "week_shard": "5_1",
+    "company": "rotowire"
+  }
+]

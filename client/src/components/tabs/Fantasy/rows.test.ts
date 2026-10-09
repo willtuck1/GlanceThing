@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest'
 
 import {
   benchRows,
+  estimateLabel,
   formatPoints,
+  formatProjected,
+  hasProjections,
   leader,
   playerDetail,
   starterRows
@@ -74,5 +77,33 @@ describe('formatting', () => {
     expect(leader(team([], [], 10), team([], [], 5))).toBe('me')
     expect(leader(team([], [], 5), team([], [], 10))).toBe('opponent')
     expect(leader(team([], [], 5), team([], [], 5))).toBe('tied')
+  })
+})
+
+describe('formatProjected', () => {
+  it('shows one decimal, or a dash without a projection', () => {
+    expect(formatProjected({ ...player('a', 'WR'), projected: 14.26 })).toBe(
+      '14.3'
+    )
+    expect(formatProjected({ ...player('a', 'WR'), projected: 0 })).toBe(
+      '0.0'
+    )
+    expect(formatProjected(player('a', 'WR'))).toBe('–')
+  })
+})
+
+describe('estimateLabel', () => {
+  it('labels the estimate "Est."', () => {
+    expect(estimateLabel({ ...team([]), estimate: 112.4 })).toBe('Est. 112.40')
+    expect(estimateLabel(team([]))).toBeNull()
+  })
+})
+
+describe('hasProjections', () => {
+  it('is true only when the host says so', () => {
+    expect(hasProjections({ projections: true })).toBe(true)
+    expect(hasProjections({ projections: false })).toBe(false)
+    // Matchups cached by an older host.
+    expect(hasProjections({})).toBe(false)
   })
 })

@@ -1,5 +1,12 @@
 import { FantasyPlayer, FantasyTeam, FantasyView, Game } from '../feeds/types.js'
 import { LIVE_INTERVAL, sportsInterval } from '../sports/logic.js'
+import {
+  parseScoring,
+  projectedPoints,
+  ProjectionMap,
+  Projections,
+  Scoring
+} from './projections.js'
 
 export const FANTASY_LIVE_INTERVAL = LIVE_INTERVAL
 export const FANTASY_IDLE_INTERVAL = 10 * 60 * 1000
@@ -24,6 +31,21 @@ export interface PlayerInfo {
   name: string
   position: string
   team?: string
+  out?: FantasyPlayer['out']
+}
+
+// Sleeper injury_status values that mean the player won't play.
+const OUT_STATUSES = new Set(['Out', 'IR', 'PUP', 'Sus', 'NA', 'DNR'])
+
+// 'OUT' from the injury report, 'Inactive' from the roster status.
+export function availability(
+  injuryStatus: unknown,
+  status: unknown
+): FantasyPlayer['out'] | undefined {
+  if (typeof injuryStatus === 'string' && OUT_STATUSES.has(injuryStatus))
+    return 'OUT'
+  if (status === 'Inactive') return 'Inactive'
+  return undefined
 }
 
 export type PlayerMap = Record<string, PlayerInfo>
@@ -83,8 +105,12 @@ export function slimPlayers(json: unknown): PlayerMap {
       ([first, last].filter(Boolean).join(' ') || null) ??
       id
     const position = text(p.position) ?? ''
+    const info: PlayerInfo = { name, position }
     const team = text(p.team)
-    out[id] = team ? { name, position, team } : { name, position }
+    if (team) info.team = team
+    const unavailable = availability(p.injury_status, p.status)
+    if (unavailable) info.out = unavailable
+    out[id] = info
   }
 
   return out
@@ -202,15 +228,22 @@ export function teamTotal(entry: MatchupEntry) {
   )
 }
 
+// What a player row needs besides the matchup: names and projections.
+export interface PlayerContext {
+  players: PlayerMap
+  projections: ProjectionMap | null
+  scoring: Scoring | null
+}
+
 function toPlayer(
   id: string,
   slot: string,
   points: number,
-  players: PlayerMap
+  ctx: PlayerContext
 ): FantasyPlayer {
   if (id === EMPTY_SLOT)
     return { id: `${EMPTY_SLOT}:${slot}`, name: 'Empty', position: '', slot, points: 0 }
-  const info = players[id]
+  const info = ctx.players[id]
   const p: FantasyPlayer = {
     id,
     name: info?.name ?? id,
@@ -219,6 +252,11 @@ function toPlayer(
     points
   }
   if (info?.team) p.team = info.team
+  if (info?.out) p.out = info.out
+  const projected = ctx.projections
+    ? projectedPoints(ctx.projections[id], ctx.scoring)
+    : null
+  if (projected !== null) p.projected = projected
   return p
 }
 
@@ -226,12 +264,12 @@ function toPlayer(
 export function mapStarters(
   entry: MatchupEntry,
   slots: string[],
-  players: PlayerMap
+  ctx: PlayerContext
 ): FantasyPlayer[] {
   return entry.starters.map((id, i) => {
     const slot = slotLabel(slots[i] ?? 'FLEX')
     const points = id === EMPTY_SLOT ? 0 : playerPoints(entry, id, i)
-    return toPlayer(id, slot, points, players)
+    return toPlayer(id, slot, points, ctx)
   })
 }
 
@@ -239,14 +277,14 @@ export function mapStarters(
 // taxi squad, highest scorers first, then by name.
 export function mapBench(
   entry: MatchupEntry,
-  players: PlayerMap,
+  ctx: PlayerContext,
   excluded: string[] = []
 ): FantasyPlayer[] {
   const skip = new Set([...entry.starters, ...excluded, EMPTY_SLOT])
   return sortByPoints(
     entry.players
       .filter(id => !skip.has(id))
-      .map(id => toPlayer(id, 'BN', playerPoints(entry, id), players))
+      .map(id => toPlayer(id, 'BN', playerPoints(entry, id), ctx))
   )
 }
 
@@ -272,6 +310,8 @@ export interface ViewInput {
   users: unknown
   matchups: unknown
   players: PlayerMap
+  // Null when Sleeper's projections are unavailable.
+  projections?: Projections | null
   week: number
 }
 
@@ -294,15 +334,23 @@ export function buildView(input: ViewInput): FantasyView {
 
   const slots = starterSlots(league?.roster_positions)
   const names = teamNames(input.rosters, input.users)
+  const projections = input.projections ?? null
+  const ctx: PlayerContext = {
+    players: input.players,
+    projections: projections?.players ?? null,
+    scoring: parseScoring(league)
+  }
+  const hasProjections =
+    projections !== null && Object.keys(projections.players).length > 0
 
   const team = (entry: MatchupEntry): FantasyTeam => ({
     rosterId: entry.rosterId,
     name: names.get(entry.rosterId) ?? `Team ${entry.rosterId}`,
     points: teamTotal(entry),
-    starters: mapStarters(entry, slots, input.players),
+    starters: mapStarters(entry, slots, ctx),
     bench: mapBench(
       entry,
-      input.players,
+      ctx,
       rosterExtras(input.rosters, entry.rosterId)
     )
   })
@@ -311,6 +359,10 @@ export function buildView(input: ViewInput): FantasyView {
     kind: 'matchup',
     leagueName,
     week,
+    projections: hasProjections,
+    ...(hasProjections && projections
+      ? { playingTeams: projections.teams }
+      : {}),
     me: team(pair.me),
     opponent: team(pair.opponent)
   }

@@ -87,6 +87,22 @@ describe('normalize', () => {
     expect(final?.detail).toBe('Final')
   })
 
+  it('keeps the NFL week, and quarter and clock for live NFL games', () => {
+    const live = nfl.find(g => g.state === 'in')
+    expect(live).toMatchObject({ period: 2, clock: 8 * 60 + 3, week: 6 })
+    for (const g of nfl.filter(g => g.state !== 'in')) {
+      expect(g.week).toBe(6)
+      expect(g.period).toBeUndefined()
+      expect(g.clock).toBeUndefined()
+    }
+  })
+
+  it('reads halftime from a real capture as Q2 0:00', () => {
+    const games = normalize('nfl', fixture('nfl-live-2.json'))
+    const half = games.find(g => g.state === 'in')
+    expect(half).toMatchObject({ period: 2, clock: 0, week: 5 })
+  })
+
   it('skips malformed events instead of failing the league', () => {
     const json = {
       events: [

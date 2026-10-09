@@ -5,6 +5,7 @@ import { slimPlayers } from './logic.js'
 import {
   createFantasyFetcher,
   describeFantasyError,
+  FantasyFetcherDeps,
   FantasySettings,
   NOT_CONFIGURED,
   userNotFound
@@ -41,10 +42,12 @@ function api(over: Record<string, unknown> = {}) {
 
 function fetcher(
   get: ReturnType<typeof api>,
-  settings: Partial<FantasySettings> = {}
+  settings: Partial<FantasySettings> = {},
+  getProjections?: FantasyFetcherDeps['getProjections']
 ) {
   const saveUserId = vi.fn()
   const fetch = createFantasyFetcher({
+    getProjections,
     get,
     getSettings: () => ({
       username: 'samplemanager',
@@ -73,6 +76,33 @@ describe('createFantasyFetcher', () => {
     expect(saveUserId).toHaveBeenCalledWith(USER_ID)
     // The player list is never requested by the matchup flow itself.
     expect(get.mock.calls.map(c => c[0])).not.toContain('/players/nfl')
+  })
+
+  it("asks for this week's projections and adds them", async () => {
+    const getProjections = vi.fn(async () => ({
+      players: { '4984': { pass_td: 2, pass_yd: 250 } },
+      teams: ['BUF']
+    }))
+    const [view] = await fetcher(api(), {}, getProjections).fetch()
+    expect(getProjections).toHaveBeenCalledWith('2026', 5)
+    if (view.kind !== 'matchup') throw new Error('expected a matchup')
+    expect(view.projections).toBe(true)
+    // 2 × 4 + 250 × 0.04 with the fixture league's scoring.
+    expect(view.me.starters[0].projected).toBe(18)
+  })
+
+  it('keeps working when projections fail', async () => {
+    for (const getProjections of [
+      vi.fn(async () => null),
+      vi.fn(async () => {
+        throw new Error('endpoint moved')
+      })
+    ]) {
+      const [view] = await fetcher(api(), {}, getProjections).fetch()
+      if (view.kind !== 'matchup') throw new Error('expected a matchup')
+      expect(view.projections).toBe(false)
+      expect(view.me.points).toBe(205.55)
+    }
   })
 
   it('skips the user lookup once the id is known', async () => {

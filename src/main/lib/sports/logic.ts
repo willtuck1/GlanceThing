@@ -90,13 +90,28 @@ function toTeam(
   return team
 }
 
+function num(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+const CLOCK = /^(\d{1,2}):(\d{2})$/
+
+function clockSeconds(value: unknown): number | null {
+  const m = typeof value === 'string' ? CLOCK.exec(value.trim()) : null
+  return m ? Number(m[1]) * 60 + Number(m[2]) : null
+}
+
 function toState(value: unknown): Game['state'] | null {
   return value === 'pre' || value === 'in' || value === 'post'
     ? value
     : null
 }
 
-function toGame(league: League, raw: unknown): Game | null {
+function toGame(
+  league: League,
+  raw: unknown,
+  week: number | null
+): Game | null {
   const event = obj(raw)
   const id =
     typeof event?.id === 'number' ? String(event.id) : text(event?.id)
@@ -120,7 +135,7 @@ function toGame(league: League, raw: unknown): Game | null {
   const away = toTeam(league, awayRaw, state)
   if (!home || !away) return null
 
-  return {
+  const game: Game = {
     id: `${league}:${id}`,
     league,
     home,
@@ -129,6 +144,21 @@ function toGame(league: League, raw: unknown): Game | null {
     detail: text(statusType?.shortDetail) ?? '',
     start
   }
+  // NFL only: quarter and seconds left in it, for the Fantasy tab's
+  // estimate. displayClock ("4:12") is what ESPN shows; clock is a fallback.
+  const period = num(status?.period)
+  const clock = clockSeconds(status?.displayClock) ?? num(status?.clock)
+  if (
+    league === 'nfl' &&
+    state === 'in' &&
+    period !== null &&
+    clock !== null
+  ) {
+    game.period = period
+    game.clock = clock
+  }
+  if (week !== null) game.week = week
+  return game
 }
 
 // Converts an ESPN scoreboard response into Games. Events missing required
@@ -138,9 +168,10 @@ export function normalize(league: League, json: unknown): Game[] {
   const events = obj(json)?.events
   if (!Array.isArray(events)) throw new Error(`Bad ${league} scoreboard`)
 
+  const week = num(obj(obj(json)?.week)?.number)
   const games: Game[] = []
   for (const event of events) {
-    const game = toGame(league, event)
+    const game = toGame(league, event, week)
     if (game) games.push(game)
   }
   return games

@@ -48,6 +48,23 @@ export function playerDetail(player: FantasyPlayer) {
   return [player.position, player.team].filter(Boolean).join(' · ')
 }
 
+// Projected points with one decimal, or a dash when Sleeper has none.
+export function formatProjected(player: FantasyPlayer) {
+  return player.projected === undefined ? '–' : player.projected.toFixed(1)
+}
+
+// 'Est. 112.40', or null when the host couldn't estimate.
+export function estimateLabel(team: FantasyTeam) {
+  return team.estimate === undefined
+    ? null
+    : `Est. ${formatPoints(team.estimate)}`
+}
+
+// Whether to show the projection column: the host had projections.
+export function hasProjections(view: { projections?: boolean }) {
+  return view.projections === true
+}
+
 export type Leader = 'me' | 'opponent' | 'tied'
 
 export function leader(me: FantasyTeam, opponent: FantasyTeam): Leader {

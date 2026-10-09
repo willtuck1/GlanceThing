@@ -36,6 +36,12 @@
   color: #fff;
 }
 
+.estimate {
+  font-size: 0.55em;
+  color: #9ab;
+  white-space: nowrap;
+}
+
 .vs {
   margin: 0 16px;
   font-size: 0.55em;
@@ -81,23 +87,55 @@
 }
 
 .detail {
-  font-size: 0.48em;
+  font-size: 0.5em;
   color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Game status: kickoff, live clock, Final, Bye, OUT. */
+.status {
+  color: #bbb;
+}
+
+.status[data-state='in'] {
+  color: #ff6b6e;
+  font-weight: 700;
+}
+
+.status[data-state='out'] {
+  color: #ff9f43;
+  font-weight: 700;
+}
+
+.status[data-state='post'],
+.status[data-state='bye'] {
+  color: #777;
+}
+
+/* Actual points, with the projection under them. */
 .points {
   flex-shrink: 0;
   width: 76px;
   margin: 0 8px;
-  font-size: 0.75em;
-  color: #999;
   text-align: center;
 }
 
-.points[data-ahead='true'] {
+.actual {
+  font-size: 0.75em;
+  color: #999;
+}
+
+.actual[data-ahead='true'] {
   color: #fff;
   font-weight: 700;
+}
+
+.projected {
+  font-size: 0.45em;
+  color: #888;
+  white-space: nowrap;
 }
 
 .slot {

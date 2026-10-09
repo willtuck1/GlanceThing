@@ -4,6 +4,7 @@ import {
   decoratePayload,
   FeedDecorator,
   getFeed,
+  getFeedPayload,
   registerFeed,
   unregisterAll
 } from '../feeds/registry.js'
@@ -18,8 +19,14 @@ import { createTasksFetcher } from '../google/tasks.js'
 import { TASKS_INTERVAL } from '../google/tasksLogic.js'
 import { describeGoogleError } from '../google/session.js'
 import { getSelectedTaskList } from '../google/tasksSettings.js'
+import { decorateFantasy } from '../fantasy/gameStatus.js'
 import { fantasyInterval } from '../fantasy/logic.js'
 import { getPlayers } from '../fantasy/playersDisk.js'
+import { afterPublish, sportsSnapshot } from '../fantasy/sportsLink.js'
+import {
+  createProjectionStore,
+  projectionsGet
+} from '../fantasy/projections.js'
 import {
   getFantasySettings,
   setFantasyUserId
@@ -37,7 +44,12 @@ import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
 import { log, LogLevel } from '../utils.js'
 
-import { FeedKey, FeedPayload, Game } from '../feeds/types.js'
+import {
+  FantasyView,
+  FeedKey,
+  FeedPayload,
+  Game
+} from '../feeds/types.js'
 import { SetupFunction } from '../../types/WebSocketSetup.js'
 
 export const name = 'feeds'
@@ -105,7 +117,12 @@ function sources(): Source[] {
         get: sleeperGet,
         getSettings: getFantasySettings,
         saveUserId: setFantasyUserId,
-        getPlayers
+        getPlayers,
+        getProjections: createProjectionStore({
+          get: projectionsGet,
+          now: () => Date.now(),
+          log: message => log(message, 'Fantasy', LogLevel.WARN)
+        })
       }),
       // Fast while an NFL game is live, judged from the Sports feed's games.
       interval: () =>
@@ -113,7 +130,14 @@ function sources(): Source[] {
           (getFeed('sports')?.getPayload().items ?? []) as Game[],
           Date.now()
         ),
-      describeError: describeFantasyError
+      describeError: describeFantasyError,
+      // Game status and the estimate come from the Sports feed's ESPN data.
+      decorate: payload =>
+        decorateFantasy(
+          payload as FeedPayload<FantasyView>,
+          sportsSnapshot(getFeed('sports')),
+          { formatTime: ts => formatDate(new Date(ts)).time }
+        )
     }
   ]
 }
@@ -137,11 +161,17 @@ export const setup: SetupFunction = async () => {
         formatTime: ts => formatDate(new Date(ts)).time,
         loadCache,
         saveCache: (k, value) => setStorageValue(`feedCache.${k}`, value),
-        publish: (k, payload) =>
+        publish: (k, payload) => {
           serverManager.broadcast(
             k,
             decoratePayload(k as FeedKey, payload as FeedPayload<unknown>)
-          ),
+          )
+          afterPublish(k, {
+            getFantasyPayload: () =>
+              getFeedPayload('fantasy') as FeedPayload<FantasyView> | null,
+            broadcast: (type, data) => serverManager.broadcast(type, data)
+          })
+        },
         log: message => log(message, 'Feeds', LogLevel.WARN)
       }
     )
