@@ -31,10 +31,9 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 In this order. Effort is relative to M5/M6.
 Items 1–2 are done: **Polish** (M7: one team color per sports row, opacity sliders) and **Weather tab** (M8, plus buttons 1/2 = prev/next tab, 3 = Calendar).
 
-3. **Clock tab with timer, plus button macros** (small–medium): timer alerts are visual only. Prefer long-press over double-tap, because double-tap delays every single press by about 300 ms.
+3. **Clock + sleep screen** (medium, merges the old Clock-tab and sleep-clock items): a Clock tab with a timer (alerts are visual only), and a sleep-screen clock with widgets from the existing feeds plus weather, sharing one clock component. Button `'4'` (a no-op in `keys.ts` today) sends the device to sleep on that clock. Button macros, if any, must be long-presses (all four short presses are taken); prefer long-press over double-tap, because double-tap delays every single press by about 300 ms.
 4. **Notifications** (medium–large): the host compares each update to the last one against rules (close game, final, fantasy swings, upcoming event), then sends a `notify` message that the client shows over any tab or the sleep screen. Per-type toggles in Settings. Optional desktop notification for sound.
-5. **Sleep screen clock with widgets** (medium): uses the existing feeds plus weather. Button `'4'` (currently a no-op in `keys.ts`) should send the device to sleep on this clock screen.
-6. **Gmail tab** (medium–large): needs the restricted `gmail.readonly` scope. Every user has to sign in to Google again, and logins from an OAuth client in test mode expire every 7 days. "Important" means `is:important is:unread`. Build after Notifications.
+5. **Gmail tab** (medium–large): needs the restricted `gmail.readonly` scope. Every user has to sign in to Google again, and logins from an OAuth client in test mode expire every 7 days. "Important" means `is:important is:unread`. Build after Notifications.
 
 ## Keeping this file current (required)
 This file is the shared memory for every agent and session. Whenever a change makes anything here wrong or incomplete, update this file in the same commit:
