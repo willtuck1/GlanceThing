@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { AppBlurContext } from '@/contexts/AppBlurContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
@@ -11,6 +11,7 @@ import Statusbar from '@/components/Statusbar/Statusbar.tsx'
 import TabPager, { TabPage } from '@/components/TabPager/TabPager.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
 import { modules } from '@/modules/registry.ts'
+import { pagerKeyForFirstReply } from '@/components/TabPager/keys.ts'
 import { visibleIds } from '@/modules/tabs.ts'
 
 import styles from './App.module.css'
@@ -28,6 +29,13 @@ const App: React.FC = () => {
   const [playerShown, setPlayerShown] = useState(false)
 
   const idKey = visibleIds(tabs, allIds).join(',')
+  // Decided once, on the first host reply; later changes keep the tab.
+  const pagerKey = useRef<'default' | 'host'>('default')
+  const decided = useRef(false)
+  if (tabs && !decided.current) {
+    decided.current = true
+    pagerKey.current = pagerKeyForFirstReply(idKey.split(','), allIds)
+  }
   const pages = useMemo(
     () =>
       idKey
@@ -55,9 +63,9 @@ const App: React.FC = () => {
     <>
       <div className={styles.app} data-blurred={blurred || !ready}>
         <Statusbar />
-        {/* Remounts once when the host's first tab settings arrive, so the
-            pager starts on the first visible tab in the chosen order. */}
-        <TabPager key={tabs ? 'host' : 'default'} pages={pages} />
+        {/* Remounts once, only if the host's first tab settings differ from
+            the default, so the pager starts on the first visible tab. */}
+        <TabPager key={pagerKey.current} pages={pages} />
         <FullescreenPlayer shown={playerShown} setShown={setPlayerShown} />
       </div>
       <LoadingScreen />

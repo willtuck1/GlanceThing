@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { CALENDAR_KEY, indexAfterChange, keyToIndex } from './keys.ts'
+import {
+  CALENDAR_KEY,
+  indexAfterChange,
+  keyToIndex,
+  pagerKeyForFirstReply
+} from './keys.ts'
 
 const KEYS = ['weather', 'calendar', 'todo', 'sports', 'spotify']
 
@@ -79,5 +84,16 @@ describe('indexAfterChange', () => {
 
   it('returns 0 for an empty list', () => {
     expect(indexAfterChange(PREV, 2, [])).toBe(0)
+  })
+})
+
+describe('pagerKeyForFirstReply', () => {
+  it('keeps the pager when nothing changed', () => {
+    expect(pagerKeyForFirstReply(KEYS, KEYS)).toBe('default')
+  })
+
+  it('remounts when hidden or reordered', () => {
+    expect(pagerKeyForFirstReply(KEYS.slice(1), KEYS)).toBe('host')
+    expect(pagerKeyForFirstReply([...KEYS].reverse(), KEYS)).toBe('host')
   })
 })

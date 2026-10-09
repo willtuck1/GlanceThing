@@ -34,24 +34,29 @@ interface Drag {
 }
 
 const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
-  const [index, setIndex] = useState(0)
+  const keys = pages.map(p => p.key)
+  const [indexState, setIndex] = useState(0)
+  const [prevKeys, setPrevKeys] = useState(keys)
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
-  const prevKeys = useRef<string[]>(pages.map(p => p.key))
 
-  useEffect(() => {
-    const before = prevKeys.current
-    const next = pages.map(p => p.key)
-    prevKeys.current = next
-    setIndex(current => indexAfterChange(before, current, next))
-  }, [pages])
+  // Adjust during render (not in an effect) so no render ever pairs the new
+  // pages with a stale or out-of-range index.
+  let index = indexState
+  if (prevKeys.join('\n') !== keys.join('\n')) {
+    index = indexAfterChange(prevKeys, indexState, keys)
+    setPrevKeys(keys)
+    setIndex(index)
+  }
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      const keys = pages.map(p => p.key)
-      setIndex(current => keyToIndex(e.key, current, keys) ?? current)
+      const pageKeys = pages.map(p => p.key)
+      setIndex(
+        current => keyToIndex(e.key, current, pageKeys) ?? current
+      )
     }
 
     document.addEventListener('keydown', listener)
