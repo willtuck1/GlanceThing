@@ -1,4 +1,9 @@
-export type FeedType = 'calendar' | 'todo' | 'sports' | 'fantasy' | 'weather'
+export type FeedType =
+  | 'calendar'
+  | 'todo'
+  | 'sports'
+  | 'fantasy'
+  | 'weather'
 
 export interface FeedPayload<T> {
   items: T[]
@@ -8,139 +13,19 @@ export interface FeedPayload<T> {
   error: string | null
 }
 
-export interface CalendarEvent {
-  id: string
-  title: string
-  allDay: boolean
-  startLabel: string
-  endLabel: string
-  dayLabel: string
-  location?: string
-  calendarColor: string
-}
-
-export interface Task {
-  id: string
-  listId: string
-  title: string
-  done: boolean
-  dueLabel?: string
-}
-
-export interface Team {
-  key: string
-  abbr: string
-  name: string
-  score: number | null
-  logo?: string
-  // Hex like '#860038', from ESPN. Missing on games cached by older hosts.
-  color?: string
-}
-
-export interface Game {
-  id: string
-  league: 'nba' | 'nfl'
-  home: Team
-  away: Team
-  state: 'pre' | 'in' | 'post'
-  detail: string
-  // Scheduled start, epoch ms. Used for sorting and polling interval.
-  start: number
-  // Live NFL games only: the period (5+ is overtime) and seconds left in it.
-  period?: number
-  clock?: number
-  // The scoreboard's week number (NFL).
-  week?: number
-  // Set when this game's league failed to refresh and the game is from the
-  // last good fetch.
-  stale?: boolean
-}
-
-export interface SportsPayload extends FeedPayload<Game> {
-  favorites?: string[]
-}
-
-export interface FantasyPlayer {
-  id: string
-  name: string
-  // 'QB', 'DEF', ... Empty for an empty starter slot.
-  position: string
-  team?: string
-  // Short label of the lineup slot ('QB', 'FLEX', 'SF', 'BN').
-  slot: string
-  points: number
-  // Projected points for the week. Missing when Sleeper has none.
-  projected?: number
-  // Set when Sleeper's player list marks the player out for the week.
-  out?: 'OUT' | 'Inactive'
-  // The player's NFL game. Missing when ESPN is down or the team is unknown.
-  game?: FantasyGameStatus
-}
-
-export interface FantasyGameStatus {
-  state: 'pre' | 'in' | 'post' | 'bye' | 'out'
-  // 'Sun 1:00 PM', 'Q3 4:12', 'Half', 'Final', 'Bye', 'OUT'.
-  label: string
-}
-
-export interface FantasyTeam {
-  rosterId: number
-  name: string
-  points: number
-  // Estimated final score. Only with projections and game status.
-  estimate?: number
-  starters: FantasyPlayer[]
-  bench: FantasyPlayer[]
-}
-
-// The one item of the fantasy feed: this week's matchup, or why there is
-// none (bye week, offseason, eliminated).
-export type FantasyView =
-  | {
-      kind: 'matchup'
-      leagueName: string
-      week: number
-      // False when Sleeper's projections couldn't be loaded.
-      projections?: boolean
-      me: FantasyTeam
-      opponent: FantasyTeam
-    }
-  | {
-      kind: 'none'
-      leagueName?: string
-      week?: number
-      message: string
-    }
-
 // Sent by the host (percent, 0-100) for the row color washes.
 export interface DisplaySettings {
   sportsTintOpacity: number
   calendarTintOpacity: number
 }
 
-export interface WeatherHour {
-  timeLabel: string
-  tempLabel: string
-  precipPct: number
-}
-
-// The one item of the weather feed: the forecast, or why there is none.
-export type WeatherView =
-  | {
-      kind: 'forecast'
-      locationName: string
-      units: 'imperial' | 'metric'
-      current: {
-        tempLabel: string
-        code: number
-        label: string
-        icon: string
-      }
-      highLabel: string
-      lowLabel: string
-      sunriseLabel: string
-      sunsetLabel: string
-      precipLabel: string
-      hours: WeatherHour[]
-    }
-  | { kind: 'none'; message: string }
+export type { CalendarEvent } from '@/modules/calendar/types.ts'
+export type { Task } from '@/modules/todo/types.ts'
+export type { Team, Game, SportsPayload } from '@/modules/sports/types.ts'
+export type {
+  FantasyPlayer,
+  FantasyGameStatus,
+  FantasyTeam,
+  FantasyView
+} from '@/modules/fantasy/types.ts'
+export type { WeatherHour, WeatherView } from '@/modules/weather/types.ts'

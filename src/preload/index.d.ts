@@ -152,6 +152,14 @@ declare global {
         sportsTintOpacity: number
         calendarTintOpacity: number
       }>
+      getTabSettings: () => Promise<{
+        settings: { order: string[]; hidden: string[] }
+        modules: { id: string; label: string }[]
+      }>
+      setTabSettings: (settings: {
+        order: string[]
+        hidden: string[]
+      }) => Promise<{ order: string[]; hidden: string[] }>
       searchWeatherLocations: (query: string) => Promise<
         {
           name: string

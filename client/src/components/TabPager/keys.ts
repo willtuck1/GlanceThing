@@ -20,3 +20,28 @@ export function keyToIndex(
   // Button 4: reserved for sleep-to-clock (roadmap item 5).
   return null
 }
+
+// Keeps the same tab selected when the visible set changes; if it is gone,
+// stays at the same position (clamped).
+export function indexAfterChange(
+  prevKeys: string[],
+  prevIndex: number,
+  nextKeys: string[]
+): number {
+  if (nextKeys.length === 0) return 0
+  const key = prevKeys[prevIndex]
+  const i = key === undefined ? -1 : nextKeys.indexOf(key)
+  if (i !== -1) return i
+  return Math.max(0, Math.min(prevIndex, nextKeys.length - 1))
+}
+
+// Remount key for the pager, decided once on the host's first reply: remount
+// only when the visible tabs differ from the default (all, registry order).
+export function pagerKeyForFirstReply(
+  visible: string[],
+  all: string[]
+): 'default' | 'host' {
+  const same =
+    visible.length === all.length && visible.every((id, i) => id === all[i])
+  return same ? 'default' : 'host'
+}

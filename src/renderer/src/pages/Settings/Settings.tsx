@@ -21,6 +21,7 @@ enum Tab {
   Google,
   Fantasy,
   Weather,
+  Tabs,
   Advanced,
   Logs,
   About
@@ -110,6 +111,13 @@ const Settings: React.FC = () => {
               <span className="material-icons">wb_sunny</span>
               Weather
             </button>
+            <button
+              onClick={() => setCurrentTab(Tab.Tabs)}
+              data-active={currentTab === Tab.Tabs}
+            >
+              <span className="material-icons">tab</span>
+              Tabs
+            </button>
             {devMode ? (
               <>
                 <button
@@ -151,6 +159,8 @@ const Settings: React.FC = () => {
               <FantasyTab />
             ) : currentTab === Tab.Weather ? (
               <WeatherTab />
+            ) : currentTab === Tab.Tabs ? (
+              <TabsTab />
             ) : currentTab === Tab.Advanced ? (
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
@@ -1349,6 +1359,102 @@ const WeatherTab: React.FC = () => {
           />
           °C / mm
         </label>
+      </div>
+    </div>
+  )
+}
+
+const TabsTab: React.FC = () => {
+  const [settings, setSettings] = useState<{
+    order: string[]
+    hidden: string[]
+  } | null>(null)
+  const [modules, setModules] = useState<{ id: string; label: string }[]>(
+    []
+  )
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    window.api.getTabSettings().then(res => {
+      setSettings(res.settings)
+      setModules(res.modules)
+    })
+  }, [])
+
+  if (!settings) return null
+
+  const current = settings
+  const shown = current.order.filter(id => !current.hidden.includes(id))
+
+  async function save(order: string[], hidden: string[]) {
+    if (saving) return
+    setSaving(true)
+    try {
+      setSettings(await window.api.setTabSettings({ order, hidden }))
+    } catch {
+      // keep the previous state
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function toggle(id: string) {
+    save(
+      current.order,
+      current.hidden.includes(id)
+        ? current.hidden.filter(h => h !== id)
+        : [...current.hidden, id]
+    )
+  }
+
+  function move(index: number, delta: number) {
+    const order = [...current.order]
+    const [id] = order.splice(index, 1)
+    order.splice(index + delta, 0, id)
+    save(order, current.hidden)
+  }
+
+  return (
+    <div className={styles.settingsTab}>
+      <div className={styles.googleSection}>
+        <p>Tabs</p>
+        <p className={styles.description}>
+          Choose which tabs show on the Car Thing and their order.
+        </p>
+        {current.order.map((id, index) => {
+          const isShown = !current.hidden.includes(id)
+          const lastShown = isShown && shown.length === 1
+          return (
+            <div key={id} className={styles.actions}>
+              <label
+                className={`${styles.taskListOption} ${styles.tabOption}`}
+                title={
+                  lastShown ? 'At least one tab must stay on' : undefined
+                }
+              >
+                <input
+                  type="checkbox"
+                  checked={isShown}
+                  disabled={lastShown || saving}
+                  onChange={() => toggle(id)}
+                />
+                {modules.find(m => m.id === id)?.label ?? id}
+              </label>
+              <button
+                disabled={saving || index === 0}
+                onClick={() => move(index, -1)}
+              >
+                Up
+              </button>
+              <button
+                disabled={saving || index === current.order.length - 1}
+                onClick={() => move(index, 1)}
+              >
+                Down
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 
-import { keyToIndex } from './keys.ts'
+import { indexAfterChange, keyToIndex } from './keys.ts'
 import { AXIS_LOCK_PX, resolveSnap } from './snap.ts'
 
 import styles from './TabPager.module.css'
@@ -34,16 +34,29 @@ interface Drag {
 }
 
 const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
-  const [index, setIndex] = useState(0)
+  const keys = pages.map(p => p.key)
+  const [indexState, setIndex] = useState(0)
+  const [prevKeys, setPrevKeys] = useState(keys)
   const [dragX, setDragX] = useState(0)
   const [dragging, setDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
 
+  // Adjust during render (not in an effect) so no render ever pairs the new
+  // pages with a stale or out-of-range index.
+  let index = indexState
+  if (prevKeys.join('\n') !== keys.join('\n')) {
+    index = indexAfterChange(prevKeys, indexState, keys)
+    setPrevKeys(keys)
+    setIndex(index)
+  }
+
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      const keys = pages.map(p => p.key)
-      setIndex(current => keyToIndex(e.key, current, keys) ?? current)
+      const pageKeys = pages.map(p => p.key)
+      setIndex(
+        current => keyToIndex(e.key, current, pageKeys) ?? current
+      )
     }
 
     document.addEventListener('keydown', listener)

@@ -79,6 +79,9 @@ import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
+import { modules } from './lib/modules/registry.js'
+import { getTabSettings, setTabSettings } from './lib/modules/tabs.js'
+import { applyTabSettings } from './lib/setup/feeds.js'
 import { getFeed } from './lib/feeds/registry.js'
 import { searchLocations } from './lib/weather/openMeteo.js'
 import { applyWeatherSettings } from './lib/weather/service.js'
@@ -271,6 +274,8 @@ enum IPCHandler {
   SetFantasyLeague = 'setFantasyLeague',
   GetDisplaySettings = 'getDisplaySettings',
   SetDisplaySettings = 'setDisplaySettings',
+  GetTabSettings = 'getTabSettings',
+  SetTabSettings = 'setTabSettings',
   SearchWeatherLocations = 'searchWeatherLocations',
   GetWeatherSettings = 'getWeatherSettings',
   SetWeatherSettings = 'setWeatherSettings'
@@ -608,6 +613,18 @@ async function setupIpcHandlers() {
   ipcMain.handle(IPCHandler.SetDisplaySettings, (_event, value) => {
     const settings = setDisplaySettings(value)
     serverManager.broadcast('display', settings)
+    return settings
+  })
+
+  ipcMain.handle(IPCHandler.GetTabSettings, () => ({
+    settings: getTabSettings(),
+    modules: modules.map(({ id, label }) => ({ id, label }))
+  }))
+
+  ipcMain.handle(IPCHandler.SetTabSettings, (_event, value) => {
+    const settings = setTabSettings(value)
+    serverManager.broadcast('tabs', settings)
+    applyTabSettings(settings)
     return settings
   })
 
