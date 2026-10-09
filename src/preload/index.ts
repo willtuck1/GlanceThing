@@ -59,7 +59,9 @@ enum IPCHandler {
   GetFantasyStatus = 'getFantasyStatus',
   SetFantasyUsername = 'setFantasyUsername',
   GetFantasyLeagues = 'getFantasyLeagues',
-  SetFantasyLeague = 'setFantasyLeague'
+  SetFantasyLeague = 'setFantasyLeague',
+  GetDisplaySettings = 'getDisplaySettings',
+  SetDisplaySettings = 'setDisplaySettings'
 }
 
 // Custom APIs for renderer
@@ -155,7 +157,12 @@ const api = {
     ipcRenderer.invoke(IPCHandler.SetFantasyUsername, username),
   getFantasyLeagues: () => ipcRenderer.invoke(IPCHandler.GetFantasyLeagues),
   setFantasyLeague: (id: string) =>
-    ipcRenderer.invoke(IPCHandler.SetFantasyLeague, id)
+    ipcRenderer.invoke(IPCHandler.SetFantasyLeague, id),
+  getDisplaySettings: () => ipcRenderer.invoke(IPCHandler.GetDisplaySettings),
+  setDisplaySettings: (settings: {
+    sportsTintOpacity?: number
+    calendarTintOpacity?: number
+  }) => ipcRenderer.invoke(IPCHandler.SetDisplaySettings, settings)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
