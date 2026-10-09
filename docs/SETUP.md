@@ -133,6 +133,53 @@ The tab refreshes every 30 seconds while an NFL game is on, otherwise every
 dial to it and press) to see your bench. To stop using the tab, clear the
 username and click **Save**.
 
+#### Projections, game status and "Est."
+
+Each player row shows, on both sides:
+
+- **Points** so far, with **proj** (projected points for the week) under
+  them. Projections are scored with your league's own scoring settings.
+  If a player's projection has no stat your league scores, the app uses
+  Sleeper's PPR, half-PPR or standard total, picked by your league's
+  points per reception.
+- **Game status** under the name: kickoff time (`Sun 1:00 PM`), the live
+  quarter and clock (`Q3 4:12`, `Half`, `OT 2:01`), `Final`, `Bye`, or
+  `OUT` / `Inactive` when Sleeper lists the player that way.
+
+Under each team's total, **Est.** is the estimated final score. It adds up
+every starter like this:
+
+| Player's game | Counts as |
+|---|---|
+| Final | actual points |
+| Not started | projected points |
+| Live | actual + projected × fraction of the game left |
+| Bye, OUT or Inactive | actual points (usually 0) |
+
+The fraction of the game left is
+`((4 − quarter) × 15 min + time on the clock) / 60 min`. For example, at
+`Q3 4:12` it is (15:00 + 4:12) / 60:00 = 0.32. Halftime is 0.5. Overtime
+counts as 0 left. A player with no projection, or whose game the app
+can't find, counts as their actual points.
+
+Game status comes from the same ESPN scores as the Sports tab and updates
+on its schedule: every 30 seconds while a game is on. Projections refresh
+every 15 minutes.
+
+Good to know:
+
+- Projections come from a Sleeper address that isn't part of Sleeper's
+  official API and may change without notice. If it stops working, the
+  **proj** numbers and **Est.** disappear and the rest of the tab keeps
+  working.
+- If ESPN can't be reached, game status and **Est.** are hidden. Points and
+  projections still show.
+- Game status shows only when ESPN's scoreboard is on the same NFL week as
+  Sleeper. Early in the week (around Tuesday) ESPN may move on first, so
+  status can be missing for a day.
+- `OUT` and `Inactive` come from Sleeper's player list, which the app
+  downloads once a day. Game-day inactives can take up to a day to show.
+
 ## 5. Device checklist
 
 Run through this once after setup to confirm everything works. Tick each
@@ -157,6 +204,9 @@ box as you go.
       Long-press a game to star or unstar both teams.
 - [ ] **Fantasy**: the totals match the Sleeper app. Turn the dial to
       **Show bench** and press it, and the bench opens.
+- [ ] **Fantasy projections**: on a game day, **proj** numbers show under
+      the points and each player has a game status. A live player's clock
+      matches the Sports tab. **Est.** shows under both totals.
 - [ ] **Offline**: turn off the computer's Wi-Fi or unplug its network
       cable. Within a few minutes the tabs show an orange "Updated <time>"
       badge and keep the last data. Turn the network back on, and the badge
