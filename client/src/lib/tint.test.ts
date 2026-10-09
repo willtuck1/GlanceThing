@@ -24,19 +24,19 @@ describe('tint', () => {
 
   it('splits the row down the middle, left then right', () => {
     expect(splitTint('#552583', '#008348')).toBe(
-      'linear-gradient(to right, rgba(85, 37, 131, 0.45) 50%, rgba(0, 131, 72, 0.45) 50%)'
+      'linear-gradient(to right, rgba(85, 37, 131, 0.25) 50%, rgba(0, 131, 72, 0.25) 50%)'
     )
   })
 
   it('can split anywhere', () => {
     expect(splitTint('#552583', '#008348', '281px')).toBe(
-      'linear-gradient(to right, rgba(85, 37, 131, 0.45) 281px, rgba(0, 131, 72, 0.45) 281px)'
+      'linear-gradient(to right, rgba(85, 37, 131, 0.25) 281px, rgba(0, 131, 72, 0.25) 281px)'
     )
   })
 
   it('leaves a half plain when its color is missing', () => {
     expect(splitTint(undefined, '#008348')).toBe(
-      'linear-gradient(to right, rgba(0, 0, 0, 0) 50%, rgba(0, 131, 72, 0.45) 50%)'
+      'linear-gradient(to right, rgba(0, 0, 0, 0) 50%, rgba(0, 131, 72, 0.25) 50%)'
     )
     expect(splitTint(undefined, undefined)).toBeUndefined()
   })

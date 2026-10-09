@@ -3,6 +3,8 @@
 // still show through. Chrome 69 handles rgba and hard-stop gradients.
 
 export const TINT_ALPHA = 0.45
+// Team colors are bright and fill a whole half row, so they sit lower.
+export const TEAM_TINT_ALPHA = 0.25
 
 const HEX = /^#([0-9a-f]{6})$/i
 
@@ -27,8 +29,8 @@ export function splitTint(
   right: string | undefined,
   at = '50%'
 ) {
-  const a = rgba(left)
-  const b = rgba(right)
+  const a = rgba(left, TEAM_TINT_ALPHA)
+  const b = rgba(right, TEAM_TINT_ALPHA)
   if (!a && !b) return undefined
   const clear = 'rgba(0, 0, 0, 0)'
   return `linear-gradient(to right, ${a ?? clear} ${at}, ${b ?? clear} ${at})`
