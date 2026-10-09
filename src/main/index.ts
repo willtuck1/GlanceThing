@@ -78,6 +78,7 @@ import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
 import * as fantasy from './lib/fantasy/service.js'
 import * as google from './lib/google/service.js'
 import { watchCarThing } from './lib/watchdog.js'
@@ -263,7 +264,9 @@ enum IPCHandler {
   GetFantasyStatus = 'getFantasyStatus',
   SetFantasyUsername = 'setFantasyUsername',
   GetFantasyLeagues = 'getFantasyLeagues',
-  SetFantasyLeague = 'setFantasyLeague'
+  SetFantasyLeague = 'setFantasyLeague',
+  GetDisplaySettings = 'getDisplaySettings',
+  SetDisplaySettings = 'setDisplaySettings'
 }
 
 async function setupIpcHandlers() {
@@ -586,6 +589,16 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.SetFantasyLeague, (_event, id) => {
     fantasy.saveLeague(id)
+  })
+
+  ipcMain.handle(IPCHandler.GetDisplaySettings, () => {
+    return getDisplaySettings()
+  })
+
+  ipcMain.handle(IPCHandler.SetDisplaySettings, (_event, value) => {
+    const settings = setDisplaySettings(value)
+    serverManager.broadcast('display', settings)
+    return settings
   })
 }
 

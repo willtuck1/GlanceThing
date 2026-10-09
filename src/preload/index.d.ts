@@ -139,6 +139,17 @@ declare global {
         ({ ok: true } & FantasyLeagues) | { ok: false; error: string }
       >
       setFantasyLeague: (id: string) => Promise<void>
+      getDisplaySettings: () => Promise<{
+        sportsTintOpacity: number
+        calendarTintOpacity: number
+      }>
+      setDisplaySettings: (settings: {
+        sportsTintOpacity?: number
+        calendarTintOpacity?: number
+      }) => Promise<{
+        sportsTintOpacity: number
+        calendarTintOpacity: number
+      }>
     }
   }
 }

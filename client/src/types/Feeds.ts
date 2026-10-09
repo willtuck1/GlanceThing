@@ -111,3 +111,9 @@ export type FantasyView =
       week?: number
       message: string
     }
+
+// Sent by the host (percent, 0-100) for the row color washes.
+export interface DisplaySettings {
+  sportsTintOpacity: number
+  calendarTintOpacity: number
+}

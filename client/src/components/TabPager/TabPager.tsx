@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 
+import { keyToIndex } from './keys.ts'
 import { AXIS_LOCK_PX, resolveSnap } from './snap.ts'
 
 import styles from './TabPager.module.css'
@@ -41,9 +42,11 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      if (e.key === '1' || e.key === '2' || e.key === '3') {
-        setIndex(Math.min(Number(e.key) - 1, pages.length - 1))
-      }
+      const next = keyToIndex(
+        e.key,
+        pages.map(p => p.key)
+      )
+      if (next !== null) setIndex(next)
     }
 
     document.addEventListener('keydown', listener)
@@ -51,7 +54,7 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
     return () => {
       document.removeEventListener('keydown', listener)
     }
-  }, [pages.length])
+  }, [pages])
 
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0]

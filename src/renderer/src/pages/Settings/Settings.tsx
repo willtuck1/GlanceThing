@@ -400,6 +400,17 @@ const ClientTab: React.FC = () => {
   }>({})
 
   const [autoBrightness, setAutoBrightness] = useState(false)
+  const [tintOpacity, setTintOpacity] = useState({
+    sports: 25,
+    calendar: 45
+  })
+  const pendingTint = useRef<{
+    sportsTintOpacity?: number
+    calendarTintOpacity?: number
+  }>({})
+  const tintTimers = useRef<{
+    [key in 'sportsTintOpacity' | 'calendarTintOpacity']?: number
+  }>({})
   const [sleepMethod, setSleepMethod] = useState('sleep')
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
@@ -426,6 +437,12 @@ const ClientTab: React.FC = () => {
       setAutoBrightness(settings.current.autoBrightness ?? false)
       setSleepMethod(settings.current.sleepMethod ?? 'sleep')
 
+      const display = await window.api.getDisplaySettings()
+      setTintOpacity({
+        sports: display.sportsTintOpacity,
+        calendar: display.calendarTintOpacity
+      })
+
       const hasImage = await window.api.hasCustomScreensaverImage()
       setHasCustomImage(hasImage)
 
@@ -437,6 +454,35 @@ const ClientTab: React.FC = () => {
     loadSettings()
     loadPatches()
   }, [])
+
+  function sendTint(key: 'sportsTintOpacity' | 'calendarTintOpacity') {
+    const value = pendingTint.current[key]
+    delete pendingTint.current[key]
+    delete tintTimers.current[key]
+    if (value !== undefined) window.api.setDisplaySettings({ [key]: value })
+  }
+
+  function queueTint(
+    key: 'sportsTintOpacity' | 'calendarTintOpacity',
+    value: number
+  ) {
+    pendingTint.current[key] = value
+    window.clearTimeout(tintTimers.current[key])
+    tintTimers.current[key] = window.setTimeout(() => sendTint(key), 150)
+  }
+
+  // Flush pending values on unmount so a quick drag then tab switch saves
+  useEffect(
+    () => () => {
+      ;(['sportsTintOpacity', 'calendarTintOpacity'] as const).forEach(
+        key => {
+          window.clearTimeout(tintTimers.current[key])
+          sendTint(key)
+        }
+      )
+    },
+    []
+  )
 
   async function loadPatches() {
     setPatches(null)
@@ -509,6 +555,30 @@ const ClientTab: React.FC = () => {
           onRelease={value =>
             window.api.setStorageValue('brightness', value as number)
           }
+        />
+        <SliderSetting
+          label="Sports color opacity"
+          description={`How strongly team colors tint sports rows (${tintOpacity.sports}%)`}
+          value={tintOpacity.sports}
+          min={0}
+          max={100}
+          step={1}
+          onChange={value => {
+            setTintOpacity(prev => ({ ...prev, sports: value }))
+            queueTint('sportsTintOpacity', value)
+          }}
+        />
+        <SliderSetting
+          label="Calendar color opacity"
+          description={`How strongly calendar colors tint event rows (${tintOpacity.calendar}%)`}
+          value={tintOpacity.calendar}
+          min={0}
+          max={100}
+          step={1}
+          onChange={value => {
+            setTintOpacity(prev => ({ ...prev, calendar: value }))
+            queueTint('calendarTintOpacity', value)
+          }}
         />
         <SelectSetting
           label="Sleep Method"

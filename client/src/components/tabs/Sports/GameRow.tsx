@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 
 import { useLongPress } from '@/hooks/useLongPress.ts'
 import { scrollRowIntoView } from '@/components/ListRow/scrollRowIntoView.ts'
-import { splitTint } from '@/lib/tint.ts'
+import { TEAM_TINT_ALPHA, rowTeamColor, tint } from '@/lib/tint.ts'
 
 import type { Game, Team } from '@/types/Feeds.ts'
 
@@ -12,6 +12,7 @@ interface GameRowProps {
   game: Game
   favorites: string[]
   highlighted: boolean
+  tintAlpha?: number
   onToggleTeam: (teamKey: string) => void
   onToggleGame: (game: Game) => void
 }
@@ -41,11 +42,6 @@ const LEAGUE_ICON: Record<Game['league'], string> = {
   nfl: 'sports_football'
 }
 
-// Where the two team colors meet: the middle of the score, from the row's
-// left edge. Row padding 16 + badge 52 + 12 margin + team 116 + half the
-// 170 px score. Keep in sync with GameRow.module.css.
-const SPLIT_AT = '281px'
-
 function scoreText(game: Game) {
   if (game.state === 'pre') return null
   return [game.away.score ?? 0, game.home.score ?? 0]
@@ -55,6 +51,7 @@ const GameRow: React.FC<GameRowProps> = ({
   game,
   favorites,
   highlighted,
+  tintAlpha = TEAM_TINT_ALPHA,
   onToggleTeam,
   onToggleGame
 }) => {
@@ -73,12 +70,10 @@ const GameRow: React.FC<GameRowProps> = ({
       data-highlighted={highlighted}
       data-stale={!!game.stale}
       data-state={game.state}
-      // Away team sits on the left, home on the right; so do their colors.
       style={{
-        backgroundImage: splitTint(
-          game.away.color,
-          game.home.color,
-          SPLIT_AT
+        backgroundImage: tint(
+          rowTeamColor(game.away, game.home, favorites),
+          tintAlpha
         )
       }}
       {...longPress}

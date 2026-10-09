@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
 
+import { DisplayContext } from '@/contexts/DisplayContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { useFeed } from '@/hooks/useFeed.ts'
 import { useListNav } from '@/hooks/useListNav.ts'
@@ -16,6 +17,7 @@ const PENDING_TIMEOUT_MS = 5000
 
 const Sports: React.FC<{ active: boolean }> = ({ active }) => {
   const { ready, socket } = useContext(SocketContext)
+  const { sportsAlpha } = useContext(DisplayContext)
   const feed = useFeed<Game, SportsPayload>('sports', active)
   const [pending, setPending] = useState<Record<string, boolean>>({})
 
@@ -97,6 +99,7 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
           key={game.id}
           game={game}
           favorites={favorites}
+          tintAlpha={sportsAlpha}
           highlighted={active && i === highlighted}
           onToggleTeam={toggleTeam}
           onToggleGame={toggleGame}

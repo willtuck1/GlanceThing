@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { rgba, splitTint, tint } from './tint.ts'
+import { rgba, rowTeamColor, tint } from './tint.ts'
 
 describe('tint', () => {
   it('turns a hex color into a muted rgba', () => {
@@ -22,22 +22,37 @@ describe('tint', () => {
     )
   })
 
-  it('splits the row down the middle, left then right', () => {
-    expect(splitTint('#552583', '#008348')).toBe(
-      'linear-gradient(to right, rgba(85, 37, 131, 0.25) 50%, rgba(0, 131, 72, 0.25) 50%)'
+  it('takes an optional alpha', () => {
+    expect(tint('#4285f4', 0.1)).toBe(
+      'linear-gradient(rgba(66, 133, 244, 0.1), rgba(66, 133, 244, 0.1))'
     )
+    expect(tint(undefined)).toBeUndefined()
+  })
+})
+
+describe('rowTeamColor', () => {
+  const away = { key: 'nba:LAL', color: '#552583' }
+  const home = { key: 'nba:BOS', color: '#008348' }
+
+  it('uses the away color with no favorite', () => {
+    expect(rowTeamColor(away, home, [])).toBe('#552583')
   })
 
-  it('can split anywhere', () => {
-    expect(splitTint('#552583', '#008348', '281px')).toBe(
-      'linear-gradient(to right, rgba(85, 37, 131, 0.25) 281px, rgba(0, 131, 72, 0.25) 281px)'
-    )
+  it('uses the home color when only home is a favorite', () => {
+    expect(rowTeamColor(away, home, ['nba:BOS'])).toBe('#008348')
   })
 
-  it('leaves a half plain when its color is missing', () => {
-    expect(splitTint(undefined, '#008348')).toBe(
-      'linear-gradient(to right, rgba(0, 0, 0, 0) 50%, rgba(0, 131, 72, 0.25) 50%)'
-    )
-    expect(splitTint(undefined, undefined)).toBeUndefined()
+  it('uses the away color when only away is a favorite', () => {
+    expect(rowTeamColor(away, home, ['nba:LAL'])).toBe('#552583')
+  })
+
+  it('uses the away color when both are favorites', () => {
+    expect(rowTeamColor(away, home, ['nba:LAL', 'nba:BOS'])).toBe('#552583')
+  })
+
+  it('does not fall back when the chosen team has no color', () => {
+    expect(
+      rowTeamColor(away, { key: 'nba:BOS' }, ['nba:BOS'])
+    ).toBeUndefined()
   })
 })
