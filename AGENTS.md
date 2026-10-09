@@ -1,6 +1,6 @@
 # GlanceThing fork
 
-Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over a websocket to a React client (`client/`) running on a Car Thing: **Chrome 69, 800×480 landscape**. Tabs, in order: Weather, Calendar, To-do, Sports, Fantasy, Spotify. Current release line: `v0.0.16-tabs.N` (see `package.json`; M7 is tabs.6).
+Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over a websocket to a React client (`client/`) running on a Car Thing: **Chrome 69, 800×480 landscape**. Tabs, in order: Weather, Calendar, To-do, Sports, Fantasy, Spotify. Current release line: `v0.0.16-tabs.N` (see `package.json`; M8 is tabs.7).
 
 ## Where things are
 - Host ws server: `src/main/lib/server.ts` routes `{type, action, data}` to `src/main/lib/handlers/*.ts` (`name`, `hasActions`, `actions`, `handle(ws, data)`).
@@ -29,12 +29,11 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 
 ## Roadmap (planned, not built)
 In this order. Effort is relative to M5/M6.
-Item 1, **Polish**, is done (M7: one team color per sports row, opacity sliders).
+Items 1–2 are done: **Polish** (M7: one team color per sports row, opacity sliders) and **Weather tab** (M8, plus buttons 1/2 = prev/next tab, 3 = Calendar).
 
-2. **Weather tab** (≈ M1): Open-Meteo (no key), hourly temperature and precipitation, sunrise and sunset, location set in Settings.
 3. **Clock tab with timer, plus button macros** (small–medium): timer alerts are visual only. Prefer long-press over double-tap, because double-tap delays every single press by about 300 ms.
 4. **Notifications** (medium–large): the host compares each update to the last one against rules (close game, final, fantasy swings, upcoming event), then sends a `notify` message that the client shows over any tab or the sleep screen. Per-type toggles in Settings. Optional desktop notification for sound.
-5. **Sleep screen clock with widgets** (medium): uses the existing feeds plus weather.
+5. **Sleep screen clock with widgets** (medium): uses the existing feeds plus weather. Button `'4'` (currently a no-op in `keys.ts`) should send the device to sleep on this clock screen.
 6. **Gmail tab** (medium–large): needs the restricted `gmail.readonly` scope. Every user has to sign in to Google again, and logins from an OAuth client in test mode expire every 7 days. "Important" means `is:important is:unread`. Build after Notifications.
 
 ## Keeping this file current (required)
