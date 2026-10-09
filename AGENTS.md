@@ -14,6 +14,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 - Desktop settings UI: `src/renderer/src/pages/Settings/Settings.tsx` (Weather tab: city search via Open-Meteo geocoding through the host, units toggle, clear location).
 - Client self-update: on connect the client asks for `version` and sends `update` if it differs from its own, and the host reinstalls it (`handlers/version.ts`, `handlers/update.ts`).
 - Device inputs arrive as DOM events: buttons `'1'` (previous tab) and `'2'` (next tab), both wrapping over visible tabs only, `'3'` (jump to Calendar; nothing if Calendar is hidden), `'4'` (does nothing; reserved for sleep-to-clock, roadmap item 5; unverified that it reaches the client), M → `'m'`, Back → `Escape`, dial → `wheel`, dial press → `Enter`.
+- Adding a code-built app: `docs/NEW_APP.md`.
 - `claude_plan.md` is the original M0–M4 spec, all done. Read only the section you need. Don't read `docs/m*-screenshots/`.
 
 ## Rules
