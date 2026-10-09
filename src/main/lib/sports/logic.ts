@@ -7,13 +7,11 @@ export const LEAGUES: League[] = ['nba', 'nfl']
 export const LIVE_INTERVAL = 30 * 1000
 export const IDLE_INTERVAL = 5 * 60 * 1000
 export const SOON_WINDOW = 10 * 60 * 1000
+// Most games sent to the device; more is slow to render on the Car Thing.
+export const MAX_GAMES = 40
 // Games shown: anything live, plus games starting within this window on
 // either side of now (recent finals and the next few hours).
 export const SHOW_WINDOW = 12 * 60 * 60 * 1000
-// Most games sent to the device; keeps the list light on the Car Thing.
-export const MAX_GAMES = 40
-
-export const SPORTS_UNAVAILABLE = "Can't reach ESPN. Trying again soon"
 
 const TEAM_KEY = /^(nba|nfl):[A-Z0-9]{1,5}$/
 
@@ -21,54 +19,74 @@ export function isTeamKey(value: unknown): value is string {
   return typeof value === 'string' && TEAM_KEY.test(value)
 }
 
-// Minimal view of ESPN's scoreboard JSON: only the fields we read.
-interface EspnCompetitor {
-  homeAway?: string
-  score?: string | number
-  team?: {
-    abbreviation?: string
-    shortDisplayName?: string
-    displayName?: string
-    logo?: string
-  }
+// ESPN's scoreboard JSON is undocumented and changes without notice, so
+// every field is read as unknown and checked before use.
+
+function obj(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
 }
 
-interface EspnEvent {
-  id?: string | number
-  date?: string
-  competitions?: {
-    competitors?: EspnCompetitor[]
-    status?: EspnStatus
-  }[]
-  status?: EspnStatus
+function text(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null
 }
 
-interface EspnStatus {
-  type?: { state?: string; shortDetail?: string }
+function list(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : []
+}
+
+const HEX = /^#?([0-9a-f]{6})$/i
+
+function hexColor(value: unknown): string | null {
+  const m = typeof value === 'string' ? HEX.exec(value.trim()) : null
+  return m ? `#${m[1].toLowerCase()}` : null
+}
+
+function isNearBlack(hex: string) {
+  const n = parseInt(hex.slice(1), 16)
+  const r = n >> 16
+  const g = (n >> 8) & 0xff
+  const b = n & 0xff
+  return 0.299 * r + 0.587 * g + 0.114 * b < 40
+}
+
+// The team's primary color for the row background. A near-black primary
+// would vanish on the dark screen, so its alternate color is used instead
+// when that one isn't near-black too.
+export function teamColor(primary: unknown, alternate: unknown) {
+  const main = hexColor(primary)
+  const alt = hexColor(alternate)
+  if (main && isNearBlack(main) && alt && !isNearBlack(alt)) return alt
+  return main ?? alt
 }
 
 function toTeam(
   league: League,
-  c: EspnCompetitor,
+  raw: Record<string, unknown>,
   state: Game['state']
 ): Team | null {
-  const abbr =
-    typeof c.team?.abbreviation === 'string'
-      ? c.team.abbreviation.toUpperCase()
-      : ''
-  if (!abbr) return null
+  const info = obj(raw.team)
+  const abbr = text(info?.abbreviation)?.toUpperCase()
+  if (!abbr || !isTeamKey(`${league}:${abbr}`)) return null
 
-  const raw = Number(c.score)
-  const name = c.team?.shortDisplayName ?? c.team?.displayName
+  const score = Number(
+    typeof raw.score === 'string' || typeof raw.score === 'number'
+      ? raw.score
+      : NaN
+  )
   const team: Team = {
     key: `${league}:${abbr}`,
     abbr,
-    name: typeof name === 'string' && name ? name : abbr,
+    name:
+      text(info?.shortDisplayName) ?? text(info?.displayName) ?? abbr,
     // ESPN reports "0" before kickoff; show no score until the game starts.
-    score: state === 'pre' || !Number.isFinite(raw) ? null : raw
+    score: state === 'pre' || !Number.isFinite(score) ? null : score
   }
-  if (typeof c.team?.logo === 'string' && c.team.logo)
-    team.logo = c.team.logo
+  const logo = text(info?.logo)
+  if (logo) team.logo = logo
+  const color = teamColor(info?.color, info?.alternateColor)
+  if (color) team.color = color
   return team
 }
 
@@ -78,60 +96,54 @@ function toState(value: unknown): Game['state'] | null {
     : null
 }
 
-// Converts an ESPN scoreboard response into Games. Events missing required
-// fields are skipped rather than failing the whole league.
-export function normalize(league: League, json: unknown): Game[] {
-  const events = (json as { events?: unknown })?.events
-  if (!Array.isArray(events)) throw new Error(`Bad ${league} scoreboard`)
+function toGame(league: League, raw: unknown): Game | null {
+  const event = obj(raw)
+  const id =
+    typeof event?.id === 'number' ? String(event.id) : text(event?.id)
+  if (!event || !id) return null
 
-  const games: Game[] = []
-
-  for (const event of events as EspnEvent[]) {
-    // A schema change in one event drops that event, never the league.
-    try {
-      const game = toGame(league, event)
-      if (game) games.push(game)
-    } catch {
-      continue
-    }
-  }
-
-  return games
-}
-
-function toGame(league: League, event: EspnEvent): Game | null {
-  const competition = Array.isArray(event?.competitions)
-    ? event.competitions[0]
-    : undefined
-  const status = competition?.status ?? event?.status
-  const state = toState(status?.type?.state)
-  const start = typeof event?.date === 'string' ? Date.parse(event.date) : NaN
-  const competitors = Array.isArray(competition?.competitors)
-    ? competition.competitors
-    : []
-  const homeRaw = competitors.find(c => c?.homeAway === 'home')
-  const awayRaw = competitors.find(c => c?.homeAway === 'away')
-
-  const id = event?.id
-  if ((typeof id !== 'string' && typeof id !== 'number') || id === '')
-    return null
+  const competition = obj(list(event.competitions)[0])
+  const status = obj(competition?.status) ?? obj(event.status)
+  const statusType = obj(status?.type)
+  const state = toState(statusType?.state)
+  const start = Date.parse(text(event.date) ?? '')
   if (!state || Number.isNaN(start)) return null
+
+  const competitors = list(competition?.competitors)
+    .map(obj)
+    .filter(c => c !== null)
+  const homeRaw = competitors.find(c => c.homeAway === 'home')
+  const awayRaw = competitors.find(c => c.homeAway === 'away')
   if (!homeRaw || !awayRaw) return null
 
   const home = toTeam(league, homeRaw, state)
   const away = toTeam(league, awayRaw, state)
   if (!home || !away) return null
 
-  const detail = status?.type?.shortDetail
   return {
     id: `${league}:${id}`,
     league,
     home,
     away,
     state,
-    detail: typeof detail === 'string' ? detail : '',
+    detail: text(statusType?.shortDetail) ?? '',
     start
   }
+}
+
+// Converts an ESPN scoreboard response into Games. Events missing required
+// fields are skipped rather than failing the whole league; only a response
+// with no events array at all counts as a failed fetch.
+export function normalize(league: League, json: unknown): Game[] {
+  const events = obj(json)?.events
+  if (!Array.isArray(events)) throw new Error(`Bad ${league} scoreboard`)
+
+  const games: Game[] = []
+  for (const event of events) {
+    const game = toGame(league, event)
+    if (game) games.push(game)
+  }
+  return games
 }
 
 const STATE_RANK: Record<Game['state'], number> = {
@@ -235,6 +247,7 @@ export function decorateSports(
   )
   return {
     ...payload,
+    // Capped after sorting, so favorites and live games always make it.
     items: sortGames(items, favorites).slice(0, MAX_GAMES),
     favorites
   }

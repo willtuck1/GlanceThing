@@ -1,4 +1,5 @@
 import { getFeed } from '../feeds/registry.js'
+import { getSetupGuideUrl } from '../repo.js'
 import { log, LogLevel } from '../utils.js'
 import {
   connectGoogle,
@@ -53,13 +54,13 @@ function forgetAccount() {
 }
 
 export function googleStatus() {
-  return getGoogleStatus()
+  return { ...getGoogleStatus(), setupGuideUrl: getSetupGuideUrl() }
 }
 
 export function saveGoogleClient(clientId: string, clientSecret: string) {
   const wasConnected = getGoogleStatus().connected
   setGoogleClient(String(clientId ?? ''), String(clientSecret ?? ''))
-  const status = getGoogleStatus()
+  const status = googleStatus()
   if (wasConnected && !status.connected) forgetAccount()
   return status
 }

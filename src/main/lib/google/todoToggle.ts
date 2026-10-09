@@ -1,3 +1,5 @@
+import { describeGoogleError } from './session.js'
+
 import { Task } from '../feeds/types.js'
 
 export interface ToggleRequest {
@@ -15,8 +17,6 @@ export interface ToggleDeps {
   setDone: (listId: string, id: string, done: boolean) => Promise<Task>
   // Re-reads the list and pushes it to every client.
   refetch: () => void
-  // Turns a failure into the message the device flashes.
-  describeError?: (e: unknown) => string
 }
 
 const isText = (v: unknown): v is string =>
@@ -44,12 +44,10 @@ export async function toggleTask(
     deps.refetch()
     return { reqId: req.reqId, ok: true, task }
   } catch (e) {
-    return {
-      reqId: req.reqId,
-      ok: false,
-      error:
-        deps.describeError?.(e) ??
-        (e instanceof Error ? e.message : String(e))
-    }
+    const { message, dropItems } = describeGoogleError(e)
+    // The account is gone: refetch so the tab swaps its tasks for the
+    // reconnect message.
+    if (dropItems) deps.refetch()
+    return { reqId: req.reqId, ok: false, error: message }
   }
 }

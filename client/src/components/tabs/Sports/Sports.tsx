@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useMemo, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { useFeed } from '@/hooks/useFeed.ts'
@@ -89,6 +89,7 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
     <div className={styles.tab} data-scroll-container>
       <StaleBadge stale={feed.stale} label={feed.fetchedAtLabel} />
       {feed.loaded && feed.items.length === 0 && (
+        // Without any cached games, say why (e.g. the computer is offline).
         <div className={styles.empty}>{feed.error ?? 'No games today'}</div>
       )}
       {feed.items.map((game, i) => (
@@ -105,5 +106,4 @@ const Sports: React.FC<{ active: boolean }> = ({ active }) => {
   )
 }
 
-// Memoized so drags and pushes for other tabs don't re-render this one.
-export default memo(Sports)
+export default Sports

@@ -11,9 +11,10 @@ import {
   resolveSelection
 } from './calendar.js'
 import {
+  DEFAULT_COLOR,
+  MAX_EVENTS,
   buildCalendarItems,
   dayLabel,
-  MAX_EVENTS,
   normalizeCalendarList,
   normalizeEvents
 } from './calendarLogic.js'
@@ -62,6 +63,20 @@ describe('normalizeCalendarList', () => {
     expect(list[0]).toMatchObject({ primary: true, color: '#9fe1e7' })
   })
 
+  it('falls back on odd names and colors', () => {
+    const [cal] = normalizeCalendarList({
+      items: [
+        { id: 'x', summary: 12, backgroundColor: 'url(evil)', primary: 'yes' }
+      ]
+    })
+    expect(cal).toEqual({
+      id: 'x',
+      name: 'x',
+      color: DEFAULT_COLOR,
+      primary: false
+    })
+  })
+
   it('returns nothing for malformed JSON', () => {
     expect(normalizeCalendarList(null)).toEqual([])
     expect(normalizeCalendarList({ items: 'x' })).toEqual([])
@@ -89,6 +104,33 @@ describe('normalizeEvents', () => {
 
   it('names untitled events', () => {
     expect(events.some(e => e.title === '(No title)')).toBe(true)
+  })
+
+  it('never passes non-string fields through', () => {
+    const json = {
+      items: [
+        null,
+        { id: 7, start: { dateTime: '2026-10-08T15:00:00Z' } },
+        { id: 'a', summary: { text: 'x' }, start: { dateTime: 42 } },
+        {
+          id: 'b',
+          summary: ['Standup'],
+          location: { lat: 1 },
+          start: { dateTime: '2026-10-08T15:00:00Z' },
+          end: { dateTime: 'soon' }
+        }
+      ]
+    }
+    const [only, ...rest] = normalizeEvents(json, { id: 'c', color: '#000' })
+    expect(rest).toEqual([])
+    expect(only).toEqual({
+      id: 'c:b',
+      title: '(No title)',
+      allDay: false,
+      start: Date.parse('2026-10-08T15:00:00Z'),
+      end: Date.parse('2026-10-08T15:00:00Z'),
+      color: '#000'
+    })
   })
 
   it('skips events without a start', () => {
@@ -149,18 +191,20 @@ describe('buildCalendarItems', () => {
 })
 
 describe('buildCalendarItems cap', () => {
-  it(`keeps the first ${MAX_EVENTS} events`, () => {
-    const raw = Array.from({ length: MAX_EVENTS + 5 }, (_, i) => ({
-      id: `e${i}`,
+  it('keeps only the first MAX_EVENTS in display order', () => {
+    const raw = Array.from({ length: 100 }, (_, i) => ({
+      id: `c:${i}`,
       title: `Event ${i}`,
       allDay: false,
-      start: NOW + (i + 1) * 60_000,
-      end: NOW + (i + 2) * 60_000,
+      start: NOW + (100 - i) * 60_000,
+      end: NOW + (100 - i) * 60_000 + 30 * 60_000,
       color: '#aaa'
     }))
     const items = buildCalendarItems(raw, NOW, formatTime)
     expect(items).toHaveLength(MAX_EVENTS)
-    expect(items[0].id).toBe('e0')
+    // The soonest events survive.
+    expect(items[0].id).toBe('c:99')
+    expect(items[MAX_EVENTS - 1].id).toBe(`c:${100 - MAX_EVENTS}`)
   })
 })
 

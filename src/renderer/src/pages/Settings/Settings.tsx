@@ -12,7 +12,6 @@ import icon from '@/assets/icon.png'
 import iconNightly from '@/assets/icon-nightly.png'
 import { useNavigate } from 'react-router-dom'
 import { ChannelContext } from '@/contexts/ChannelContext.js'
-import { GOOGLE_SETUP_URL } from '@/lib/setupGuide.js'
 
 enum Tab {
   General,
@@ -848,16 +847,14 @@ const GoogleTab: React.FC = () => {
           {status.clientSource === 'build'
             ? 'This app has a built-in Google client. Enter your own to use it instead.'
             : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}{' '}
-          <a href={GOOGLE_SETUP_URL} target="_blank" rel="noreferrer">
-            How to get these
+          <a
+            href={status.setupGuideUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Setup guide
           </a>
         </p>
-        {!status.configured && (
-          <p className={styles.error}>
-            Google is not set up yet, so the Calendar and To-do tabs on the
-            Car Thing stay empty.
-          </p>
-        )}
         <input
           type="text"
           placeholder="Client ID"
@@ -907,12 +904,6 @@ const GoogleTab: React.FC = () => {
               ? 'Waiting for you to sign in from your browser...'
               : 'Not connected.'}
         </p>
-        {status.revoked && !status.connected && !connecting && (
-          <p className={styles.error}>
-            Google access was revoked or expired. Connect again to bring
-            back your events and tasks.
-          </p>
-        )}
         <div className={styles.actions}>
           {status.connected ? (
             <button data-type="danger" onClick={disconnect}>

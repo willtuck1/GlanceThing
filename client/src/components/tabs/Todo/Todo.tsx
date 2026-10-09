@@ -1,4 +1,4 @@
-import { memo, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { useFeed } from '@/hooks/useFeed.ts'
@@ -206,5 +206,4 @@ const Todo: React.FC<{ active: boolean }> = ({ active }) => {
   )
 }
 
-// Memoized so drags and pushes for other tabs don't re-render this one.
-export default memo(Todo)
+export default Todo

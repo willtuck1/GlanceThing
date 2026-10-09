@@ -1,5 +1,3 @@
-import { memo } from 'react'
-
 import Controls from './widgets/Controls/Controls.tsx'
 import Player from './widgets/Player/Player.tsx'
 import Apps from './widgets/Apps/Apps.tsx'
@@ -18,5 +16,4 @@ const Widgets: React.FC = () => {
   )
 }
 
-// Memoized so pager drags don't re-render the Spotify page.
-export default memo(Widgets)
+export default Widgets

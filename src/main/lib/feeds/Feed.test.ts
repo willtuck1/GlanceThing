@@ -1,13 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { Feed, FeedDeps, REFRESH_RATE_LIMIT_MS } from './Feed.js'
+import {
+  Feed,
+  FeedDeps,
+  FeedOptions,
+  REFRESH_RATE_LIMIT_MS
+} from './Feed.js'
 
 function setup(opts?: {
   fetch?: () => Promise<number[]>
   cached?: { items: number[]; fetchedAt: number } | null
   interval?: number
-  describeError?: (e: unknown) => string
-  dropsData?: (e: unknown) => boolean
+  describeError?: FeedOptions<number>['describeError']
 }) {
   let now = 1_000_000
   const published: unknown[] = []
@@ -27,8 +31,7 @@ function setup(opts?: {
       key: 'test',
       fetch,
       interval: () => opts?.interval ?? 60_000,
-      describeError: opts?.describeError,
-      dropsData: opts?.dropsData
+      describeError: opts?.describeError
     },
     deps
   )
@@ -225,52 +228,44 @@ describe('Feed.refetch', () => {
     await pending
   })
 
-  it('shows the described error and logs the raw one', async () => {
-    const { feed } = setup({
+  it('publishes the described error and keeps data by default', async () => {
+    let fail = false
+    const { feed, published } = setup({
       fetch: async () => {
-        throw new Error('Request failed with status code 503')
+        if (fail) throw new Error('getaddrinfo ENOTFOUND')
+        return [5]
       },
-      describeError: () => 'Google is down'
+      describeError: () => ({ message: 'Offline', dropItems: false })
     })
     await feed.refresh()
-    expect(feed.getPayload()).toMatchObject({
+    fail = true
+    await feed.refresh()
+    expect(published[1]).toMatchObject({
+      items: [5],
       stale: true,
-      error: 'Google is down'
+      error: 'Offline'
     })
   })
 
-  it('drops data and the cache when the error says it is invalid', async () => {
+  it('drops data and the cache when the error says so', async () => {
     let fail = false
-    const { feed, saved } = setup({
+    const { feed, published, saved } = setup({
       fetch: async () => {
         if (fail) throw new Error('revoked')
-        return [1, 2]
+        return [5]
       },
-      dropsData: e => (e as Error).message === 'revoked'
+      describeError: () => ({ message: 'Reconnect', dropItems: true })
     })
     await feed.refresh()
     fail = true
     await feed.refresh()
-    expect(feed.getPayload()).toMatchObject({
+    expect(saved.test).toBeNull()
+    expect(published[1]).toMatchObject({
       items: [],
       fetchedAt: null,
-      error: 'revoked'
+      fetchedAtLabel: '',
+      stale: true,
+      error: 'Reconnect'
     })
-    expect(saved.test).toBeNull()
-  })
-
-  it('keeps data for errors that do not invalidate it', async () => {
-    let fail = false
-    const { feed } = setup({
-      fetch: async () => {
-        if (fail) throw new Error('timeout')
-        return [1, 2]
-      },
-      dropsData: e => (e as Error).message === 'revoked'
-    })
-    await feed.refresh()
-    fail = true
-    await feed.refresh()
-    expect(feed.getPayload()).toMatchObject({ items: [1, 2], stale: true })
   })
 })

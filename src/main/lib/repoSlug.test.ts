@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import { parseRepoSlug, resolveRepoSlug } from './repoSlug.js'
-import { getClientZipUrl, getLatestReleaseApiUrl } from './repo.js'
+import {
+  getClientZipUrl,
+  getLatestReleaseApiUrl,
+  getSetupGuideUrl
+} from './repo.js'
 
 describe('parseRepoSlug', () => {
   it('accepts owner/name', () => {
@@ -65,6 +69,12 @@ describe('release urls', () => {
   it('builds the latest release api url from the slug', () => {
     expect(getLatestReleaseApiUrl('a/b')).toBe(
       'https://api.github.com/repos/a/b/releases/latest'
+    )
+  })
+
+  it('links the setup guide in the same repo', () => {
+    expect(getSetupGuideUrl('a/b')).toBe(
+      'https://github.com/a/b/blob/main/docs/SETUP.md'
     )
   })
 })
