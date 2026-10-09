@@ -400,6 +400,10 @@ const ClientTab: React.FC = () => {
   }>({})
 
   const [autoBrightness, setAutoBrightness] = useState(false)
+  const [tintOpacity, setTintOpacity] = useState({
+    sports: 25,
+    calendar: 45
+  })
   const [sleepMethod, setSleepMethod] = useState('sleep')
   const [patches, setPatches] = useState<
     | { name: string; description: string; installed: boolean }[]
@@ -425,6 +429,12 @@ const ClientTab: React.FC = () => {
       }
       setAutoBrightness(settings.current.autoBrightness ?? false)
       setSleepMethod(settings.current.sleepMethod ?? 'sleep')
+
+      const display = await window.api.getDisplaySettings()
+      setTintOpacity({
+        sports: display.sportsTintOpacity,
+        calendar: display.calendarTintOpacity
+      })
 
       const hasImage = await window.api.hasCustomScreensaverImage()
       setHasCustomImage(hasImage)
@@ -509,6 +519,30 @@ const ClientTab: React.FC = () => {
           onRelease={value =>
             window.api.setStorageValue('brightness', value as number)
           }
+        />
+        <SliderSetting
+          label="Sports color opacity"
+          description={`How strongly team colors tint sports rows (${tintOpacity.sports}%)`}
+          value={tintOpacity.sports}
+          min={0}
+          max={100}
+          step={1}
+          onChange={value => {
+            setTintOpacity(prev => ({ ...prev, sports: value }))
+            window.api.setDisplaySettings({ sportsTintOpacity: value })
+          }}
+        />
+        <SliderSetting
+          label="Calendar color opacity"
+          description={`How strongly calendar colors tint event rows (${tintOpacity.calendar}%)`}
+          value={tintOpacity.calendar}
+          min={0}
+          max={100}
+          step={1}
+          onChange={value => {
+            setTintOpacity(prev => ({ ...prev, calendar: value }))
+            window.api.setDisplaySettings({ calendarTintOpacity: value })
+          }}
         />
         <SelectSetting
           label="Sleep Method"
