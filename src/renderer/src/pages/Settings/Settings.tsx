@@ -479,8 +479,7 @@ const ClientTab: React.FC = () => {
     const value = pendingTint.current[key]
     delete pendingTint.current[key]
     delete tintTimers.current[key]
-    if (value !== undefined)
-      window.api.setDisplaySettings({ [key]: value })
+    if (value !== undefined) window.api.setDisplaySettings({ [key]: value })
   }
 
   function queueTint(
@@ -929,9 +928,7 @@ const GoogleTab: React.FC = () => {
     if (!calendars) return
     const next = calendars.map(c => (c.id === id ? { ...c, selected } : c))
     setCalendars(next)
-    window.api.setGoogleCalendars(
-      next.filter(c => c.selected).map(c => c.id)
-    )
+    window.api.setGoogleCalendars(next.filter(c => c.selected).map(c => c.id))
   }
 
   function selectTaskList(id: string) {
@@ -950,7 +947,11 @@ const GoogleTab: React.FC = () => {
           {status.clientSource === 'build'
             ? 'This app has a built-in Google client. Enter your own to use it instead.'
             : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}{' '}
-          <a href={status.setupGuideUrl} target="_blank" rel="noreferrer">
+          <a
+            href={status.setupGuideUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
             Setup guide
           </a>
         </p>
@@ -1026,9 +1027,7 @@ const GoogleTab: React.FC = () => {
           <p className={styles.description}>
             Events from the checked calendars show on the Car Thing.
           </p>
-          {calendarError && (
-            <p className={styles.error}>{calendarError}</p>
-          )}
+          {calendarError && <p className={styles.error}>{calendarError}</p>}
           {!calendars && !calendarError && (
             <p className={styles.description}>Loading calendars...</p>
           )}
@@ -1037,9 +1036,7 @@ const GoogleTab: React.FC = () => {
               <input
                 type="checkbox"
                 checked={calendar.selected}
-                onChange={e =>
-                  toggleCalendar(calendar.id, e.target.checked)
-                }
+                onChange={e => toggleCalendar(calendar.id, e.target.checked)}
               />
               <span
                 className={styles.swatch}
@@ -1142,9 +1139,7 @@ const FantasyTab: React.FC = () => {
     setLeagueId(res.leagueId)
     setSeason(res.season)
     setMessage({
-      text: res.username
-        ? 'Sleeper username saved.'
-        : 'Sleeper username cleared.',
+      text: res.username ? 'Sleeper username saved.' : 'Sleeper username cleared.',
       type: 'success'
     })
   }
@@ -1230,12 +1225,7 @@ const WeatherTab: React.FC = () => {
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<
-    | {
-        name: string
-        label: string
-        latitude: number
-        longitude: number
-      }[]
+    | { name: string; label: string; latitude: number; longitude: number }[]
     | null
   >(null)
   const [error, setError] = useState(false)
@@ -1382,6 +1372,7 @@ const TabsTab: React.FC = () => {
   const [modules, setModules] = useState<{ id: string; label: string }[]>(
     []
   )
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     window.api.getTabSettings().then(res => {
@@ -1396,7 +1387,15 @@ const TabsTab: React.FC = () => {
   const shown = current.order.filter(id => !current.hidden.includes(id))
 
   async function save(order: string[], hidden: string[]) {
-    setSettings(await window.api.setTabSettings({ order, hidden }))
+    if (saving) return
+    setSaving(true)
+    try {
+      setSettings(await window.api.setTabSettings({ order, hidden }))
+    } catch {
+      // keep the previous state
+    } finally {
+      setSaving(false)
+    }
   }
 
   function toggle(id: string) {
@@ -1428,7 +1427,7 @@ const TabsTab: React.FC = () => {
           return (
             <div key={id} className={styles.actions}>
               <label
-                className={styles.taskListOption}
+                className={`${styles.taskListOption} ${styles.tabOption}`}
                 title={
                   lastShown ? 'At least one tab must stay on' : undefined
                 }
@@ -1436,19 +1435,19 @@ const TabsTab: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={isShown}
-                  disabled={lastShown}
+                  disabled={lastShown || saving}
                   onChange={() => toggle(id)}
                 />
                 {modules.find(m => m.id === id)?.label ?? id}
               </label>
               <button
-                disabled={index === 0}
+                disabled={saving || index === 0}
                 onClick={() => move(index, -1)}
               >
                 Up
               </button>
               <button
-                disabled={index === current.order.length - 1}
+                disabled={saving || index === current.order.length - 1}
                 onClick={() => move(index, 1)}
               >
                 Down
