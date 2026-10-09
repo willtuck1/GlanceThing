@@ -3,7 +3,7 @@
 // still show through. Chrome 69 handles rgba and hard-stop gradients.
 
 export const TINT_ALPHA = 0.45
-// Team colors are bright and fill a whole half row, so they sit lower.
+// Team colors are bright and fill the whole row, so they sit lower.
 export const TEAM_TINT_ALPHA = 0.25
 
 const HEX = /^#([0-9a-f]{6})$/i
@@ -16,22 +16,18 @@ export function rgba(hex: string | undefined, alpha = TINT_ALPHA) {
 }
 
 // One color across the whole row.
-export function tint(hex: string | undefined) {
-  const c = rgba(hex)
+export function tint(hex: string | undefined, alpha = TINT_ALPHA) {
+  const c = rgba(hex, alpha)
   return c ? `linear-gradient(${c}, ${c})` : undefined
 }
 
-// Left side one color, right side the other, meeting at `at` (any CSS
-// length). A missing color leaves its side plain; with neither there is no
-// tint at all.
-export function splitTint(
-  left: string | undefined,
-  right: string | undefined,
-  at = '50%'
+// One color per sports row: the favorite's if exactly one team is a
+// favorite, else the away (left) team's. No fallback to the other team.
+export function rowTeamColor(
+  away: { key: string; color?: string },
+  home: { key: string; color?: string },
+  favorites: string[]
 ) {
-  const a = rgba(left, TEAM_TINT_ALPHA)
-  const b = rgba(right, TEAM_TINT_ALPHA)
-  if (!a && !b) return undefined
-  const clear = 'rgba(0, 0, 0, 0)'
-  return `linear-gradient(to right, ${a ?? clear} ${at}, ${b ?? clear} ${at})`
+  const homeOnly = favorites.includes(home.key) && !favorites.includes(away.key)
+  return homeOnly ? home.color : away.color
 }
