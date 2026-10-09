@@ -10,5 +10,6 @@ Review `git diff origin/main...HEAD` (run `git diff --stat` first and open only 
 - Secrets or tokens in plain storage or logs.
 - Chrome 69 incompatibilities in `client/`.
 - New logic without tests.
+- AGENTS.md left wrong or incomplete by the diff.
 
 Report at most 8 findings, most severe first, each with `path:line`, a concrete failing scenario and a suggested fix, in under 400 words. Say "no issues found" if there are none. Don't edit files.

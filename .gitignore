@@ -6,3 +6,4 @@ client/*.tsbuildinfo
 .DS_Store
 *.tsbuildinfo
 .env
+.claude/.docs-checked
