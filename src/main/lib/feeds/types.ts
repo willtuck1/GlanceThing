@@ -46,6 +46,11 @@ export interface Game {
   detail: string
   // Scheduled start, epoch ms. Used for sorting and polling interval.
   start: number
+  // Live games only: the period (5+ is overtime) and seconds left in it.
+  period?: number
+  clock?: number
+  // The scoreboard's week number (NFL). Missing on older cached games.
+  week?: number
   // Set when this game's league failed to refresh and the game is from the
   // last good fetch.
   stale?: boolean
