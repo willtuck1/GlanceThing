@@ -6,6 +6,8 @@ import { ModalContext } from '@/contexts/ModalContext.js'
 import Loader from '@/components/Loader/Loader.js'
 import Switch from '@/components/Switch/Switch.js'
 
+import ConnectorsTab from './ConnectorsTab.js'
+
 import styles from './Settings.module.css'
 
 import icon from '@/assets/icon.png'
@@ -22,6 +24,7 @@ enum Tab {
   Fantasy,
   Weather,
   Tabs,
+  Connectors,
   Advanced,
   Logs,
   About
@@ -118,6 +121,13 @@ const Settings: React.FC = () => {
               <span className="material-icons">tab</span>
               Tabs
             </button>
+            <button
+              onClick={() => setCurrentTab(Tab.Connectors)}
+              data-active={currentTab === Tab.Connectors}
+            >
+              <span className="material-icons">link</span>
+              Connectors
+            </button>
             {devMode ? (
               <>
                 <button
@@ -161,6 +171,8 @@ const Settings: React.FC = () => {
               <WeatherTab />
             ) : currentTab === Tab.Tabs ? (
               <TabsTab />
+            ) : currentTab === Tab.Connectors ? (
+              <ConnectorsTab />
             ) : currentTab === Tab.Advanced ? (
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
@@ -479,7 +491,8 @@ const ClientTab: React.FC = () => {
     const value = pendingTint.current[key]
     delete pendingTint.current[key]
     delete tintTimers.current[key]
-    if (value !== undefined) window.api.setDisplaySettings({ [key]: value })
+    if (value !== undefined)
+      window.api.setDisplaySettings({ [key]: value })
   }
 
   function queueTint(
@@ -928,7 +941,9 @@ const GoogleTab: React.FC = () => {
     if (!calendars) return
     const next = calendars.map(c => (c.id === id ? { ...c, selected } : c))
     setCalendars(next)
-    window.api.setGoogleCalendars(next.filter(c => c.selected).map(c => c.id))
+    window.api.setGoogleCalendars(
+      next.filter(c => c.selected).map(c => c.id)
+    )
   }
 
   function selectTaskList(id: string) {
@@ -947,11 +962,7 @@ const GoogleTab: React.FC = () => {
           {status.clientSource === 'build'
             ? 'This app has a built-in Google client. Enter your own to use it instead.'
             : 'Create a Desktop app OAuth client in your Google Cloud project and paste its ID and secret here.'}{' '}
-          <a
-            href={status.setupGuideUrl}
-            target="_blank"
-            rel="noreferrer"
-          >
+          <a href={status.setupGuideUrl} target="_blank" rel="noreferrer">
             Setup guide
           </a>
         </p>
@@ -1027,7 +1038,9 @@ const GoogleTab: React.FC = () => {
           <p className={styles.description}>
             Events from the checked calendars show on the Car Thing.
           </p>
-          {calendarError && <p className={styles.error}>{calendarError}</p>}
+          {calendarError && (
+            <p className={styles.error}>{calendarError}</p>
+          )}
           {!calendars && !calendarError && (
             <p className={styles.description}>Loading calendars...</p>
           )}
@@ -1036,7 +1049,9 @@ const GoogleTab: React.FC = () => {
               <input
                 type="checkbox"
                 checked={calendar.selected}
-                onChange={e => toggleCalendar(calendar.id, e.target.checked)}
+                onChange={e =>
+                  toggleCalendar(calendar.id, e.target.checked)
+                }
               />
               <span
                 className={styles.swatch}
@@ -1139,7 +1154,9 @@ const FantasyTab: React.FC = () => {
     setLeagueId(res.leagueId)
     setSeason(res.season)
     setMessage({
-      text: res.username ? 'Sleeper username saved.' : 'Sleeper username cleared.',
+      text: res.username
+        ? 'Sleeper username saved.'
+        : 'Sleeper username cleared.',
       type: 'success'
     })
   }
@@ -1225,7 +1242,12 @@ const WeatherTab: React.FC = () => {
   const [query, setQuery] = useState('')
   const [searching, setSearching] = useState(false)
   const [results, setResults] = useState<
-    | { name: string; label: string; latitude: number; longitude: number }[]
+    | {
+        name: string
+        label: string
+        latitude: number
+        longitude: number
+      }[]
     | null
   >(null)
   const [error, setError] = useState(false)

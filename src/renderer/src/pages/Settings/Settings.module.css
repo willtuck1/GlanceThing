@@ -500,3 +500,53 @@
   border-radius: 3px;
   flex-shrink: 0;
 }
+
+.connectorRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connectorRow .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.connectorRow .info p {
+  margin: 0;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 8px;
+}
+
+.fieldRow input {
+  flex: 1;
+  min-width: 0;
+}
+
+.warning {
+  color: #ffb020;
+  font-size: 14px;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 14px;
+}
+
+.preview .previewRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preview .big {
+  font-size: 28px;
+}
