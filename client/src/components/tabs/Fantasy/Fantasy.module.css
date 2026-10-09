@@ -1,0 +1,160 @@
+/* Chrome 69: no flex gap, use margins. */
+
+.card {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  background-color: #1e1e1e;
+}
+
+.team {
+  flex: 1;
+  min-width: 0;
+}
+
+.team[data-align='right'] {
+  text-align: right;
+}
+
+.teamName {
+  font-size: 0.65em;
+  color: #ccc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.total {
+  font-size: 1.6em;
+  font-weight: 700;
+  color: #aaa;
+}
+
+.total[data-ahead='true'] {
+  color: #fff;
+}
+
+.vs {
+  margin: 0 16px;
+  font-size: 0.55em;
+  color: #777;
+  text-transform: uppercase;
+}
+
+/* One slot: my player and points, the slot, their points and player. */
+.row {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding: 6px 12px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background-color: #161616;
+}
+
+.row[data-highlighted='true'],
+.toggle[data-highlighted='true'] {
+  background-color: #2a2a2a;
+  outline: 2px solid #fff;
+}
+
+.player {
+  flex: 1;
+  min-width: 0;
+}
+
+.player[data-align='right'] {
+  text-align: right;
+}
+
+.player[data-empty='true'] {
+  color: #666;
+}
+
+.name {
+  font-size: 0.7em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail {
+  font-size: 0.48em;
+  color: #999;
+  white-space: nowrap;
+}
+
+.points {
+  flex-shrink: 0;
+  width: 76px;
+  margin: 0 8px;
+  font-size: 0.75em;
+  color: #999;
+  text-align: center;
+}
+
+.points[data-ahead='true'] {
+  color: #fff;
+  font-weight: 700;
+}
+
+.slot {
+  flex-shrink: 0;
+  width: 60px;
+  padding: 4px 0;
+  border-radius: 8px;
+  background-color: #2a2a2a;
+  color: #ddd;
+  font-size: 0.48em;
+  font-weight: 700;
+  text-align: center;
+}
+
+.row[data-highlighted='true'] .slot {
+  background-color: #444;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 64px;
+  margin: 8px 0;
+  border-radius: 12px;
+  background-color: #161616;
+  color: #ccc;
+  font-size: 0.65em;
+}
+
+.toggle .material-icons {
+  margin-right: 8px;
+}
+
+.notice {
+  margin-top: 60px;
+  padding: 0 40px;
+  text-align: center;
+  color: #999;
+  font-size: 0.75em;
+}
+
+/* Beats the global .material-icons font size. */
+.notice span:global(.material-icons) {
+  display: block;
+  font-size: 2.4em;
+  margin-bottom: 12px;
+  color: #666;
+}
+
+.benchEmpty {
+  margin: 8px 0 16px;
+  text-align: center;
+  color: #777;
+  font-size: 0.6em;
+}
+
+.end {
+  height: 24px;
+}

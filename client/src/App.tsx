@@ -12,6 +12,7 @@ import TabPager, { TabPage } from '@/components/TabPager/TabPager.tsx'
 import Calendar from '@/components/tabs/Calendar/Calendar.tsx'
 import Todo from '@/components/tabs/Todo/Todo.tsx'
 import Sports from '@/components/tabs/Sports/Sports.tsx'
+import Fantasy from '@/components/tabs/Fantasy/Fantasy.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
 
 import styles from './App.module.css'
@@ -20,6 +21,7 @@ const pages: TabPage[] = [
   { key: 'calendar', render: active => <Calendar active={active} /> },
   { key: 'todo', render: active => <Todo active={active} /> },
   { key: 'sports', render: active => <Sports active={active} /> },
+  { key: 'fantasy', render: active => <Fantasy active={active} /> },
   { key: 'spotify', render: () => <Widgets /> }
 ]
 

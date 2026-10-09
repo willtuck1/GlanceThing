@@ -55,7 +55,11 @@ enum IPCHandler {
   GetGoogleCalendars = 'getGoogleCalendars',
   SetGoogleCalendars = 'setGoogleCalendars',
   GetGoogleTaskLists = 'getGoogleTaskLists',
-  SetGoogleTaskList = 'setGoogleTaskList'
+  SetGoogleTaskList = 'setGoogleTaskList',
+  GetFantasyStatus = 'getFantasyStatus',
+  SetFantasyUsername = 'setFantasyUsername',
+  GetFantasyLeagues = 'getFantasyLeagues',
+  SetFantasyLeague = 'setFantasyLeague'
 }
 
 // Custom APIs for renderer
@@ -145,7 +149,13 @@ const api = {
   getGoogleTaskLists: () =>
     ipcRenderer.invoke(IPCHandler.GetGoogleTaskLists),
   setGoogleTaskList: (id: string) =>
-    ipcRenderer.invoke(IPCHandler.SetGoogleTaskList, id)
+    ipcRenderer.invoke(IPCHandler.SetGoogleTaskList, id),
+  getFantasyStatus: () => ipcRenderer.invoke(IPCHandler.GetFantasyStatus),
+  setFantasyUsername: (username: string) =>
+    ipcRenderer.invoke(IPCHandler.SetFantasyUsername, username),
+  getFantasyLeagues: () => ipcRenderer.invoke(IPCHandler.GetFantasyLeagues),
+  setFantasyLeague: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.SetFantasyLeague, id)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

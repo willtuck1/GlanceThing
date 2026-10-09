@@ -1,0 +1,70 @@
+[
+  {
+    "total_rosters": 4,
+    "status": "in_season",
+    "sport": "nfl",
+    "season_type": "regular",
+    "season": "2026",
+    "settings": {
+      "playoff_week_start": 15,
+      "num_teams": 4
+    },
+    "roster_positions": [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "SUPER_FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "IR"
+    ],
+    "previous_league_id": null,
+    "name": "Sample Dynasty League",
+    "league_id": "910000000000000001",
+    "draft_id": "920000000000000001",
+    "avatar": null
+  },
+  {
+    "total_rosters": 4,
+    "status": "in_season",
+    "sport": "nfl",
+    "season_type": "regular",
+    "season": "2026",
+    "settings": {
+      "playoff_week_start": 15,
+      "num_teams": 4
+    },
+    "roster_positions": [
+      "QB",
+      "RB",
+      "RB",
+      "WR",
+      "WR",
+      "TE",
+      "FLEX",
+      "SUPER_FLEX",
+      "K",
+      "DEF",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "BN",
+      "IR"
+    ],
+    "previous_league_id": null,
+    "name": "Sample Redraft League",
+    "league_id": "910000000000000002",
+    "draft_id": "920000000000000002",
+    "avatar": null
+  }
+]

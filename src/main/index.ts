@@ -78,6 +78,7 @@ import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import * as fantasy from './lib/fantasy/service.js'
 import * as google from './lib/google/service.js'
 import { watchCarThing } from './lib/watchdog.js'
 
@@ -258,7 +259,11 @@ enum IPCHandler {
   GetGoogleCalendars = 'getGoogleCalendars',
   SetGoogleCalendars = 'setGoogleCalendars',
   GetGoogleTaskLists = 'getGoogleTaskLists',
-  SetGoogleTaskList = 'setGoogleTaskList'
+  SetGoogleTaskList = 'setGoogleTaskList',
+  GetFantasyStatus = 'getFantasyStatus',
+  SetFantasyUsername = 'setFantasyUsername',
+  GetFantasyLeagues = 'getFantasyLeagues',
+  SetFantasyLeague = 'setFantasyLeague'
 }
 
 async function setupIpcHandlers() {
@@ -565,6 +570,22 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.SetGoogleTaskList, (_event, id) => {
     google.saveTaskList(id)
+  })
+
+  ipcMain.handle(IPCHandler.GetFantasyStatus, () => {
+    return fantasy.fantasyStatus()
+  })
+
+  ipcMain.handle(IPCHandler.SetFantasyUsername, async (_event, username) => {
+    return await fantasy.saveUsername(username)
+  })
+
+  ipcMain.handle(IPCHandler.GetFantasyLeagues, async () => {
+    return await fantasy.leagues()
+  })
+
+  ipcMain.handle(IPCHandler.SetFantasyLeague, (_event, id) => {
+    fantasy.saveLeague(id)
   })
 }
 
