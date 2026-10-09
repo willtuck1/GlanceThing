@@ -1,6 +1,6 @@
-import { respondWithFeed } from '../feeds/respond.js'
+import { respondWithFeed } from '../../feeds/respond.js'
 
-import { HandlerFunction } from '../../types/WebSocketHandler.js'
+import { HandlerFunction } from '../../../types/WebSocketHandler.js'
 
 export const name = 'fantasy'
 

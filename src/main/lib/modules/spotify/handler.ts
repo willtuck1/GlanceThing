@@ -1,9 +1,9 @@
-import { RepeatMode } from '../../types/Playback.js'
+import { RepeatMode } from '../../../types/Playback.js'
 import {
   HandlerAction,
   HandlerFunction
-} from '../../types/WebSocketHandler.js'
-import { playbackManager } from '../playback/playback.js'
+} from '../../../types/WebSocketHandler.js'
+import { playbackManager } from '../../playback/playback.js'
 
 export const name = 'playback'
 

@@ -1,14 +1,14 @@
-import { respondWithFeed } from '../feeds/respond.js'
-import { getFeedPayload } from '../feeds/registry.js'
-import { setStoredFavorite } from '../sports/favorites.js'
-import { isTeamKey } from '../sports/logic.js'
-import { serverManager } from '../server.js'
-import { log, LogLevel } from '../utils.js'
+import { respondWithFeed } from '../../feeds/respond.js'
+import { getFeedPayload } from '../../feeds/registry.js'
+import { setStoredFavorite } from '../../sports/favorites.js'
+import { isTeamKey } from '../../sports/logic.js'
+import { serverManager } from '../../server.js'
+import { log, LogLevel } from '../../utils.js'
 
 import {
   HandlerAction,
   HandlerFunction
-} from '../../types/WebSocketHandler.js'
+} from '../../../types/WebSocketHandler.js'
 
 export const name = 'sports'
 

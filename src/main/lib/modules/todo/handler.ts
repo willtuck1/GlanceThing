@@ -1,14 +1,14 @@
-import { respondWithFeed } from '../feeds/respond.js'
-import { getFeed } from '../feeds/registry.js'
-import { setTaskDone } from '../google/tasks.js'
-import { googlePatch } from '../google/tasksSettings.js'
-import { parseToggle, toggleTask } from '../google/todoToggle.js'
-import { log, LogLevel } from '../utils.js'
+import { respondWithFeed } from '../../feeds/respond.js'
+import { getFeed } from '../../feeds/registry.js'
+import { setTaskDone } from '../../google/tasks.js'
+import { googlePatch } from '../../google/tasksSettings.js'
+import { parseToggle, toggleTask } from '../../google/todoToggle.js'
+import { log, LogLevel } from '../../utils.js'
 
 import {
   HandlerAction,
   HandlerFunction
-} from '../../types/WebSocketHandler.js'
+} from '../../../types/WebSocketHandler.js'
 
 export const name = 'todo'
 
