@@ -4,7 +4,7 @@
       "layout": "list",
       "rows": [
         {
-          "primary": "Living room wall panel backlight controller, north array (zone 3 of 4)",
+          "primary": "Living room wall panel backlight controller north array zone three of four extra",
           "secondary": "Light",
           "value": "On"
         },
@@ -20,7 +20,7 @@
         },
         {
           "primary": "Front porch motion",
-          "secondary": "Binary sensor",
+          "secondary": "Front porch motion sensor, outdoor north",
           "value": "No motion"
         },
         {
