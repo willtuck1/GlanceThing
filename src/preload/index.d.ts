@@ -29,6 +29,18 @@ interface GoogleTaskListOption {
   selected: boolean
 }
 
+interface FantasyStatus {
+  username: string | null
+  leagueId: string | null
+}
+
+interface FantasyLeagues {
+  leagues: { id: string; name: string }[]
+  // The league the tab shows, null without any.
+  leagueId: string | null
+  season: string
+}
+
 declare global {
   interface Window {
     api: {
@@ -118,6 +130,15 @@ declare global {
         | { ok: false; error: string }
       >
       setGoogleTaskList: (id: string) => Promise<void>
+      getFantasyStatus: () => Promise<FantasyStatus>
+      setFantasyUsername: (username: string) => Promise<
+        | ({ ok: true; username: string | null } & FantasyLeagues)
+        | { ok: false; error: string }
+      >
+      getFantasyLeagues: () => Promise<
+        ({ ok: true } & FantasyLeagues) | { ok: false; error: string }
+      >
+      setFantasyLeague: (id: string) => Promise<void>
     }
   }
 }

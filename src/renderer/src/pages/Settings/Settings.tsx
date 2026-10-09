@@ -19,6 +19,7 @@ enum Tab {
   Appearance,
   Startup,
   Google,
+  Fantasy,
   Advanced,
   Logs,
   About
@@ -94,6 +95,13 @@ const Settings: React.FC = () => {
               <span className="material-icons">event</span>
               Google
             </button>
+            <button
+              onClick={() => setCurrentTab(Tab.Fantasy)}
+              data-active={currentTab === Tab.Fantasy}
+            >
+              <span className="material-icons">sports_football</span>
+              Fantasy
+            </button>
             {devMode ? (
               <>
                 <button
@@ -131,6 +139,8 @@ const Settings: React.FC = () => {
               <StartupTab />
             ) : currentTab === Tab.Google ? (
               <GoogleTab />
+            ) : currentTab === Tab.Fantasy ? (
+              <FantasyTab />
             ) : currentTab === Tab.Advanced ? (
               <AdvancedTab />
             ) : currentTab === Tab.Logs ? (
@@ -975,6 +985,136 @@ const GoogleTab: React.FC = () => {
               )}
             </label>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+type FantasyLeague = Extract<
+  Awaited<ReturnType<typeof window.api.getFantasyLeagues>>,
+  { ok: true }
+>['leagues'][number]
+
+const FantasyTab: React.FC = () => {
+  const [loaded, setLoaded] = useState(false)
+  const [username, setUsername] = useState('')
+  const [savedUsername, setSavedUsername] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [leagues, setLeagues] = useState<FantasyLeague[] | null>(null)
+  const [leagueId, setLeagueId] = useState<string | null>(null)
+  const [season, setSeason] = useState('')
+  const [message, setMessage] = useState<{
+    text: string
+    type: 'error' | 'success'
+  } | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    window.api.getFantasyStatus().then(status => {
+      if (cancelled) return
+      setUsername(status.username ?? '')
+      setSavedUsername(status.username)
+      setLeagueId(status.leagueId)
+      setLoaded(true)
+      if (!status.username) return
+      window.api.getFantasyLeagues().then(res => {
+        if (cancelled) return
+        if (res.ok) {
+          setLeagues(res.leagues)
+          setLeagueId(res.leagueId)
+          setSeason(res.season)
+        } else {
+          setMessage({ text: res.error, type: 'error' })
+        }
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  async function save() {
+    setSaving(true)
+    setMessage(null)
+    const res = await window.api.setFantasyUsername(username)
+    setSaving(false)
+    if (!res.ok) {
+      setMessage({ text: res.error, type: 'error' })
+      return
+    }
+    setSavedUsername(res.username)
+    setUsername(res.username ?? '')
+    setLeagues(res.username ? res.leagues : null)
+    setLeagueId(res.leagueId)
+    setSeason(res.season)
+    setMessage({
+      text: res.username ? 'Sleeper username saved.' : 'Sleeper username cleared.',
+      type: 'success'
+    })
+  }
+
+  function selectLeague(id: string) {
+    setLeagueId(id)
+    window.api.setFantasyLeague(id)
+  }
+
+  if (!loaded) return null
+
+  return (
+    <div className={styles.settingsTab}>
+      <div className={styles.googleSection}>
+        <p>Sleeper username</p>
+        <p className={styles.description}>
+          The Fantasy tab on the Car Thing shows your current Sleeper
+          matchup. Sleeper data is public, so no password is needed.
+        </p>
+        <input
+          type="text"
+          placeholder="Sleeper username"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') save()
+          }}
+        />
+        <div className={styles.actions}>
+          <button disabled={saving} onClick={save}>
+            {saving ? 'Checking...' : 'Save'}
+          </button>
+        </div>
+        {message && <p className={styles[message.type]}>{message.text}</p>}
+      </div>
+
+      {savedUsername && leagues && (
+        <div className={styles.googleSection}>
+          <p>League</p>
+          {leagues.length === 0 ? (
+            <p className={styles.description}>
+              No leagues found for the {season} season.
+            </p>
+          ) : leagues.length === 1 ? (
+            <p className={styles.description}>
+              Showing {leagues[0].name}, your only league this season.
+            </p>
+          ) : (
+            <>
+              <p className={styles.description}>
+                The Car Thing shows your matchup in this league.
+              </p>
+              {leagues.map(league => (
+                <label key={league.id} className={styles.taskListOption}>
+                  <input
+                    type="radio"
+                    name="sleeperLeague"
+                    checked={league.id === leagueId}
+                    onChange={() => selectLeague(league.id)}
+                  />
+                  {league.name}
+                </label>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
