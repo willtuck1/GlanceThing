@@ -7,14 +7,21 @@ import { scrollRowIntoView } from '@/components/ListRow/scrollRowIntoView.ts'
 import StaleBadge from '@/components/StaleBadge/StaleBadge.tsx'
 import {
   benchRows,
+  estimateLabel,
   formatPoints,
+  formatProjected,
+  hasProjections,
   leader,
   MatchupRow,
   playerDetail,
   starterRows
 } from './rows.ts'
 
-import type { FantasyPlayer, FantasyView } from '@/types/Feeds.ts'
+import type {
+  FantasyPlayer,
+  FantasyTeam,
+  FantasyView
+} from '@/types/Feeds.ts'
 
 import tabStyles from '../tab.module.css'
 import styles from './Fantasy.module.css'
@@ -36,23 +43,47 @@ function useScrollIntoView(highlighted: boolean, first: boolean) {
   return ref
 }
 
+// Second line under a player's name: game status first, then position and
+// team. The line ellipsizes at its end, so on a narrow screen the position
+// and team are cut before the status.
+const Detail: React.FC<{ player: FantasyPlayer }> = ({ player }) => {
+  const detail = playerDetail(player)
+  return (
+    <div className={styles.detail}>
+      {player.game && (
+        <span className={styles.status} data-state={player.game.state}>
+          {player.game.label}
+        </span>
+      )}
+      {player.game && detail ? ' · ' : ''}
+      {detail}
+    </div>
+  )
+}
+
 const Side: React.FC<{
   player: FantasyPlayer | null
   ahead: boolean
   align: 'left' | 'right'
-}> = ({ player, ahead, align }) => {
+  showProjected: boolean
+}> = ({ player, ahead, align, showProjected }) => {
   const empty = !player || player.position === ''
   const points = (
-    <div className={styles.points} data-ahead={ahead}>
-      {player ? formatPoints(player.points) : ''}
+    <div className={styles.points}>
+      <div className={styles.actual} data-ahead={ahead}>
+        {player ? formatPoints(player.points) : ''}
+      </div>
+      {showProjected && player && !empty && (
+        <div className={styles.projected}>
+          proj {formatProjected(player)}
+        </div>
+      )}
     </div>
   )
   const info = (
     <div className={styles.player} data-align={align} data-empty={empty}>
       <div className={styles.name}>{player?.name ?? ''}</div>
-      {player && !empty && (
-        <div className={styles.detail}>{playerDetail(player)}</div>
-      )}
+      {player && !empty && <Detail player={player} />}
     </div>
   )
   return align === 'left' ? (
@@ -72,15 +103,45 @@ const Row: React.FC<{
   row: MatchupRow
   highlighted: boolean
   first: boolean
-}> = ({ row, highlighted, first }) => {
+  showProjected: boolean
+}> = ({ row, highlighted, first, showProjected }) => {
   const ref = useScrollIntoView(highlighted, first)
   const mine = row.mine?.points ?? 0
   const theirs = row.theirs?.points ?? 0
   return (
     <div ref={ref} className={styles.row} data-highlighted={highlighted}>
-      <Side player={row.mine} ahead={mine > theirs} align="left" />
+      <Side
+        player={row.mine}
+        ahead={mine > theirs}
+        align="left"
+        showProjected={showProjected}
+      />
       <div className={styles.slot}>{row.slot}</div>
-      <Side player={row.theirs} ahead={theirs > mine} align="right" />
+      <Side
+        player={row.theirs}
+        ahead={theirs > mine}
+        align="right"
+        showProjected={showProjected}
+      />
+    </div>
+  )
+}
+
+// A team's name, current total and, when the host has one, its estimated
+// final score.
+const TeamScore: React.FC<{
+  team: FantasyTeam
+  ahead: boolean
+  align: 'left' | 'right'
+}> = ({ team, ahead, align }) => {
+  const estimate = estimateLabel(team)
+  return (
+    <div className={styles.team} data-align={align}>
+      <div className={styles.teamName}>{team.name}</div>
+      <div className={styles.total} data-ahead={ahead}>
+        {formatPoints(team.points)}
+      </div>
+      {estimate && <div className={styles.estimate}>{estimate}</div>}
     </div>
   )
 }
@@ -150,6 +211,7 @@ const Fantasy: React.FC<{ active: boolean }> = ({ active }) => {
   const isHighlighted = (i: number) => active && i === highlighted
 
   const lead = matchup ? leader(matchup.me, matchup.opponent) : 'tied'
+  const showProjected = matchup ? hasProjections(matchup) : false
 
   return (
     <div className={tabStyles.tab} data-scroll-container>
@@ -183,22 +245,17 @@ const Fantasy: React.FC<{ active: boolean }> = ({ active }) => {
       {matchup && (
         <>
           <div className={styles.card}>
-            <div className={styles.team} data-align="left">
-              <div className={styles.teamName}>{matchup.me.name}</div>
-              <div className={styles.total} data-ahead={lead === 'me'}>
-                {formatPoints(matchup.me.points)}
-              </div>
-            </div>
+            <TeamScore
+              team={matchup.me}
+              ahead={lead === 'me'}
+              align="left"
+            />
             <div className={styles.vs}>vs</div>
-            <div className={styles.team} data-align="right">
-              <div className={styles.teamName}>{matchup.opponent.name}</div>
-              <div
-                className={styles.total}
-                data-ahead={lead === 'opponent'}
-              >
-                {formatPoints(matchup.opponent.points)}
-              </div>
-            </div>
+            <TeamScore
+              team={matchup.opponent}
+              ahead={lead === 'opponent'}
+              align="right"
+            />
           </div>
 
           {starters.map((row, i) => (
@@ -207,6 +264,7 @@ const Fantasy: React.FC<{ active: boolean }> = ({ active }) => {
               row={row}
               highlighted={isHighlighted(i)}
               first={i === 0}
+              showProjected={showProjected}
             />
           ))}
 
@@ -223,6 +281,7 @@ const Fantasy: React.FC<{ active: boolean }> = ({ active }) => {
                 row={row}
                 highlighted={isHighlighted(toggleIndex + 1 + i)}
                 first={false}
+                showProjected={showProjected}
               />
             ))}
           {benchOpen && bench.length === 0 && (
