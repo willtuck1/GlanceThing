@@ -1,0 +1,37 @@
+{
+  "items": [
+    {
+      "layout": "keyvalue",
+      "pairs": [
+        {
+          "label": "Uptime",
+          "value": "12d 4h"
+        },
+        {
+          "label": "CPU",
+          "value": "18%"
+        },
+        {
+          "label": "Memory",
+          "value": "6.2 / 16 GB"
+        },
+        {
+          "label": "Disk",
+          "value": "71%"
+        },
+        {
+          "label": "Load (1m)",
+          "value": "0.42"
+        },
+        {
+          "label": "Version",
+          "value": "2026.9.1"
+        }
+      ]
+    }
+  ],
+  "fetchedAt": 1760000000000,
+  "fetchedAtLabel": "3:04 PM",
+  "stale": false,
+  "error": null
+}
