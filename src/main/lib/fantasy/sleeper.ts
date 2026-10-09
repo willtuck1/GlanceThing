@@ -12,6 +12,8 @@ import {
   seasonNotice
 } from './logic.js'
 
+import { ProjectionMap } from './projections.js'
+
 import { FantasyView } from '../feeds/types.js'
 
 // Sleeper's public, read-only API. No account or token is involved.
@@ -89,6 +91,25 @@ export interface FantasyFetcherDeps {
   // Remembers the id a username resolved to, so it is looked up once.
   saveUserId: (userId: string) => void
   getPlayers: () => Promise<PlayerMap>
+  // Optional extra: the week's projections, null when unavailable.
+  getProjections?: (
+    season: string,
+    week: number
+  ) => Promise<ProjectionMap | null>
+}
+
+// Projections come from an unofficial endpoint; any failure just leaves
+// them out.
+async function safeProjections(
+  deps: FantasyFetcherDeps,
+  season: string,
+  week: number
+) {
+  try {
+    return (await deps.getProjections?.(season, week)) ?? null
+  } catch {
+    return null
+  }
 }
 
 // Returns a fetch function for the fantasy Feed. Its one item is this
@@ -119,12 +140,14 @@ export function createFantasyFetcher(deps: FantasyFetcherDeps) {
       ]
 
     const id = enc(choice.id)
-    const [league, rosters, users, matchups] = await Promise.all([
-      deps.get(`/league/${id}`),
-      deps.get(`/league/${id}/rosters`),
-      deps.get(`/league/${id}/users`),
-      deps.get(`/league/${id}/matchups/${state.week}`)
-    ])
+    const [league, rosters, users, matchups, projections] =
+      await Promise.all([
+        deps.get(`/league/${id}`),
+        deps.get(`/league/${id}/rosters`),
+        deps.get(`/league/${id}/users`),
+        deps.get(`/league/${id}/matchups/${state.week}`),
+        safeProjections(deps, state.season, state.week)
+      ])
 
     const notice = leagueNotice(league)
     if (notice)
@@ -145,6 +168,7 @@ export function createFantasyFetcher(deps: FantasyFetcherDeps) {
         users,
         matchups,
         players: await deps.getPlayers(),
+        projections,
         week: state.week
       })
     ]

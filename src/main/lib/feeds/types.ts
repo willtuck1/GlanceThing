@@ -70,12 +70,26 @@ export interface FantasyPlayer {
   // Short label of the lineup slot ('QB', 'FLEX', 'SF', 'BN').
   slot: string
   points: number
+  // Projected points for the week. Missing when Sleeper has none.
+  projected?: number
+  // Set when Sleeper's player list marks the player out for the week.
+  out?: 'OUT' | 'Inactive'
+  // The player's NFL game, added from the Sports feed when ESPN is up.
+  game?: FantasyGameStatus
+}
+
+export interface FantasyGameStatus {
+  state: 'pre' | 'in' | 'post' | 'bye' | 'out'
+  // 'Sun 1:00 PM', 'Q3 4:12', 'Half', 'Final', 'Bye', 'OUT'.
+  label: string
 }
 
 export interface FantasyTeam {
   rosterId: number
   name: string
   points: number
+  // Estimated final score. Only with projections and game status.
+  estimate?: number
   starters: FantasyPlayer[]
   bench: FantasyPlayer[]
 }
@@ -87,6 +101,9 @@ export type FantasyView =
       kind: 'matchup'
       leagueName: string
       week: number
+      // False when Sleeper's projections couldn't be loaded; the tab then
+      // hides the projection column and the estimate.
+      projections?: boolean
       me: FantasyTeam
       opponent: FantasyTeam
     }

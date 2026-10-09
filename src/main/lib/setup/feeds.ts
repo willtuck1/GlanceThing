@@ -4,6 +4,7 @@ import {
   decoratePayload,
   FeedDecorator,
   getFeed,
+  getFeedPayload,
   registerFeed,
   unregisterAll
 } from '../feeds/registry.js'
@@ -18,8 +19,13 @@ import { createTasksFetcher } from '../google/tasks.js'
 import { TASKS_INTERVAL } from '../google/tasksLogic.js'
 import { describeGoogleError } from '../google/session.js'
 import { getSelectedTaskList } from '../google/tasksSettings.js'
+import { decorateFantasy } from '../fantasy/gameStatus.js'
 import { fantasyInterval } from '../fantasy/logic.js'
 import { getPlayers } from '../fantasy/playersDisk.js'
+import {
+  createProjectionStore,
+  projectionsGet
+} from '../fantasy/projections.js'
 import {
   getFantasySettings,
   setFantasyUserId
@@ -37,7 +43,12 @@ import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
 import { log, LogLevel } from '../utils.js'
 
-import { FeedKey, FeedPayload, Game } from '../feeds/types.js'
+import {
+  FantasyView,
+  FeedKey,
+  FeedPayload,
+  Game
+} from '../feeds/types.js'
 import { SetupFunction } from '../../types/WebSocketSetup.js'
 
 export const name = 'feeds'
@@ -57,6 +68,15 @@ interface Source {
   interval: (items: unknown[]) => number
   describeError: (e: unknown) => FeedError
   decorate?: FeedDecorator
+}
+
+// The Sports feed's games as they are now, for the Fantasy tab's game
+// status. Null before the Sports feed exists.
+function currentGames() {
+  const payload = getFeed('sports')?.getPayload()
+  return payload
+    ? { items: payload.items as Game[], stale: payload.stale }
+    : null
 }
 
 function sources(): Source[] {
@@ -105,7 +125,12 @@ function sources(): Source[] {
         get: sleeperGet,
         getSettings: getFantasySettings,
         saveUserId: setFantasyUserId,
-        getPlayers
+        getPlayers,
+        getProjections: createProjectionStore({
+          get: projectionsGet,
+          now: () => Date.now(),
+          log: message => log(message, 'Fantasy', LogLevel.WARN)
+        })
       }),
       // Fast while an NFL game is live, judged from the Sports feed's games.
       interval: () =>
@@ -113,9 +138,22 @@ function sources(): Source[] {
           (getFeed('sports')?.getPayload().items ?? []) as Game[],
           Date.now()
         ),
-      describeError: describeFantasyError
+      describeError: describeFantasyError,
+      // Game status and the estimate come from the Sports feed's ESPN data.
+      decorate: payload =>
+        decorateFantasy(
+          payload as FeedPayload<FantasyView>,
+          currentGames(),
+          { formatTime: ts => formatDate(new Date(ts)).time }
+        )
     }
   ]
+}
+
+function rebroadcastFantasy() {
+  const payload = getFeedPayload('fantasy') as FeedPayload<FantasyView> | null
+  if (payload && payload.items.length > 0)
+    serverManager.broadcast('fantasy', payload)
 }
 
 export const setup: SetupFunction = async () => {
@@ -137,11 +175,15 @@ export const setup: SetupFunction = async () => {
         formatTime: ts => formatDate(new Date(ts)).time,
         loadCache,
         saveCache: (k, value) => setStorageValue(`feedCache.${k}`, value),
-        publish: (k, payload) =>
+        publish: (k, payload) => {
           serverManager.broadcast(
             k,
             decoratePayload(k as FeedKey, payload as FeedPayload<unknown>)
-          ),
+          )
+          // Fantasy game status follows the Sports feed's live cadence, so
+          // each ESPN update also refreshes the Fantasy tab.
+          if (k === 'sports') rebroadcastFantasy()
+        },
         log: message => log(message, 'Feeds', LogLevel.WARN)
       }
     )

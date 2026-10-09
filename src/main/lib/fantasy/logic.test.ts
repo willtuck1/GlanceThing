@@ -2,6 +2,7 @@ import { readFileSync } from 'fs'
 import { describe, expect, it } from 'vitest'
 
 import {
+  availability,
   buildView,
   EMPTY_SLOT,
   FANTASY_IDLE_INTERVAL,
@@ -19,6 +20,7 @@ import {
   parseMatchups,
   parseState,
   pickLeague,
+  PlayerContext,
   playersFresh,
   PLAYERS_MAX_AGE,
   seasonNotice,
@@ -30,6 +32,7 @@ import {
   teamTotal,
   ViewInput
 } from './logic.js'
+import { parseProjections, ProjectionMap } from './projections.js'
 
 import { FantasyPlayer, Game } from '../feeds/types.js'
 
@@ -38,6 +41,13 @@ function fixture(name: string): unknown {
   return JSON.parse(readFileSync(url, 'utf8'))
 }
 
+const projections: ProjectionMap = Object.assign(
+  {},
+  ...['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(pos =>
+    parseProjections(fixture(`projections-${pos}.json`))
+  )
+)
+
 const MY_ID = '900000000000000001'
 const players = slimPlayers(fixture('players-sample.json'))
 const league = fixture('league.json') as { roster_positions: string[] }
@@ -45,6 +55,7 @@ const rosters = fixture('rosters.json')
 const users = fixture('users.json')
 const week5 = parseMatchups(fixture('matchups-week5.json'))
 const slots = starterSlots(league.roster_positions)
+const ctx: PlayerContext = { players, projections: null, scoring: null }
 
 function input(over: Partial<ViewInput> = {}): ViewInput {
   return {
@@ -74,6 +85,18 @@ describe('slimPlayers', () => {
       position: 'DEF',
       team: 'BUF'
     })
+  })
+
+  it('marks players Sleeper lists as out or inactive', () => {
+    // Real sample: IR with roster status Inactive.
+    expect(players['5859'].out).toBe('OUT')
+    // Questionable still plays.
+    expect(players['4881'].out).toBeUndefined()
+    expect(availability('Out', 'Active')).toBe('OUT')
+    expect(availability('Sus', 'Active')).toBe('OUT')
+    expect(availability(null, 'Inactive')).toBe('Inactive')
+    expect(availability('Doubtful', 'Active')).toBeUndefined()
+    expect(availability(undefined, undefined)).toBeUndefined()
   })
 
   it('ignores junk', () => {
@@ -185,7 +208,7 @@ describe('teamTotal', () => {
 
 describe('mapStarters', () => {
   it('labels each starter with its slot, name and points', () => {
-    const starters = mapStarters(week5[0], slots, players)
+    const starters = mapStarters(week5[0], slots, ctx)
     expect(starters.map(p => p.slot)).toEqual([
       'QB',
       'RB',
@@ -214,7 +237,7 @@ describe('mapStarters', () => {
   })
 
   it('shows an empty slot', () => {
-    const starters = mapStarters(week5[1], slots, players)
+    const starters = mapStarters(week5[1], slots, ctx)
     expect(starters[6]).toEqual({
       id: `${EMPTY_SLOT}:FLEX`,
       name: 'Empty',
@@ -228,7 +251,7 @@ describe('mapStarters', () => {
     const [p] = mapStarters(
       { ...week5[0], starters: ['99999'], playersPoints: { 99999: 3 } },
       ['QB'],
-      players
+      ctx
     )
     expect(p).toMatchObject({ id: '99999', name: '99999', points: 3 })
   })
@@ -236,7 +259,7 @@ describe('mapStarters', () => {
 
 describe('mapBench', () => {
   it('lists non-starters by points, without IR', () => {
-    const bench = mapBench(week5[0], players, ['7569'])
+    const bench = mapBench(week5[0], ctx, ['7569'])
     expect(bench.map(p => p.id)).toEqual(['6813', '8130', '9226', '7547'])
     expect(bench.every(p => p.slot === 'BN')).toBe(true)
   })
@@ -282,6 +305,54 @@ describe('buildView', () => {
       '5859',
       '8112'
     ])
+  })
+
+  it('adds projected points from the league scoring settings', () => {
+    const view = buildView(input({ projections }))
+    if (view.kind !== 'matchup') throw new Error('expected a matchup')
+    expect(view.projections).toBe(true)
+    const allen = view.me.starters[0]
+    expect(allen.id).toBe('4984')
+    expect(allen.projected).toBeCloseTo(22.01, 2)
+    expect(view.me.starters[9]).toMatchObject({ id: 'BUF' })
+    expect(view.me.starters[9].projected).toBeCloseTo(5.12, 2)
+    // KC is on bye: no projection, no crash.
+    expect(view.opponent.starters[9].id).toBe('KC')
+    expect(view.opponent.starters[9].projected).toBeUndefined()
+    // The empty slot never gets one.
+    expect(view.opponent.starters[6].projected).toBeUndefined()
+    // Bench players get one too.
+    expect(view.me.bench.find(p => p.id === '6813')?.projected).toBeCloseTo(
+      18.91,
+      2
+    )
+  })
+
+  it('falls back to pts_* when the league has no scoring settings', () => {
+    const noScoring = { ...(league as object), scoring_settings: undefined }
+    const view = buildView(input({ league: noScoring, projections }))
+    if (view.kind !== 'matchup') throw new Error('expected a matchup')
+    // No `rec` setting → standard scoring.
+    const rb = view.me.starters[1]
+    expect(rb.id).toBe('9221')
+    expect(rb.projected).toBe(20.71)
+  })
+
+  it('hides projections when Sleeper had none', () => {
+    for (const p of [null, undefined, {}]) {
+      const view = buildView(input({ projections: p }))
+      if (view.kind !== 'matchup') throw new Error('expected a matchup')
+      expect(view.projections).toBe(false)
+      expect(view.me.starters.every(x => x.projected === undefined)).toBe(
+        true
+      )
+    }
+  })
+
+  it('carries the out marker to the player row', () => {
+    const view = buildView(input())
+    if (view.kind !== 'matchup') throw new Error('expected a matchup')
+    expect(view.opponent.bench.find(p => p.id === '5859')?.out).toBe('OUT')
   })
 
   it('says so when there is no matchup', () => {
