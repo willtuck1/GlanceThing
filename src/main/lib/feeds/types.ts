@@ -1,4 +1,4 @@
-export type FeedKey = 'calendar' | 'todo' | 'sports'
+export type FeedKey = 'calendar' | 'todo' | 'sports' | 'fantasy'
 
 export interface FeedPayload<T> {
   items: T[]
@@ -54,3 +54,40 @@ export interface Game {
 export interface SportsPayload extends FeedPayload<Game> {
   favorites?: string[]
 }
+
+export interface FantasyPlayer {
+  id: string
+  name: string
+  // 'QB', 'DEF', ... Empty for an empty starter slot.
+  position: string
+  // NFL team abbreviation, missing for free agents and empty slots.
+  team?: string
+  // Short label of the lineup slot ('QB', 'FLEX', 'SF', 'BN').
+  slot: string
+  points: number
+}
+
+export interface FantasyTeam {
+  rosterId: number
+  name: string
+  points: number
+  starters: FantasyPlayer[]
+  bench: FantasyPlayer[]
+}
+
+// The one item of the fantasy feed: this week's matchup, or why there is
+// none (bye week, offseason, eliminated).
+export type FantasyView =
+  | {
+      kind: 'matchup'
+      leagueName: string
+      week: number
+      me: FantasyTeam
+      opponent: FantasyTeam
+    }
+  | {
+      kind: 'none'
+      leagueName?: string
+      week?: number
+      message: string
+    }

@@ -1,0 +1,38 @@
+[
+  {
+    "user_id": "900000000000000001",
+    "username": "samplemanager",
+    "display_name": "SampleManager",
+    "avatar": null,
+    "metadata": {
+      "team_name": "Gridiron Gang"
+    },
+    "is_owner": true
+  },
+  {
+    "user_id": "900000000000000002",
+    "username": "rivalcoach",
+    "display_name": "RivalCoach",
+    "avatar": null,
+    "metadata": {},
+    "is_owner": false
+  },
+  {
+    "user_id": "900000000000000003",
+    "username": "thirdteam",
+    "display_name": "ThirdTeam",
+    "avatar": null,
+    "metadata": {
+      "team_name": ""
+    },
+    "is_owner": false
+  },
+  {
+    "user_id": "900000000000000009",
+    "username": "coowner",
+    "display_name": "CoOwner",
+    "avatar": null,
+    "metadata": null,
+    "is_owner": false
+  }
+]
