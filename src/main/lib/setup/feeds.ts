@@ -3,6 +3,7 @@ import { Feed } from '../feeds/Feed.js'
 import {
   decoratePayload,
   FeedDecorator,
+  getFeed,
   registerFeed,
   unregisterAll
 } from '../feeds/registry.js'
@@ -17,6 +18,17 @@ import { createTasksFetcher } from '../google/tasks.js'
 import { TASKS_INTERVAL } from '../google/tasksLogic.js'
 import { describeGoogleError } from '../google/session.js'
 import { getSelectedTaskList } from '../google/tasksSettings.js'
+import { fantasyInterval } from '../fantasy/logic.js'
+import { getPlayers } from '../fantasy/playersDisk.js'
+import {
+  getFantasySettings,
+  setFantasyUserId
+} from '../fantasy/settings.js'
+import {
+  createFantasyFetcher,
+  describeFantasyError,
+  sleeperGet
+} from '../fantasy/sleeper.js'
 import { createSportsFetcher } from '../sports/espn.js'
 import { getFavorites } from '../sports/favorites.js'
 import { decorateSports, sportsInterval } from '../sports/logic.js'
@@ -86,6 +98,22 @@ function sources(): Source[] {
           now: Date.now(),
           formatTime: ts => formatDate(new Date(ts)).time
         })
+    },
+    {
+      key: 'fantasy',
+      fetch: createFantasyFetcher({
+        get: sleeperGet,
+        getSettings: getFantasySettings,
+        saveUserId: setFantasyUserId,
+        getPlayers
+      }),
+      // Fast while an NFL game is live, judged from the Sports feed's games.
+      interval: () =>
+        fantasyInterval(
+          (getFeed('sports')?.getPayload().items ?? []) as Game[],
+          Date.now()
+        ),
+      describeError: describeFantasyError
     }
   ]
 }
@@ -97,6 +125,9 @@ export const setup: SetupFunction = async () => {
     setStorageValue('feedCache.calendar', null)
     setStorageValue('feedCache.todo', null)
   }
+  // Same for a fantasy matchup cached before the username was removed.
+  if (!getFantasySettings().username)
+    setStorageValue('feedCache.fantasy', null)
 
   const feeds = sources().map(({ decorate, ...options }) => {
     const feed = new Feed<unknown>(
