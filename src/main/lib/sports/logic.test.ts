@@ -158,6 +158,71 @@ describe('normalize (real ESPN captures)', () => {
   })
 })
 
+describe('normalize (real ESPN captures, live and final)', () => {
+  const captures = [
+    { league: 'nba' as const, file: 'nba-live-2.json', count: 6 },
+    { league: 'nfl' as const, file: 'nfl-live-2.json', count: 15 }
+  ]
+
+  for (const { league, file, count } of captures) {
+    it(`maps every ${league.toUpperCase()} event`, () => {
+      const raw = fixture(file) as {
+        events: {
+          id: string
+          competitions: { status: { type: { shortDetail: string } } }[]
+        }[]
+      }
+      const games = normalize(league, raw)
+      expect(games).toHaveLength(count)
+      for (const g of games) {
+        const event = raw.events.find(e => `${league}:${e.id}` === g.id)
+        expect(g.detail).toBe(
+          event?.competitions[0].status.type.shortDetail
+        )
+        expect(isTeamKey(g.home.key)).toBe(true)
+        expect(isTeamKey(g.away.key)).toBe(true)
+        expect(g.home.key).not.toBe(g.away.key)
+        if (g.state === 'pre') {
+          expect(g.home.score).toBeNull()
+          expect(g.away.score).toBeNull()
+        } else {
+          expect(typeof g.home.score).toBe('number')
+          expect(typeof g.away.score).toBe('number')
+        }
+      }
+    })
+  }
+
+  it('has live and final games', () => {
+    const games = [
+      ...normalize('nba', fixture('nba-live-2.json')),
+      ...normalize('nfl', fixture('nfl-live-2.json'))
+    ]
+    expect(games.filter(g => g.state === 'in')).toHaveLength(5)
+    expect(games.filter(g => g.state === 'post')).toHaveLength(1)
+  })
+
+  it('reads a final game correctly', () => {
+    const games = normalize('nba', fixture('nba-live-2.json'))
+    expect(games.find(g => g.id === 'nba:401898392')).toMatchObject({
+      home: { key: 'nba:CLE', score: 113 },
+      away: { key: 'nba:BOS', score: 124 },
+      state: 'post',
+      detail: 'Final'
+    })
+  })
+
+  it('reads a live game correctly', () => {
+    const games = normalize('nfl', fixture('nfl-live-2.json'))
+    expect(games.find(g => g.id === 'nfl:401872980')).toMatchObject({
+      home: { key: 'nfl:DAL', score: 10 },
+      away: { key: 'nfl:TB', score: 7 },
+      state: 'in',
+      detail: 'Halftime'
+    })
+  })
+})
+
 describe('sortGames', () => {
   const all = [...nba, ...nfl]
 
