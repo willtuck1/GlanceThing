@@ -51,6 +51,9 @@ const Weather: React.FC<{ active: boolean }> = ({ active }) => {
                 {'  '}
                 <span>L</span>
                 {forecast.lowLabel}
+                {'  '}
+                <span>Precip</span>
+                {forecast.precipLabel}
               </div>
               <div className={styles.meta}>
                 <span>Sunrise</span>

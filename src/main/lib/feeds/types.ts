@@ -140,7 +140,7 @@ export type WeatherView =
       lowLabel: string
       sunriseLabel: string
       sunsetLabel: string
-      precipUnit: 'in' | 'mm'
+      precipLabel: string
       hours: { timeLabel: string; tempLabel: string; precipPct: number }[]
     }
   | {

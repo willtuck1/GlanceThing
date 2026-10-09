@@ -617,7 +617,8 @@ async function setupIpcHandlers() {
       try {
         return await searchLocations(String(query ?? ''))
       } catch {
-        // Keep the reason short: the request URL holds the search text.
+        // The original error message may contain request details (the search
+        // text), so throw a generic one that never reaches logs.
         throw new Error('Could not search for locations')
       }
     }

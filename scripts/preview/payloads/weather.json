@@ -14,7 +14,7 @@
    "lowLabel": "58°",
    "sunriseLabel": "6:12 AM",
    "sunsetLabel": "7:48 PM",
-   "precipUnit": "in",
+   "precipLabel": "0.12 in",
    "hours": [
     {
      "timeLabel": "Now",

@@ -72,16 +72,23 @@ describe('setWeatherSettings', () => {
     expect(store.get('weatherLocation')).toBeNull()
   })
 
-  it('does not store an invalid location', () => {
-    const result = setWeatherSettings({
-      location: { name: 'X', latitude: 200, longitude: 0 }
-    })
-    expect(result.location).toBeNull()
+  it('throws on an invalid location and keeps the saved one', () => {
+    setWeatherSettings({ location: CHICAGO })
+    expect(() =>
+      setWeatherSettings({
+        location: { name: 'X', latitude: 200, longitude: 0 },
+        units: 'metric'
+      })
+    ).toThrow('Invalid location')
+    expect(store.get('weatherLocation')).toEqual(CHICAGO)
+    expect(store.has('weatherUnits')).toBe(false)
   })
 
-  it('normalizes unknown units', () => {
-    expect(setWeatherSettings({ units: 'bogus' as never }).units).toBe(
-      'imperial'
-    )
+  it('throws on invalid units and stores nothing', () => {
+    expect(() =>
+      setWeatherSettings({ location: CHICAGO, units: 'bogus' as never })
+    ).toThrow('Invalid units')
+    expect(store.has('weatherLocation')).toBe(false)
+    expect(store.has('weatherUnits')).toBe(false)
   })
 })

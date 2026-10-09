@@ -26,12 +26,12 @@ describe('createWeatherFetcher', () => {
     const hour = 1_700_000_000
     const resp = {
       utc_offset_seconds: 0,
+      timezone: 'UTC',
       current: { temperature_2m: 70, weather_code: 0, is_day: 1 },
       hourly: {
         time: [hour, hour + 3600],
         temperature_2m: [70, 71],
-        precipitation_probability: [0, 10],
-        precipitation: [0, 0]
+        precipitation_probability: [0, 10]
       },
       daily: {
         time: [hour],
@@ -39,6 +39,7 @@ describe('createWeatherFetcher', () => {
         temperature_2m_min: [60],
         sunrise: [hour],
         sunset: [hour + 40000],
+        precipitation_sum: [0.1],
         weather_code: [0]
       }
     }
@@ -82,5 +83,17 @@ describe('applyWeatherSettings', () => {
     expect(
       applyWeatherSettings({ units: 'metric' }, null, save).units
     ).toBe('metric')
+  })
+
+  it('propagates a rejected save without resetting or refetching', () => {
+    const feed = { reset: vi.fn(), refetch: vi.fn() }
+    const save = vi.fn(() => {
+      throw new Error('Invalid location')
+    })
+    expect(() =>
+      applyWeatherSettings({ location: loc }, feed, save)
+    ).toThrow('Invalid location')
+    expect(feed.reset).not.toHaveBeenCalled()
+    expect(feed.refetch).not.toHaveBeenCalled()
   })
 })

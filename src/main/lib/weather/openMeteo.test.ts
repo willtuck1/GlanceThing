@@ -30,10 +30,10 @@ describe('fetchForecast', () => {
       'temperature_2m,weather_code,is_day'
     )
     expect(url.searchParams.get('hourly')).toBe(
-      'temperature_2m,precipitation_probability,precipitation'
+      'temperature_2m,precipitation_probability'
     )
     expect(url.searchParams.get('daily')).toBe(
-      'temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code'
+      'temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,weather_code'
     )
   })
 

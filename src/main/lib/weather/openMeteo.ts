@@ -24,8 +24,8 @@ export function forecastUrl(loc: Coordinates, units: Units): string {
     'timezone=auto',
     'timeformat=unixtime',
     'current=temperature_2m,weather_code,is_day',
-    'hourly=temperature_2m,precipitation_probability,precipitation',
-    'daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,weather_code',
+    'hourly=temperature_2m,precipitation_probability',
+    'daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,weather_code',
     'forecast_days=2',
     units === 'imperial'
       ? 'temperature_unit=fahrenheit&precipitation_unit=inch'

@@ -23,8 +23,7 @@
   "hourly_units": {
     "time": "unixtime",
     "temperature_2m": "°C",
-    "precipitation_probability": "%",
-    "precipitation": "mm"
+    "precipitation_probability": "%"
   },
   "hourly": {
     "time": [
@@ -176,56 +175,6 @@
       5,
       0,
       0
-    ],
-    "precipitation": [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      3.43,
-      4.19,
-      4.57,
-      3.05,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      3.43,
-      4.19,
-      4.57,
-      3.05,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
     ]
   },
   "daily_units": {
@@ -234,7 +183,8 @@
     "temperature_2m_min": "°C",
     "sunrise": "unixtime",
     "sunset": "unixtime",
-    "weather_code": "wmo code"
+    "weather_code": "wmo code",
+    "precipitation_sum": "mm"
   },
   "daily": {
     "time": [
@@ -260,6 +210,10 @@
     "weather_code": [
       3,
       61
+    ],
+    "precipitation_sum": [
+      3.1,
+      7.9
     ]
   }
 }
