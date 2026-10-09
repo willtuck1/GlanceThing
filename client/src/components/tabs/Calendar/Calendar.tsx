@@ -1,3 +1,6 @@
+import { useContext } from 'react'
+
+import { DisplayContext } from '@/contexts/DisplayContext.tsx'
 import { useFeed } from '@/hooks/useFeed.ts'
 import { useListNav } from '@/hooks/useListNav.ts'
 
@@ -9,6 +12,7 @@ import type { CalendarEvent } from '@/types/Feeds.ts'
 import styles from '../tab.module.css'
 
 const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
+  const { calendarAlpha } = useContext(DisplayContext)
   const feed = useFeed<CalendarEvent>('calendar', active)
   const highlighted = useListNav(feed.items.length, active)
 
@@ -34,6 +38,7 @@ const Calendar: React.FC<{ active: boolean }> = ({ active }) => {
               trailing={event.allDay ? 'All day' : event.startLabel}
               accent={event.calendarColor}
               tint={event.calendarColor}
+              tintAlpha={calendarAlpha}
               highlighted={active && i === highlighted}
             />
           </div>

@@ -12,6 +12,8 @@ interface ListRowProps {
   accent?: string
   // Muted wash of this color across the whole row (#rrggbb).
   tint?: string
+  // Opacity of the wash, 0-1. Defaults to the standard tint.
+  tintAlpha?: number
   // Shown instead of the accent bar, e.g. a checkbox.
   leading?: React.ReactNode
   highlighted?: boolean
@@ -28,6 +30,7 @@ const ListRow: React.FC<ListRowProps> = ({
   trailing,
   accent,
   tint: tintColor,
+  tintAlpha,
   leading,
   highlighted,
   dim,
@@ -41,7 +44,7 @@ const ListRow: React.FC<ListRowProps> = ({
     if (highlighted && ref.current) scrollRowIntoView(ref.current)
   }, [highlighted])
 
-  const wash = tint(tintColor)
+  const wash = tint(tintColor, tintAlpha)
 
   return (
     <div

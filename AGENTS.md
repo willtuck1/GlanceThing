@@ -7,7 +7,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 - Feeds (poll + cache + stale): `src/main/lib/feeds/Feed.ts`, wired in `src/main/lib/setup/feeds.ts`. Data sources: `lib/google/` (Calendar, Tasks; OAuth in `google/oauth.ts`), `lib/sports/` (ESPN), `lib/fantasy/` (Sleeper, including projections and game status). Each has a `fixtures/` folder.
 - Client tabs: `client/src/components/tabs/<Tab>/`, registered in `client/src/App.tsx`. Pager: `client/src/components/TabPager/TabPager.tsx`; button keys → tab index in `TabPager/keys.ts`. Data: `client/src/hooks/useFeed.ts`. Payload types: `client/src/types/Feeds.ts`. Row colors: `client/src/lib/tint.ts` (each sports row takes one team color: the favorite's if exactly one team is a favorite, else the away team's, else none).
 - Sleep screen: `client/src/components/Screensaver/`. Long-press helper: `client/src/hooks/useLongPress.ts`.
-- Display settings (`sportsTintOpacity`, `calendarTintOpacity`, 0–100, defaults 25/45): `src/main/lib/display.ts`. The client sends `{type:'display'}` and gets `{type:'display', data}`; the host rebroadcasts it when Settings changes a value (IPC `getDisplaySettings`/`setDisplaySettings`).
+- Display settings (`sportsTintOpacity`, `calendarTintOpacity`, 0–100, defaults 25/45): `src/main/lib/display.ts`. The client sends `{type:'display'}` and gets `{type:'display', data}`; the host rebroadcasts it when Settings changes a value (IPC `getDisplaySettings`/`setDisplaySettings`). Client side: `client/src/contexts/DisplayContext.tsx` and `client/src/lib/display.ts` (percent → alpha, falls back to the `tint.ts` constants). Sliders: Settings → Client tab.
 - Desktop settings UI: `src/renderer/src/pages/Settings/Settings.tsx`.
 - Client self-update: on connect the client asks for `version` and sends `update` if it differs from its own, and the host reinstalls it (`handlers/version.ts`, `handlers/update.ts`).
 - Device inputs arrive as DOM events: buttons `'1'`–`'3'` (tabs 1–3 by position) and `'4'` (jumps to Fantasy; wired but unverified on the device), M → `'m'`, Back → `Escape`, dial → `wheel`, dial press → `Enter`.
@@ -28,7 +28,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 
 ## Roadmap (planned, not built)
 In this order. Effort is relative to M5/M6.
-1. **Polish** (small): (in progress, M7) separate opacity sliders for sports and calendar colors.
+1. **Polish** (small): (in progress, M7) display sliders.
 2. **Weather tab** (≈ M1): Open-Meteo (no key), hourly temperature and precipitation, sunrise and sunset, location set in Settings.
 3. **Clock tab with timer, plus button macros** (small–medium): timer alerts are visual only. Prefer long-press over double-tap, because double-tap delays every single press by about 300 ms.
 4. **Notifications** (medium–large): the host compares each update to the last one against rules (close game, final, fantasy swings, upcoming event), then sends a `notify` message that the client shows over any tab or the sleep screen. Per-type toggles in Settings. Optional desktop notification for sound.
