@@ -10,6 +10,7 @@ import * as handler from './handler.js'
 export const manifest: ModuleManifest = {
   id: 'weather',
   label: 'Weather',
+  feedKeys: ['weather'],
   feeds: () => [
     {
       key: 'weather',

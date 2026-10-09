@@ -8,6 +8,13 @@ import {
 import { afterPublish } from '../fantasy/sportsLink.js'
 import { loadCache } from '../modules/cache.js'
 import { modules } from '../modules/registry.js'
+import {
+  activeFeedKeys,
+  getTabSettings,
+  Startable,
+  syncFeeds,
+  TabSettings
+} from '../modules/tabs.js'
 import { setStorageValue } from '../storage.js'
 import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
@@ -17,6 +24,17 @@ import { FantasyView, FeedKey, FeedPayload } from '../feeds/types.js'
 import { SetupFunction } from '../../types/WebSocketSetup.js'
 
 export const name = 'feeds'
+
+const registered = new Map<FeedKey, Startable>()
+let running = new Set<FeedKey>()
+
+export function applyTabSettings(settings: TabSettings) {
+  running = syncFeeds(
+    registered,
+    running,
+    activeFeedKeys(modules, settings)
+  )
+}
 
 export const setup: SetupFunction = async () => {
   const sources = modules.flatMap(m => m.feeds())
@@ -44,14 +62,18 @@ export const setup: SetupFunction = async () => {
         log: message => log(message, 'Feeds', LogLevel.WARN)
       })
       registerFeed(options.key, feed, decorate)
+      registered.set(options.key as FeedKey, feed)
       return feed
     }
   )
 
-  feeds.forEach(feed => feed.start())
+  running = new Set()
+  applyTabSettings(getTabSettings())
 
   return async () => {
     feeds.forEach(feed => feed.stop())
+    registered.clear()
+    running = new Set()
     unregisterAll()
   }
 }

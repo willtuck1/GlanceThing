@@ -12,6 +12,7 @@ import * as handler from './handler.js'
 export const manifest: ModuleManifest = {
   id: 'todo',
   label: 'To-do',
+  feedKeys: ['todo'],
   feeds: () => [
     {
       key: 'todo',

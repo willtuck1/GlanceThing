@@ -16,6 +16,8 @@ export interface FeedSource {
 export interface ModuleManifest {
   id: string
   label: string
+  /** Keys of the feeds `feeds()` builds, known without building them. */
+  feedKeys: FeedKey[]
   /** A function because some sources read the cache at setup time. */
   feeds: () => FeedSource[]
   handlers: Handler[]

@@ -12,6 +12,7 @@ import * as handler from './handler.js'
 export const manifest: ModuleManifest = {
   id: 'sports',
   label: 'Sports',
+  feedKeys: ['sports'],
   feeds: () => {
     const cachedGames = loadCache('sports')?.items
     const fetchSports = createSportsFetcher(

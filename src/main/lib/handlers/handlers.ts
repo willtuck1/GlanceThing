@@ -9,6 +9,7 @@ import * as reboot from './reboot.js'
 import * as restore from './restore.js'
 import * as screensaver from './screensaver.js'
 import * as sleep from './sleep.js'
+import * as tabs from './tabs.js'
 import * as time from './time.js'
 import * as update from './update.js'
 import * as version from './version.js'
@@ -23,13 +24,19 @@ export const coreHandlers: Handler[] = [
   restore,
   screensaver,
   sleep,
+  tabs,
   time,
   update,
   version,
   wake
 ]
 
-export const handlers: Handler[] = [
-  ...coreHandlers,
-  ...modules.flatMap(m => m.handlers)
-]
+// Built on first use: module manifests import server.ts (via time.ts), which
+// imports this file, so reading the registry at load time could see it
+// half-initialized.
+let all: Handler[] | null = null
+
+export function getHandlers(): Handler[] {
+  all ??= [...coreHandlers, ...modules.flatMap(m => m.handlers)]
+  return all
+}

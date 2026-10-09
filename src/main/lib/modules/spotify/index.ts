@@ -5,6 +5,7 @@ import * as handler from './handler.js'
 export const manifest: ModuleManifest = {
   id: 'spotify',
   label: 'Spotify',
+  feedKeys: [],
   feeds: () => [],
   handlers: [handler]
 }

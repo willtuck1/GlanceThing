@@ -27,6 +27,7 @@ import * as handler from './handler.js'
 export const manifest: ModuleManifest = {
   id: 'fantasy',
   label: 'Fantasy',
+  feedKeys: ['fantasy'],
   feeds: () => [
     {
       key: 'fantasy',

@@ -15,6 +15,7 @@ import * as handler from './handler.js'
 export const manifest: ModuleManifest = {
   id: 'calendar',
   label: 'Calendar',
+  feedKeys: ['calendar'],
   feeds: () => [
     {
       key: 'calendar',
