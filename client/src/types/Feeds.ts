@@ -4,6 +4,7 @@ export type FeedType =
   | 'sports'
   | 'fantasy'
   | 'weather'
+  | `json:${string}`
 
 export interface FeedPayload<T> {
   items: T[]
@@ -29,3 +30,4 @@ export type {
   FantasyView
 } from '@/modules/fantasy/types.ts'
 export type { WeatherHour, WeatherView } from '@/modules/weather/types.ts'
+export type { ConnectorView } from '@/modules/connector/types.ts'
