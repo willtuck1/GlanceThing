@@ -1,0 +1,306 @@
+{
+  "leagues": [
+    {
+      "abbreviation": "NBA"
+    }
+  ],
+  "events": [
+    null,
+    "not an event",
+    [],
+    {
+      "id": "d1"
+    },
+    {
+      "id": "d2",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": {
+            "home": "BOS"
+          },
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d3",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            null,
+            {
+              "homeAway": "away",
+              "score": "90",
+              "team": {
+                "abbreviation": "NYK",
+                "shortDisplayName": "Nyk",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d4",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "88",
+              "team": {
+                "abbreviation": "BOS",
+                "shortDisplayName": "Bos",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "80",
+              "team": null
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d5",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "88",
+              "team": {
+                "abbreviation": "BOS",
+                "shortDisplayName": "Bos",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "80",
+              "team": {
+                "abbreviation": 12
+              }
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d6",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "88",
+              "team": {
+                "abbreviation": "BOS",
+                "shortDisplayName": "Bos",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "80",
+              "team": {
+                "abbreviation": "NYK",
+                "shortDisplayName": "Nyk",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "halftime",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d7",
+      "date": 1760000000,
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "88",
+              "team": {
+                "abbreviation": "BOS",
+                "shortDisplayName": "Bos",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "80",
+              "team": {
+                "abbreviation": "NYK",
+                "shortDisplayName": "Nyk",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d8",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "88",
+              "team": {
+                "abbreviation": "BOS",
+                "shortDisplayName": "Bos",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "80",
+              "team": {
+                "abbreviation": "NEW ORLEANS",
+                "shortDisplayName": "New Orleans",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": "Q3 4:12"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "d9",
+      "date": "2026-10-08T23:00Z",
+      "competitions": {
+        "0": {}
+      }
+    },
+    {
+      "id": "k1",
+      "date": "2026-10-08T23:00Z",
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": {
+                "value": 101
+              },
+              "team": {
+                "abbreviation": "lal",
+                "shortDisplayName": {
+                  "en": "Lakers"
+                },
+                "displayName": "Los Angeles Lakers",
+                "logo": {
+                  "href": "x"
+                }
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "99",
+              "team": {
+                "abbreviation": "GSW",
+                "shortDisplayName": 7
+              }
+            }
+          ],
+          "status": {
+            "type": {
+              "state": "in",
+              "shortDetail": {
+                "text": "Q4 1:00"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 4012,
+      "date": "2026-10-09T00:30Z",
+      "status": {
+        "type": {
+          "state": "pre",
+          "shortDetail": "10/8 - 8:30 PM EDT"
+        }
+      },
+      "competitions": [
+        {
+          "competitors": [
+            {
+              "homeAway": "home",
+              "score": "0",
+              "team": {
+                "abbreviation": "MIA",
+                "shortDisplayName": "Mia",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            {
+              "homeAway": "away",
+              "score": "0",
+              "team": {
+                "abbreviation": "CHI",
+                "shortDisplayName": "Chi",
+                "logo": "https://a.espncdn.com/x.png"
+              }
+            },
+            null
+          ]
+        }
+      ]
+    }
+  ]
+}

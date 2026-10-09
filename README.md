@@ -2,6 +2,10 @@
 
 Your CarThing as a glanceable action pad!
 
+> **Tabs edition:** this fork adds Calendar, To-do (Google Tasks) and
+> Sports tabs next to the Spotify controls. To install it, follow
+> **[docs/SETUP.md](docs/SETUP.md)**.
+
 <img src=".github/assets/glancething.png" />
 
 ## Features
@@ -14,8 +18,6 @@ Your CarThing as a glanceable action pad!
 - Command actions (will be customizable in the future)
 
 ## Getting started
-
-This fork adds Calendar, To-do and Sports tabs. Follow [docs/SETUP.md](docs/SETUP.md) for the full setup, including connecting Google and a device checklist.
 
 The application only works on Windows and Mac for now. Linux support is planned!
 

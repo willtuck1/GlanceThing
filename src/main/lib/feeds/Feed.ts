@@ -1,3 +1,4 @@
+import { FeedError } from './errors.js'
 import { FeedPayload } from './types.js'
 
 export const STALE_FACTOR = 2
@@ -21,11 +22,16 @@ export interface FeedOptions<T> {
   key: string
   fetch: () => Promise<T[]>
   interval: (items: T[]) => number
-  // Turns a fetch error into the message clients show.
-  describeError?: (e: unknown) => string
-  // True when the error means the data itself is no longer valid (e.g. the
-  // account was revoked), so the feed forgets it instead of marking it stale.
-  dropsData?: (e: unknown) => boolean
+  // Maps a failed fetch to the message clients see. Defaults to the
+  // error's own message.
+  describeError?: (e: unknown) => FeedError
+}
+
+function defaultDescribe(e: unknown): FeedError {
+  return {
+    message: e instanceof Error ? e.message : String(e),
+    dropItems: false
+  }
 }
 
 export class Feed<T> {
@@ -142,18 +148,18 @@ export class Feed<T> {
       })
     } catch (e) {
       if (generation !== this.generation) return
-      const raw = e instanceof Error ? e.message : String(e)
+      const { message, dropItems } = (
+        this.options.describeError ?? defaultDescribe
+      )(e)
       this.lastFetchFailed = true
-      this.error = this.options.describeError?.(e) ?? raw
-      this.deps.log?.(`Fetch failed for ${this.options.key}: ${raw}`)
-      if (
-        this.options.dropsData?.(e) &&
-        (this.items.length > 0 || this.fetchedAt !== null)
-      ) {
+      this.error = message
+      if (dropItems) {
         this.items = []
         this.fetchedAt = null
         this.deps.saveCache(this.options.key, null)
       }
+      const raw = e instanceof Error ? e.message : String(e)
+      this.deps.log?.(`Fetch failed for ${this.options.key}: ${raw}`)
     }
 
     this.deps.publish(this.options.key, this.getPayload())

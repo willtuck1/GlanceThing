@@ -10,7 +10,8 @@ interface GoogleStatus {
   clientSource: 'settings' | 'build' | null
   clientId: string
   connected: boolean
-  revoked: boolean
+  // docs/SETUP.md in the repo this build came from.
+  setupGuideUrl: string
 }
 
 interface GoogleCalendarOption {

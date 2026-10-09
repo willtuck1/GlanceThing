@@ -1,4 +1,5 @@
-import { Feed, FeedOptions } from '../feeds/Feed.js'
+import { describeFetchError, FeedError } from '../feeds/errors.js'
+import { Feed } from '../feeds/Feed.js'
 import {
   decoratePayload,
   FeedDecorator,
@@ -7,7 +8,6 @@ import {
 } from '../feeds/registry.js'
 import { getGoogleStatus } from '../google/auth.js'
 import { createCalendarFetcher } from '../google/calendar.js'
-import { googleErrorMessage, isAccountGone } from '../google/errors.js'
 import {
   getSelectedCalendars,
   googleGet
@@ -15,14 +15,11 @@ import {
 import { CALENDAR_INTERVAL } from '../google/calendarLogic.js'
 import { createTasksFetcher } from '../google/tasks.js'
 import { TASKS_INTERVAL } from '../google/tasksLogic.js'
+import { describeGoogleError } from '../google/session.js'
 import { getSelectedTaskList } from '../google/tasksSettings.js'
 import { createSportsFetcher } from '../sports/espn.js'
 import { getFavorites } from '../sports/favorites.js'
-import {
-  decorateSports,
-  SPORTS_UNAVAILABLE,
-  sportsInterval
-} from '../sports/logic.js'
+import { decorateSports, sportsInterval } from '../sports/logic.js'
 import { getStorageValue, setStorageValue } from '../storage.js'
 import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
@@ -42,14 +39,12 @@ function loadCache(key: string) {
   return getStorageValue(`feedCache.${key}`) as CachedItems | null
 }
 
-interface Source extends FeedOptions<unknown> {
+interface Source {
   key: FeedKey
+  fetch: () => Promise<unknown[]>
+  interval: (items: unknown[]) => number
+  describeError: (e: unknown) => FeedError
   decorate?: FeedDecorator
-}
-
-const google = {
-  describeError: googleErrorMessage,
-  dropsData: isAccountGone
 }
 
 function sources(): Source[] {
@@ -69,7 +64,7 @@ function sources(): Source[] {
         formatTime: ts => formatDate(new Date(ts)).time
       }),
       interval: () => CALENDAR_INTERVAL,
-      ...google
+      describeError: describeGoogleError
     },
     {
       key: 'todo',
@@ -79,13 +74,13 @@ function sources(): Source[] {
         now: () => Date.now()
       }),
       interval: () => TASKS_INTERVAL,
-      ...google
+      describeError: describeGoogleError
     },
     {
       key: 'sports',
       fetch: fetchSports,
       interval: items => sportsInterval(items as Game[], Date.now()),
-      describeError: () => SPORTS_UNAVAILABLE,
+      describeError: e => describeFetchError(e, 'ESPN'),
       decorate: payload =>
         decorateSports(payload as FeedPayload<Game>, getFavorites(), {
           now: Date.now(),
@@ -103,9 +98,9 @@ export const setup: SetupFunction = async () => {
     setStorageValue('feedCache.todo', null)
   }
 
-  const feeds = sources().map(({ key, decorate, ...options }) => {
+  const feeds = sources().map(({ decorate, ...options }) => {
     const feed = new Feed<unknown>(
-      { key, ...options },
+      options,
       {
         now: () => Date.now(),
         formatTime: ts => formatDate(new Date(ts)).time,
@@ -119,7 +114,7 @@ export const setup: SetupFunction = async () => {
         log: message => log(message, 'Feeds', LogLevel.WARN)
       }
     )
-    registerFeed(key, feed, decorate)
+    registerFeed(options.key, feed, decorate)
     return feed
   })
 

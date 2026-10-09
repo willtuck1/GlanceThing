@@ -33,6 +33,8 @@ export interface Team {
   name: string
   score: number | null
   logo?: string
+  // Hex like '#860038', from ESPN. Missing on games cached by older hosts.
+  color?: string
 }
 
 export interface Game {

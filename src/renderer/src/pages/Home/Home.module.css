@@ -63,9 +63,19 @@
   color: #ff9800;
 }
 
-.noticeActions {
+.notice .actions {
   display: flex;
   gap: 10px;
+}
+
+.notice .actions button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.notice .actions button span {
+  font-size: 18px;
 }
 
 .update {

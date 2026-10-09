@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { NotConnectedError } from './session.js'
+import { NotConnectedError, REVOKED } from './session.js'
 import { parseToggle, toggleTask } from './todoToggle.js'
 
 const task = { id: 't1', listId: 'L1', title: 'Send invoice', done: true }
@@ -47,26 +47,29 @@ describe('toggleTask', () => {
     const refetch = vi.fn()
     const ack = await toggleTask(req, {
       setDone: async () => {
-        throw new NotConnectedError()
+        throw Object.assign(new Error('Request failed'), {
+          response: { status: 503 }
+        })
       },
       refetch
     })
     expect(ack).toEqual({
       reqId: 'r1',
       ok: false,
-      error: 'Connect Google in the desktop app'
+      error: 'Google is having problems (503). Retrying'
     })
     expect(refetch).not.toHaveBeenCalled()
   })
 
-  it('uses the described error when given one', async () => {
+  it('refetches when the account is gone, so the tab can say so', async () => {
+    const refetch = vi.fn()
     const ack = await toggleTask(req, {
       setDone: async () => {
-        throw new Error('Request failed with status code 503')
+        throw new NotConnectedError(REVOKED)
       },
-      refetch: vi.fn(),
-      describeError: () => 'Google is down'
+      refetch
     })
-    expect(ack).toMatchObject({ ok: false, error: 'Google is down' })
+    expect(ack).toEqual({ reqId: 'r1', ok: false, error: REVOKED })
+    expect(refetch).toHaveBeenCalledOnce()
   })
 })

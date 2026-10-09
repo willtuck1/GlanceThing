@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 import { scrollRowIntoView } from './scrollRowIntoView.ts'
+import { tint } from '@/lib/tint.ts'
 
 import styles from './ListRow.module.css'
 
@@ -9,6 +10,8 @@ interface ListRowProps {
   subtitle?: string
   trailing?: string
   accent?: string
+  // Muted wash of this color across the whole row (#rrggbb).
+  tint?: string
   // Shown instead of the accent bar, e.g. a checkbox.
   leading?: React.ReactNode
   highlighted?: boolean
@@ -24,6 +27,7 @@ const ListRow: React.FC<ListRowProps> = ({
   subtitle,
   trailing,
   accent,
+  tint: tintColor,
   leading,
   highlighted,
   dim,
@@ -37,6 +41,8 @@ const ListRow: React.FC<ListRowProps> = ({
     if (highlighted && ref.current) scrollRowIntoView(ref.current)
   }, [highlighted])
 
+  const wash = tint(tintColor)
+
   return (
     <div
       ref={ref}
@@ -45,6 +51,8 @@ const ListRow: React.FC<ListRowProps> = ({
       data-dim={!!dim}
       data-strike={!!strike}
       data-error={!!error}
+      data-tinted={!!wash}
+      style={wash ? { backgroundImage: wash } : undefined}
       onClick={onClick}
     >
       {leading ?? (

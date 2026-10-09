@@ -4,6 +4,9 @@ const calls = vi.hoisted(() => [] as string[])
 const status = vi.hoisted(() => ({ connected: true }))
 
 vi.mock('../utils.js', () => ({ log: () => {}, LogLevel: { WARN: 2 } }))
+vi.mock('../repo.js', () => ({
+  getSetupGuideUrl: () => 'https://github.com/a/b/blob/main/docs/SETUP.md'
+}))
 vi.mock('./auth.js', () => ({
   connectGoogle: async () => calls.push('connect'),
   disconnectGoogle: async () => {
@@ -94,5 +97,13 @@ describe('task lists', () => {
     service.saveTaskList(42)
     service.saveTaskList('')
     expect(calls).toEqual([])
+  })
+})
+
+describe('googleStatus', () => {
+  it('includes the setup guide link for the desktop app', () => {
+    expect(service.googleStatus().setupGuideUrl).toBe(
+      'https://github.com/a/b/blob/main/docs/SETUP.md'
+    )
   })
 })

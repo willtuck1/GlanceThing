@@ -14,6 +14,7 @@ import {
   sortGames,
   sportsInterval,
   applyFavorite,
+  teamColor,
   visibleGames
 } from './logic.js'
 
@@ -55,14 +56,16 @@ describe('normalize', () => {
         abbr: 'BOS',
         name: 'Celtics',
         score: 88,
-        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png'
+        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/bos.png',
+        color: '#008348'
       },
       away: {
         key: 'nba:LAL',
         abbr: 'LAL',
         name: 'Lakers',
         score: 84,
-        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/lal.png'
+        logo: 'https://a.espncdn.com/i/teamlogos/nba/500/scoreboard/lal.png',
+        color: '#552583'
       },
       state: 'in',
       detail: 'Q3 4:12',
@@ -95,46 +98,6 @@ describe('normalize', () => {
     expect(normalize('nba', json)).toHaveLength(3)
   })
 
-  it('survives fields changing type or shape', () => {
-    const good = (fixture('nba-scoreboard.json') as { events: unknown[] })
-      .events
-    const json = {
-      events: [
-        null,
-        'event',
-        { id: '1', date: '2026-10-08T23:00Z', competitions: 'oops' },
-        {
-          id: '2',
-          date: '2026-10-08T23:00Z',
-          competitions: [{ competitors: { home: {} } }]
-        },
-        {
-          id: '3',
-          date: '2026-10-08T23:00Z',
-          status: { type: { state: 'pre' } },
-          competitions: [
-            {
-              competitors: [
-                { homeAway: 'home', team: { abbreviation: 42 } },
-                { homeAway: 'away', team: { abbreviation: 'BOS' } }
-              ]
-            }
-          ]
-        },
-        ...good
-      ]
-    }
-    expect(normalize('nba', json)).toHaveLength(good.length)
-  })
-
-  it('accepts numeric event ids', () => {
-    const json = fixture('nba-scoreboard.json') as {
-      events: { id: unknown }[]
-    }
-    json.events[0].id = 401700001
-    expect(normalize('nba', json)[0].id).toBe('nba:401700001')
-  })
-
   it('upper-cases team abbreviations so keys stay valid', () => {
     const json = fixture('nba-scoreboard.json') as {
       events: {
@@ -147,6 +110,29 @@ describe('normalize', () => {
     const [first] = normalize('nba', json)
     expect(first.home.key).toBe('nba:BOS')
     expect(isTeamKey(first.home.key)).toBe(true)
+  })
+
+  it('survives schema drift: skips bad events, coerces odd fields', () => {
+    const games = normalize('nba', fixture('nba-drift.json'))
+    expect(games.map(g => g.id)).toEqual(['nba:k1', 'nba:4012'])
+
+    const [odd, scheduled] = games
+    // Wrongly typed fields fall back instead of reaching the client.
+    expect(odd.home).toEqual({
+      key: 'nba:LAL',
+      abbr: 'LAL',
+      name: 'Los Angeles Lakers',
+      score: null
+    })
+    expect(odd.away).toMatchObject({ name: 'GSW', score: 99 })
+    expect(odd.detail).toBe('')
+    expect(scheduled).toMatchObject({ state: 'pre', detail: '10/8 - 8:30 PM EDT' })
+    expect(scheduled.home.score).toBeNull()
+
+    // Everything the client renders as text is a string.
+    for (const g of games)
+      for (const value of [g.detail, g.home.name, g.away.name, g.home.abbr])
+        expect(typeof value).toBe('string')
   })
 
   it('throws when the response has no events array', () => {
@@ -176,6 +162,8 @@ describe('normalize (real ESPN captures)', () => {
         expect(g.state).toBe('pre')
         expect(g.home.score).toBeNull()
         expect(g.away.score).toBeNull()
+        expect(g.home.color).toMatch(/^#[0-9a-f]{6}$/)
+        expect(g.away.color).toMatch(/^#[0-9a-f]{6}$/)
       }
     })
   }
@@ -189,13 +177,38 @@ describe('normalize (real ESPN captures)', () => {
         key: 'nba:CLE',
         abbr: 'CLE',
         name: 'Cavaliers',
-        score: null
+        score: null,
+        color: '#860038'
       },
       away: { key: 'nba:BOS', abbr: 'BOS', name: 'Celtics', score: null },
       state: 'pre',
       detail: '10/8 - 7:00 PM EDT',
       start: Date.parse('2026-10-08T23:00Z')
     })
+  })
+})
+
+describe('teamColor', () => {
+  it('uses the primary color, normalized to #rrggbb', () => {
+    expect(teamColor('860038', 'bc945c')).toBe('#860038')
+    expect(teamColor('#ABCDEF', null)).toBe('#abcdef')
+  })
+
+  it('swaps a near-black primary for its alternate', () => {
+    // Real ESPN values: Bears navy, Spurs black, Nets black/white.
+    expect(teamColor('0b1c3a', 'e64100')).toBe('#e64100')
+    expect(teamColor('000000', 'c4ced4')).toBe('#c4ced4')
+    expect(teamColor('000000', 'ffffff')).toBe('#ffffff')
+  })
+
+  it('keeps a near-black primary when the alternate is no better', () => {
+    expect(teamColor('000000', '021018')).toBe('#000000')
+  })
+
+  it('ignores anything that is not a hex color', () => {
+    expect(teamColor('red', 'url(x)')).toBeNull()
+    expect(teamColor(undefined, 12)).toBeNull()
+    expect(teamColor('zzz', '00338d')).toBe('#00338d')
   })
 })
 
@@ -359,18 +372,31 @@ describe('favorites', () => {
     expect(out.fetchedAtLabel).toBe('12:00')
   })
 
-  it(`sends at most ${MAX_GAMES} games`, () => {
+  it('sends at most MAX_GAMES, keeping favorites and live games', () => {
     const now = Date.parse('2026-10-08T18:00Z')
-    const items = Array.from({ length: MAX_GAMES + 10 }, (_, i) =>
+    const many = Array.from({ length: 60 }, (_, i) =>
       game({ id: `nba:${i}`, start: now + i * 60_000 })
     )
+    const live = game({ id: 'nba:live', state: 'in', start: now + 3600_000 })
+    const fav = game({
+      id: 'nba:fav',
+      start: now + 2 * 3600_000,
+      home: { key: 'nba:MIA', abbr: 'MIA', name: 'Heat', score: null }
+    })
     const out = decorateSports(
-      { items, fetchedAt: 1, fetchedAtLabel: '', stale: false, error: null },
-      [],
+      {
+        items: [...many, live, fav],
+        fetchedAt: 1,
+        fetchedAtLabel: '',
+        stale: false,
+        error: null
+      },
+      ['nba:MIA'],
       { now, formatTime: () => 'T' }
     )
     expect(out.items).toHaveLength(MAX_GAMES)
-    expect(out.items[0].id).toBe('nba:0')
+    expect(out.items[0].id).toBe('nba:fav')
+    expect(out.items[1].id).toBe('nba:live')
   })
 
   it('relabels only scheduled games', () => {

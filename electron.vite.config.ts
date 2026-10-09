@@ -30,9 +30,6 @@ export default defineConfig({
         '@': resolve('src/renderer/src')
       }
     },
-    plugins: [react()],
-    define: {
-      __GT_REPO__: JSON.stringify(repoSlug)
-    }
+    plugins: [react()]
   }
 })

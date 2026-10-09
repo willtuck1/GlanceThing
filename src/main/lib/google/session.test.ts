@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { PostForm } from './oauth.js'
 import {
   createGoogleSession,
-  NOT_CONFIGURED,
+  describeGoogleError,
+  FORBIDDEN,
   NotConnectedError,
   REVOKED
 } from './session.js'
@@ -36,12 +37,9 @@ function fakeApi(validToken: () => string) {
   })
 }
 
-function setup(
-  opts: { refreshToken?: string | null; hasClient?: boolean } = {}
-) {
+function setup(opts: { refreshToken?: string | null } = {}) {
   let stored: string | null =
     opts.refreshToken === undefined ? 'refresh-1' : opts.refreshToken
-  let revoked = false
   let issued = 0
   const post = vi.fn<PostForm>(async () => ({
     status: 200,
@@ -52,13 +50,9 @@ function setup(
     stored = t
   })
   const session = createGoogleSession({
-    getClient: () => (opts.hasClient === false ? null : client),
+    getClient: () => client,
     getRefreshToken: () => stored,
     setRefreshToken,
-    isRevoked: () => revoked,
-    setRevoked: r => {
-      revoked = r
-    },
     post,
     now: () => 0,
     axiosConfig: { adapter }
@@ -132,23 +126,33 @@ describe('createGoogleSession', () => {
     expect(err.message).toBe(REVOKED)
     expect(setRefreshToken).toHaveBeenCalledWith(null)
   })
+})
 
-  it('asks to set Google up when there is no OAuth client', async () => {
-    const { session } = setup({ hasClient: false })
-    const err = await session.getAccessToken().catch(e => e)
-    expect(err).toBeInstanceOf(NotConnectedError)
-    expect(err.message).toBe(NOT_CONFIGURED)
+describe('describeGoogleError', () => {
+  it('drops cached data when the account is gone', () => {
+    expect(describeGoogleError(new NotConnectedError(REVOKED))).toEqual({
+      message: REVOKED,
+      dropItems: true
+    })
+    expect(describeGoogleError(new NotConnectedError())).toEqual({
+      message: 'Connect Google in the desktop app',
+      dropItems: true
+    })
   })
 
-  it('keeps asking to reconnect after a revoke', async () => {
-    const { session, post } = setup()
-    post.mockResolvedValueOnce({
-      status: 400,
-      data: { error: 'invalid_grant' }
+  it('points at the APIs on a 403', () => {
+    const e = Object.assign(new Error('403'), { response: { status: 403 } })
+    expect(describeGoogleError(e)).toEqual({
+      message: FORBIDDEN,
+      dropItems: false
     })
-    await session.getAccessToken().catch(() => {})
-    const err = await session.getAccessToken().catch(e => e)
-    expect(err).toBeInstanceOf(NotConnectedError)
-    expect(err.message).toBe(REVOKED)
+  })
+
+  it('keeps cached data on a Google outage', () => {
+    const e = Object.assign(new Error('500'), { response: { status: 500 } })
+    expect(describeGoogleError(e)).toEqual({
+      message: 'Google is having problems (500). Retrying',
+      dropItems: false
+    })
   })
 })
