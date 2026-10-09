@@ -42,11 +42,8 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
-      const next = keyToIndex(
-        e.key,
-        pages.map(p => p.key)
-      )
-      if (next !== null) setIndex(next)
+      const keys = pages.map(p => p.key)
+      setIndex(current => keyToIndex(e.key, current, keys) ?? current)
     }
 
     document.addEventListener('keydown', listener)
