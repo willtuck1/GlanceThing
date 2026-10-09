@@ -10,7 +10,12 @@ The session reads `CLAUDE.md` (which imports `AGENTS.md`) automatically. Hooks i
 Milestone M<N> (<name>). Branch milestone/<N>-<name> from main.
 Feature: <what it should do, from the user's point of view>
 
-You orchestrate; coder writes feature code, one step per call. Every subagent
+You are the coordinator on Opus 5.5. Follow "Agent harness (cascading
+inference)" in AGENTS.md: every subagent call starts on the cheapest tier
+that does the job well (explorer = Haiku, coder = Sonnet, planner and
+reviewer = Opus) and escalates one tier for that call only after two
+failures on the same step. Never run planner or reviewer below Opus.
+Coder writes feature code, one step per call. Every subagent
 call must be self-contained: goal, exact files, constraints, acceptance test.
 Use explorer for repo searches.
 
@@ -31,17 +36,19 @@ Rules:
 - Never skip or disable tests or lint rules. Never commit secrets or personal IDs.
 - Say "not verified" for anything you couldn't run (device, live APIs).
 - Stay inside this milestone.
+- List every model escalation (step, from → to, why) in the PR body.
 - After ANY change, update AGENTS.md (and CLAUDE.md for Claude-only
   notes) in the same commit if it is now wrong or incomplete. Include this
   requirement in any prompt you write for a later session.
 
 PR body: what changed, gate summary, screenshots, reviewer findings and what
-you did with each, what's unverified, and what changed in AGENTS.md (or
+you did with each, model escalations, what's unverified, and what changed in AGENTS.md (or
 "AGENTS.md: no update needed").
 ```
 
 ## Notes
 
 - Every prompt written for a future session must keep the AGENTS.md update rule.
-- If coder keeps failing one hard step, raise just that call to Opus.
+- Every prompt written for a future session must also keep the coordinator-on-Opus-5.5 and cascading-inference rules (see AGENTS.md "Agent harness").
+- If coder keeps failing one hard step, raise just that call one tier (Sonnet → Opus).
 - To release after merging: tag `v0.0.16-tabs.N` (matching the bumped version) or create the release on GitHub.
