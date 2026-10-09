@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 
-import { keyToIndex } from './keys.ts'
+import { indexAfterChange, keyToIndex } from './keys.ts'
 import { AXIS_LOCK_PX, resolveSnap } from './snap.ts'
 
 import styles from './TabPager.module.css'
@@ -39,6 +39,14 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
   const [dragging, setDragging] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
+  const prevKeys = useRef<string[]>(pages.map(p => p.key))
+
+  useEffect(() => {
+    const before = prevKeys.current
+    const next = pages.map(p => p.key)
+    prevKeys.current = next
+    setIndex(current => indexAfterChange(before, current, next))
+  }, [pages])
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {

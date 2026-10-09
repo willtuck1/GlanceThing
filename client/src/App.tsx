@@ -1,7 +1,8 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useMemo, useState } from 'react'
 
 import { AppBlurContext } from '@/contexts/AppBlurContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
+import { TabsContext } from '@/contexts/TabsContext.tsx'
 
 import FullescreenPlayer from './components/FullscreenPlayer/FullscreenPlayer.tsx'
 import LoadingScreen from '@/components/LoadingScreen/LoadingScreen.tsx'
@@ -10,18 +11,31 @@ import Statusbar from '@/components/Statusbar/Statusbar.tsx'
 import TabPager, { TabPage } from '@/components/TabPager/TabPager.tsx'
 import Menu from '@/components/Menu/Menu.tsx'
 import { modules } from '@/modules/registry.ts'
+import { visibleIds } from '@/modules/tabs.ts'
 
 import styles from './App.module.css'
 
-const pages: TabPage[] = modules.map(m => ({
+const allPages: TabPage[] = modules.map(m => ({
   key: m.id,
   render: m.render
 }))
+const allIds = modules.map(m => m.id)
 
 const App: React.FC = () => {
   const { blurred } = useContext(AppBlurContext)
   const { ready } = useContext(SocketContext)
+  const tabs = useContext(TabsContext)
   const [playerShown, setPlayerShown] = useState(false)
+
+  const idKey = visibleIds(tabs, allIds).join(',')
+  const pages = useMemo(
+    () =>
+      idKey
+        .split(',')
+        .map(id => allPages.find(p => p.key === id))
+        .filter((p): p is TabPage => !!p),
+    [idKey]
+  )
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
@@ -41,7 +55,9 @@ const App: React.FC = () => {
     <>
       <div className={styles.app} data-blurred={blurred || !ready}>
         <Statusbar />
-        <TabPager pages={pages} />
+        {/* Remounts once when the host's first tab settings arrive, so the
+            pager starts on the first visible tab in the chosen order. */}
+        <TabPager key={tabs ? 'host' : 'default'} pages={pages} />
         <FullescreenPlayer shown={playerShown} setShown={setPlayerShown} />
       </div>
       <LoadingScreen />
