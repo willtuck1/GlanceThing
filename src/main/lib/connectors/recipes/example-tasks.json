@@ -1,0 +1,25 @@
+{
+  "id": "example-tasks",
+  "label": "Example tasks",
+  "description": "Tasks due this week from the GlanceThing test MCP server.",
+  "defaultServerUrl": "http://127.0.0.1:8931/mcp",
+  "intervalMin": 15,
+  "tool": {
+    "name": "list_tasks",
+    "args": {
+      "from": { "$host": "dayStart" },
+      "to": { "$host": "dayEnd", "offsetDays": 7 },
+      "list": { "$setting": "list" }
+    }
+  },
+  "settings": [
+    { "key": "list", "label": "List name", "placeholder": "inbox", "maxLength": 40 }
+  ],
+  "layout": "list",
+  "mapping": {
+    "itemsPath": "tasks",
+    "primary": "title",
+    "secondary": "due",
+    "value": "status"
+  }
+}
