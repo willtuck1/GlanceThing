@@ -7,9 +7,10 @@ import React, {
 
 import { SocketContext } from './SocketContext.tsx'
 
+import SleepClock from '@/components/SleepClock/SleepClock.tsx'
 import Screensaver from '@/components/Screensaver/Screensaver.tsx'
 
-export type SleepState = 'off' | 'screensaver' | 'sleep'
+export type SleepState = 'off' | 'screensaver' | 'sleep' | 'clock'
 
 interface SleepContextProps {
   sleepState: SleepState
@@ -30,7 +31,7 @@ const SleepContextProvider = ({ children }: SleepContextProviderProps) => {
   const [sleepState, setSleepState] = useState<SleepState>('off')
 
   useEffect(() => {
-    function listener(e: KeyboardEvent | MouseEvent) {
+    function listener(e: KeyboardEvent | MouseEvent | WheelEvent) {
       if (sleepState === 'off') return
       e.stopImmediatePropagation()
       setSleepState('off')
@@ -44,12 +45,14 @@ const SleepContextProvider = ({ children }: SleepContextProviderProps) => {
     document.addEventListener('keydown', listener, {
       capture: true
     })
+    document.addEventListener('wheel', listener, { capture: true })
     document.addEventListener('mousedown', listener)
 
     return () => {
       document.removeEventListener('keydown', listener, {
         capture: true
       })
+      document.removeEventListener('wheel', listener, { capture: true })
       document.removeEventListener('mousedown', listener)
     }
   }, [socket, sleepState])
@@ -94,6 +97,7 @@ const SleepContextProvider = ({ children }: SleepContextProviderProps) => {
     >
       {children}
       <Screensaver type={sleepState} />
+      {sleepState === 'clock' && <SleepClock />}
     </SleepContext.Provider>
   )
 }

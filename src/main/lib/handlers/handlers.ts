@@ -4,6 +4,7 @@ import { allModules, modules } from '../modules/registry.js'
 
 import * as apps from './apps.js'
 import * as display from './display.js'
+import * as keylog from './keylog.js'
 import * as lock from './lock.js'
 import * as ping from './ping.js'
 import * as reboot from './reboot.js'
@@ -19,6 +20,7 @@ import * as wake from './wake.js'
 export const coreHandlers: Handler[] = [
   apps,
   display,
+  keylog,
   lock,
   ping,
   reboot,

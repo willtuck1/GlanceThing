@@ -1,0 +1,47 @@
+.alert {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 800px;
+  height: 480px;
+  z-index: 20000;
+  color: #fff;
+  text-align: center;
+  -webkit-animation: flash 1s steps(1, end) infinite;
+  animation: flash 1s steps(1, end) infinite;
+}
+
+.title {
+  margin-top: 150px;
+  font-size: 72px;
+  font-weight: 700;
+}
+
+.duration {
+  margin-top: 16px;
+  font-size: 36px;
+}
+
+.hint {
+  margin-top: 40px;
+  font-size: 22px;
+  opacity: 0.8;
+}
+
+@-webkit-keyframes flash {
+  0% {
+    background-color: #d32f2f;
+  }
+  50% {
+    background-color: #111;
+  }
+}
+
+@keyframes flash {
+  0% {
+    background-color: #d32f2f;
+  }
+  50% {
+    background-color: #111;
+  }
+}

@@ -90,6 +90,12 @@ import {
   ipcMcpSignIn,
   ipcMcpSignOut
 } from './lib/mcp/ipc.js'
+import {
+  CLOCK_WIDGETS,
+  clockPayload,
+  getClockSettings,
+  setClockSettings
+} from './lib/clock/settings.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
 import { allModules } from './lib/modules/registry.js'
 import {
@@ -290,6 +296,9 @@ enum IPCHandler {
   SetFantasyLeague = 'setFantasyLeague',
   GetDisplaySettings = 'getDisplaySettings',
   SetDisplaySettings = 'setDisplaySettings',
+  GetClockSettings = 'getClockSettings',
+  SetClockSettings = 'setClockSettings',
+  SleepDeviceOnClock = 'sleepDeviceOnClock',
   GetTabSettings = 'getTabSettings',
   SetTabSettings = 'setTabSettings',
   SearchWeatherLocations = 'searchWeatherLocations',
@@ -639,6 +648,28 @@ async function setupIpcHandlers() {
     const settings = setDisplaySettings(value)
     serverManager.broadcast('display', settings)
     return settings
+  })
+
+  ipcMain.handle(IPCHandler.GetClockSettings, () => ({
+    settings: getClockSettings(),
+    widgets: CLOCK_WIDGETS
+  }))
+
+  ipcMain.handle(IPCHandler.SetClockSettings, (_event, value) => {
+    const settings = setClockSettings(value)
+    serverManager.broadcast('clock', clockPayload(settings))
+    return settings
+  })
+
+  ipcMain.handle(IPCHandler.SleepDeviceOnClock, async () => {
+    if (!serverManager.hasClient()) return false
+    serverManager.broadcast('sleep', 'clock')
+    try {
+      await setBrightnessSmooth(null, 0.2, 10)
+    } catch {
+      /* the clock still shows */
+    }
+    return true
   })
 
   ipcMain.handle(IPCHandler.GetTabSettings, () => ({

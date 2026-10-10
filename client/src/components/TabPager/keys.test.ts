@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   CALENDAR_KEY,
   indexAfterChange,
+  isSleepKey,
+  SLEEP_KEY,
   keyToIndex,
   pagerKeyForFirstReply
 } from './keys.ts'
@@ -39,7 +41,11 @@ describe('keyToIndex', () => {
     expect(keyToIndex('3', 0, ['weather', 'todo'])).toBeNull()
   })
 
-  it('ignores button 4', () => {
+  it('treats button 4 as the sleep key, not a tab move', () => {
+    expect(SLEEP_KEY).toBe('4')
+    expect(isSleepKey('4')).toBe(true)
+    expect(isSleepKey('1')).toBe(false)
+    expect(isSleepKey('3')).toBe(false)
     expect(keyToIndex('4', 0, KEYS)).toBeNull()
   })
 

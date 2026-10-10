@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { useContext, useEffect, useMemo, useRef } from 'react'
 
 import { AppBlurContext } from '@/contexts/AppBlurContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
@@ -28,10 +28,10 @@ const builtInPages: TabPage[] = modules.map(toPage)
 const allIds = modules.map(m => m.id)
 
 const App: React.FC = () => {
-  const { blurred } = useContext(AppBlurContext)
+  const { blurred, playerShown, setPlayerShown } =
+    useContext(AppBlurContext)
   const { ready } = useContext(SocketContext)
   const tabs = useContext(TabsContext)
-  const [playerShown, setPlayerShown] = useState(false)
 
   const connectors = tabs?.connectors
   const idKey = visibleIds(tabs, [
@@ -59,7 +59,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setPlayerShown(s => !s)
+        setPlayerShown(!playerShown)
       }
     }
 

@@ -7,6 +7,9 @@ import { ClockProvider } from '@/contexts/ClockContext.tsx'
 import { TabsContextProvider } from '@/contexts/TabsContext.tsx'
 import { SleepContextProvider } from '@/contexts/SleepContext.tsx'
 
+import TimerAlert from '@/components/TimerAlert/TimerAlert.tsx'
+import KeyDebug from '@/components/KeyDebug/KeyDebug.tsx'
+
 import App from '@/App.tsx'
 
 import './index.css'
@@ -28,6 +31,8 @@ root.render(
               </MediaContextProvider>
             </SleepContextProvider>
           </AppBlurContextProvider>
+          <TimerAlert />
+          <KeyDebug />
         </TabsContextProvider>
       </ClockProvider>
     </DisplayContextProvider>

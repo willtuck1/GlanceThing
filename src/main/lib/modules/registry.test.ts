@@ -28,7 +28,8 @@ describe('module registry', () => {
       'todo',
       'sports',
       'fantasy',
-      'spotify'
+      'spotify',
+      'clock'
     ])
     expect(getModule('sports')?.label).toBe('Sports')
     expect(getModule('nope')).toBeUndefined()

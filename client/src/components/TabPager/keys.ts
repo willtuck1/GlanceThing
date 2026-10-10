@@ -1,5 +1,9 @@
 export const CALENDAR_KEY = 'calendar'
 
+// Button 4 sends the device to sleep on the clock.
+export const SLEEP_KEY = '4'
+export const isSleepKey = (key: string): boolean => key === SLEEP_KEY
+
 // Maps a Car Thing hardware button to a page index. Button 1 goes to the
 // previous tab and 2 to the next (both wrap); 3 jumps to the Calendar tab.
 export function keyToIndex(
@@ -17,7 +21,7 @@ export function keyToIndex(
     return i === -1 ? null : i
   }
 
-  // Button 4: reserved for sleep-to-clock (roadmap item 5).
+  // Button 4 is the sleep key (isSleepKey), not a tab move.
   return null
 }
 
@@ -42,6 +46,7 @@ export function pagerKeyForFirstReply(
   all: string[]
 ): 'default' | 'host' {
   const same =
-    visible.length === all.length && visible.every((id, i) => id === all[i])
+    visible.length === all.length &&
+    visible.every((id, i) => id === all[i])
   return same ? 'default' : 'host'
 }
