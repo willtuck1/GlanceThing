@@ -1,0 +1,10 @@
+{
+  "order": ["weather", "calendar", "todo", "sports", "fantasy", "spotify", "json:list0001", "json:numb0001", "json:keyv0001", "json:grid0001"],
+  "hidden": [],
+  "connectors": [
+    { "id": "json:list0001", "label": "Sensors", "layout": "list" },
+    { "id": "json:numb0001", "label": "Power", "layout": "number" },
+    { "id": "json:keyv0001", "label": "Server", "layout": "keyvalue" },
+    { "id": "json:grid0001", "label": "Rooms", "layout": "grid" }
+  ]
+}

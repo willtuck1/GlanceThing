@@ -16,6 +16,11 @@ export function registerFeed(
   if (decorate) decorators.set(key, decorate)
 }
 
+export function unregisterFeed(key: FeedKey) {
+  feeds.delete(key)
+  decorators.delete(key)
+}
+
 export function unregisterAll() {
   feeds.clear()
   decorators.clear()

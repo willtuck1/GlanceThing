@@ -1,0 +1,62 @@
+{
+  "items": [
+    {
+      "layout": "grid",
+      "cells": [
+        {
+          "label": "Living room",
+          "value": "21°"
+        },
+        {
+          "label": "Kitchen",
+          "value": "22.5°"
+        },
+        {
+          "label": "Bedroom",
+          "value": "19°"
+        },
+        {
+          "label": "Office",
+          "value": "21.5°"
+        },
+        {
+          "label": "Hallway",
+          "value": "20°"
+        },
+        {
+          "label": "Bathroom",
+          "value": "23°"
+        },
+        {
+          "label": "Basement",
+          "value": "18°"
+        },
+        {
+          "label": "Garage",
+          "value": "14°"
+        },
+        {
+          "label": "Porch",
+          "value": "9°"
+        },
+        {
+          "label": "Attic",
+          "value": "27°"
+        },
+        {
+          "label": "Nursery",
+          "value": "20°"
+        },
+        {
+          "label": "Guest room",
+          "value": "19.5°"
+        }
+      ],
+      "more": 2
+    }
+  ],
+  "fetchedAt": 1760000000000,
+  "fetchedAtLabel": "3:04 PM",
+  "stale": false,
+  "error": null
+}

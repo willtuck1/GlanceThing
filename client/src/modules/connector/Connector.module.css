@@ -1,0 +1,128 @@
+.error {
+  margin: 0 4px 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background-color: #4a1616;
+  color: #ffb3b3;
+  font-size: 0.6em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.more {
+  margin: 4px;
+  text-align: center;
+  font-size: 0.6em;
+  color: #aaa;
+}
+
+/* Big number */
+.number {
+  padding-top: 24px;
+  text-align: center;
+}
+
+.numberLine {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: center;
+  min-width: 0;
+}
+
+.numberValue {
+  min-width: 0;
+  font-size: 4.5em;
+  font-weight: 700;
+  line-height: 1.1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.numberUnit {
+  margin-left: 12px;
+  font-size: 1.5em;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.numberCaption {
+  margin-top: 8px;
+  font-size: 0.9em;
+  color: #aaa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Key / value */
+.pair {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 48px;
+  padding: 6px 16px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background-color: #161616;
+}
+
+.pairLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8em;
+  color: #aaa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pairValue {
+  flex-shrink: 0;
+  max-width: 55%;
+  margin-left: 12px;
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Grid: 4 columns x 3 rows, floats (no gap in Chrome 69). */
+.grid {
+  overflow: hidden;
+}
+
+.cellOuter {
+  float: left;
+  width: 25%;
+  box-sizing: border-box;
+  padding: 0 4px 8px;
+}
+
+.cell {
+  box-sizing: border-box;
+  height: 96px;
+  padding: 10px;
+  border-radius: 12px;
+  background-color: #161616;
+  overflow: hidden;
+}
+
+.cellLabel {
+  font-size: 0.6em;
+  color: #aaa;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellValue {
+  margin-top: 8px;
+  font-size: 1.3em;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

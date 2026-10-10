@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "layout": "number",
+      "value": "1,234.5",
+      "unit": "W",
+      "caption": "House power"
+    }
+  ],
+  "fetchedAt": 1760000000000,
+  "fetchedAtLabel": "3:04 PM",
+  "stale": false,
+  "error": null
+}

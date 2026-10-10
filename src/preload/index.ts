@@ -66,7 +66,11 @@ enum IPCHandler {
   SetTabSettings = 'setTabSettings',
   SearchWeatherLocations = 'searchWeatherLocations',
   GetWeatherSettings = 'getWeatherSettings',
-  SetWeatherSettings = 'setWeatherSettings'
+  SetWeatherSettings = 'setWeatherSettings',
+  ListConnectors = 'listConnectors',
+  SaveConnector = 'saveConnector',
+  DeleteConnector = 'deleteConnector',
+  TestConnector = 'testConnector'
 }
 
 // Custom APIs for renderer
@@ -180,7 +184,14 @@ const api = {
   setWeatherSettings: (settings: {
     location?: { name: string; latitude: number; longitude: number } | null
     units?: 'imperial' | 'metric'
-  }) => ipcRenderer.invoke(IPCHandler.SetWeatherSettings, settings)
+  }) => ipcRenderer.invoke(IPCHandler.SetWeatherSettings, settings),
+  listConnectors: () => ipcRenderer.invoke(IPCHandler.ListConnectors),
+  saveConnector: (draft: unknown) =>
+    ipcRenderer.invoke(IPCHandler.SaveConnector, draft),
+  deleteConnector: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.DeleteConnector, id),
+  testConnector: (draft: unknown) =>
+    ipcRenderer.invoke(IPCHandler.TestConnector, draft)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

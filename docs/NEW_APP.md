@@ -1,6 +1,6 @@
 # Adding an app module
 
-A module is one host folder, one client folder and one line in each registry, all with the same id. Ids are lowercase. `json:<id>` and `mcp:<id>` are reserved for connectors (later milestones). Never name anything "apps"; `src/main/lib/handlers/apps.ts` is desktop shortcuts.
+A module is one host folder, one client folder and one line in each registry, all with the same id. Ids are lowercase. `json:<id>` is used by JSON connectors (below) and `mcp:<id>` is reserved for MCP connectors (Part C). Never name anything "apps"; `src/main/lib/handlers/apps.ts` is desktop shortcuts.
 
 ## Host
 
@@ -42,6 +42,52 @@ A module is one host folder, one client folder and one line in each registry, al
 - Update `AGENTS.md` (tab list, module entries, preview notes).
 - In the milestone PR, bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N`.
 
-## JSON and MCP connectors
+## JSON connectors (no code)
 
-Coming in M9 Parts B and C.
+Use a JSON connector when the data is one HTTPS (or local-network) URL that returns JSON and you only need to show it as a list, a big number, key-value rows or a grid. It adds a tab with no release. Use a code-built app (above) when you need OAuth, several requests, computed values, or a custom layout.
+
+### Steps
+
+In Settings → Connectors, press Add connector, then:
+
+1. Name: the tab title (at most 24 characters).
+2. URL: `http://` or `https://`, no username or password, at most 2000 characters.
+3. Refresh every N minutes: 1-1440.
+4. Layout: List, Big number, Key-value or Grid.
+5. Mapping: the paths for that layout (below).
+6. Secret header (optional): header name and value, for an API key or token.
+7. Test: fetches the URL and shows the mapped result without saving. Fix any error, then Save. The tab appears on the device at once; show, hide and reorder it in Settings → Tabs.
+
+### Layouts and mapping
+
+- List: items path, primary (at most 80 characters), optional secondary (40) and value (16). Up to 20 rows; more are counted as "+N more".
+- Grid: items path, label (40) and value (16). Up to 12 cells.
+- Big number: value path, optional caption path, optional unit (literal text, at most 8 characters) and decimals (0-3; default up to 2).
+- Key-value: up to 8 rows, each a literal label (at most 40 characters) and the path of its value.
+
+Paths use dots and array indexes: `data.items[0].price`. An empty path means the whole response. For List and Grid, the items path picks an array ("for each item in") and the other paths are relative to each item; leave it empty when the response itself is the array.
+
+### Limits and network rules
+
+- At most 20 connectors. Each request: 10 s, 1 MB, 3 redirects, and the response must have a JSON content type.
+- Public hosts must use https. http is allowed only when every address the host name resolves to is local: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 127.0.0.0/8, `::1`, fc00::/7 (this includes `.local` names). Link-local addresses are refused. A redirect from https to http is refused.
+- Tailscale addresses (100.64.0.0/10) count as public, so use https there.
+- The host makes every request; the device only gets display-ready text.
+
+### Secret header
+
+The value is kept in secure storage and is never shown again. When editing, the field shows Set with Replace and Clear. Over http the form warns that the value is sent unencrypted. Changing the URL's host (protocol, host or port) requires entering the value again. The secret is dropped on a redirect to another origin, and a response that contains the secret is rejected.
+
+### Example: Home Assistant
+
+Create a long-lived access token in your Home Assistant user profile. The values below are fake.
+
+Big number, URL `http://homeassistant.local:8123/api/states/sensor.house_power`, header name `Authorization`, value `Bearer <your long-lived token>`:
+
+- Value path `state`, unit `W`, caption path `attributes.friendly_name`.
+
+List, URL `http://homeassistant.local:8123/api/states`, same header:
+
+- Items path empty (the response is an array), primary `attributes.friendly_name`, secondary `entity_id`, value `state`.
+
+MCP connectors come in Part C. They reuse the same layouts and mapping.

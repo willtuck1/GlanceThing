@@ -51,11 +51,14 @@ http
   })
   .listen(HTTP_PORT)
 
+// Connector feeds are `json:<id>` on the wire but `json-<id>` on disk, so
+// VARIANT_json-<id>=<name> (env names can't contain ':' in a shell) works.
 function payload(type) {
-  const variant = process.env[`VARIANT_${type}`]
+  const name = type.replace(':', '-')
+  const variant = process.env[`VARIANT_${name}`]
   const file = path.join(
     payloads,
-    variant ? `${type}.${variant}.json` : `${type}.json`
+    variant ? `${name}.${variant}.json` : `${name}.json`
   )
   return fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : null
 }

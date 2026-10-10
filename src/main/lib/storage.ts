@@ -128,6 +128,15 @@ export function setStorageValue(
   }
 }
 
+// Removes a key entirely (no handler runs). Use this instead of storing an
+// encrypted "null" for secrets.
+export function deleteStorageValue(key: string) {
+  log(`Deleting value for key: ${key}`, 'Storage', LogLevel.DEBUG)
+  if (!(key in storage)) return
+  delete storage[key]
+  writeStorage(storage)
+}
+
 export function getSocketPassword() {
   let socketPassword = getStorageValue('socketPassword', true)
   if (!socketPassword) {

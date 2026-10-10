@@ -2,7 +2,12 @@ import { getStorageValue, setStorageValue } from '../storage.js'
 
 import { FeedKey } from '../feeds/types.js'
 import { ModuleManifest } from './types.js'
-import { modules } from './registry.js'
+import { allModules } from './registry.js'
+import { listConnectors } from '../connectors/store.js'
+import {
+  CONNECTOR_PREFIX,
+  ConnectorDescriptor
+} from '../connectors/types.js'
 
 export interface TabSettings {
   order: string[]
@@ -36,10 +41,27 @@ export function normalizeTabSettings(
   return { order, hidden: hidden.length >= order.length ? [] : hidden }
 }
 
-const moduleIds = () => modules.map(m => m.id)
+const moduleIds = () => allModules().map(m => m.id)
 
 export function getTabSettings(): TabSettings {
   return normalizeTabSettings(getStorageValue(STORAGE_KEY), moduleIds())
+}
+
+export interface TabsPayload extends TabSettings {
+  connectors: ConnectorDescriptor[]
+}
+
+/** What the device gets in `tabs`: settings plus the connector descriptors
+ * (id, label, layout only; never url, header or mapping). */
+export function tabsPayload(): TabsPayload {
+  return {
+    ...getTabSettings(),
+    connectors: listConnectors().map(c => ({
+      id: `${CONNECTOR_PREFIX}${c.id}`,
+      label: c.label,
+      layout: c.layout
+    }))
+  }
 }
 
 export function setTabSettings(value: unknown): TabSettings {

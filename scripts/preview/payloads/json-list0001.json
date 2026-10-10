@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "layout": "list",
+      "rows": [
+        {
+          "primary": "Living room wall panel backlight controller north array zone three of four extra",
+          "secondary": "Light",
+          "value": "On"
+        },
+        {
+          "primary": "Kitchen dishwasher",
+          "secondary": "Switch",
+          "value": "Done"
+        },
+        {
+          "primary": "Garage door",
+          "secondary": "Cover",
+          "value": "Closed"
+        },
+        {
+          "primary": "Front porch motion",
+          "secondary": "Front porch motion sensor, outdoor north",
+          "value": "No motion"
+        },
+        {
+          "primary": "Hallway thermostat",
+          "secondary": "Climate",
+          "value": "21.5 °C"
+        },
+        {
+          "primary": "Office window",
+          "secondary": "Contact",
+          "value": "Open"
+        },
+        {
+          "primary": "Basement humidity",
+          "secondary": "Sensor",
+          "value": "48%"
+        },
+        {
+          "primary": "Water heater",
+          "secondary": "Switch",
+          "value": "Heating"
+        }
+      ],
+      "more": 3
+    }
+  ],
+  "fetchedAt": 1760000000000,
+  "fetchedAtLabel": "3:04 PM",
+  "stale": false,
+  "error": null
+}

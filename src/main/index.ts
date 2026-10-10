@@ -78,9 +78,20 @@ import { playbackManager } from './lib/playback/playback.js'
 import { applyPatch, getPatches } from './lib/patches.js'
 import { getLatestVersion } from './lib/update.js'
 import { serverManager } from './lib/server.js'
+import { isProtectedStorageKey } from './lib/connectors/store.js'
+import {
+  ipcDeleteConnector,
+  ipcListConnectors,
+  ipcSaveConnector,
+  ipcTestConnector
+} from './lib/connectors/ipc.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
-import { modules } from './lib/modules/registry.js'
-import { getTabSettings, setTabSettings } from './lib/modules/tabs.js'
+import { allModules } from './lib/modules/registry.js'
+import {
+  getTabSettings,
+  setTabSettings,
+  tabsPayload
+} from './lib/modules/tabs.js'
 import { applyTabSettings } from './lib/setup/feeds.js'
 import { getFeed } from './lib/feeds/registry.js'
 import { searchLocations } from './lib/weather/openMeteo.js'
@@ -278,7 +289,11 @@ enum IPCHandler {
   SetTabSettings = 'setTabSettings',
   SearchWeatherLocations = 'searchWeatherLocations',
   GetWeatherSettings = 'getWeatherSettings',
-  SetWeatherSettings = 'setWeatherSettings'
+  SetWeatherSettings = 'setWeatherSettings',
+  ListConnectors = 'listConnectors',
+  SaveConnector = 'saveConnector',
+  DeleteConnector = 'deleteConnector',
+  TestConnector = 'testConnector'
 }
 
 async function setupIpcHandlers() {
@@ -334,10 +349,12 @@ async function setupIpcHandlers() {
   })
 
   ipcMain.handle(IPCHandler.GetStorageValue, (_event, key) => {
+    if (isProtectedStorageKey(key)) return null
     return getStorageValue(key)
   })
 
   ipcMain.handle(IPCHandler.SetStorageValue, (_event, key, value) => {
+    if (isProtectedStorageKey(key)) throw new Error('Not allowed')
     return setStorageValue(key, value)
   })
 
@@ -618,12 +635,12 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.GetTabSettings, () => ({
     settings: getTabSettings(),
-    modules: modules.map(({ id, label }) => ({ id, label }))
+    modules: allModules().map(({ id, label }) => ({ id, label }))
   }))
 
   ipcMain.handle(IPCHandler.SetTabSettings, (_event, value) => {
     const settings = setTabSettings(value)
-    serverManager.broadcast('tabs', settings)
+    serverManager.broadcast('tabs', tabsPayload())
     applyTabSettings(settings)
     return settings
   })
@@ -645,6 +662,20 @@ async function setupIpcHandlers() {
 
   ipcMain.handle(IPCHandler.SetWeatherSettings, (_event, value) =>
     applyWeatherSettings(value, getFeed('weather'))
+  )
+
+  ipcMain.handle(IPCHandler.ListConnectors, () => ipcListConnectors())
+
+  ipcMain.handle(IPCHandler.SaveConnector, (_event, draft) =>
+    ipcSaveConnector(draft)
+  )
+
+  ipcMain.handle(IPCHandler.DeleteConnector, (_event, id) =>
+    ipcDeleteConnector(id)
+  )
+
+  ipcMain.handle(IPCHandler.TestConnector, (_event, draft) =>
+    ipcTestConnector(draft)
   )
 }
 

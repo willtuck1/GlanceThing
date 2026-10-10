@@ -1,0 +1,40 @@
+[
+  {
+    "entity_id": "sensor.living_room_temperature",
+    "state": "21.5",
+    "attributes": {
+      "friendly_name": "Living Room Temperature",
+      "unit_of_measurement": "\u00b0C"
+    }
+  },
+  {
+    "entity_id": "sensor.outdoor_humidity",
+    "state": "64",
+    "attributes": {
+      "friendly_name": "Outdoor Humidity",
+      "unit_of_measurement": "%"
+    }
+  },
+  {
+    "entity_id": "light.kitchen",
+    "state": "on",
+    "attributes": {
+      "friendly_name": "Kitchen Light"
+    }
+  },
+  {
+    "entity_id": "sensor.power_usage",
+    "state": "1.234",
+    "attributes": {
+      "friendly_name": "Power Usage",
+      "unit_of_measurement": "kW"
+    }
+  },
+  {
+    "entity_id": "sensor.garage_door",
+    "state": "unavailable",
+    "attributes": {
+      "friendly_name": "Garage Door"
+    }
+  }
+]

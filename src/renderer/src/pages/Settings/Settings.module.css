@@ -462,11 +462,14 @@
   color: #4c9aff;
 }
 
+.settingsTab > .actions,
 .googleSection .actions {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
+.settingsTab > .actions button,
 .googleSection .actions button {
   padding: 8px 14px;
 }
@@ -499,4 +502,90 @@
   height: 12px;
   border-radius: 3px;
   flex-shrink: 0;
+}
+
+.connectorRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.connectorRow .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.connectorRow .info p {
+  margin: 0;
+}
+
+.connectorRow .info .meta {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connectorRow .info .meta span + span {
+  margin-left: 8px;
+}
+
+.connectorRow .actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.googleSection input[type='number'],
+.googleSection select {
+  align-self: flex-start;
+  box-sizing: border-box;
+  min-width: 160px;
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 5px;
+  background-color: #111;
+  color: #fff;
+  border: 1px solid #333;
+  transition: 200ms ease;
+}
+
+.googleSection input[type='number']:focus,
+.googleSection select:focus {
+  outline: none;
+  border: 1px solid #555;
+}
+
+.fieldRow {
+  display: flex;
+  gap: 8px;
+}
+
+.fieldRow input {
+  flex: 1;
+  min-width: 0;
+}
+
+.warning {
+  color: #ffb020;
+  font-size: 14px;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 14px;
+}
+
+.preview .previewRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preview .big {
+  font-size: 28px;
 }
