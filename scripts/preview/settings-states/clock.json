@@ -1,0 +1,27 @@
+{
+  "panel": "Clock",
+  "outDir": "docs/m10-screenshots",
+  "height": 900,
+  "css": "[class*=\"_box_\"] { height: 840px !important; }",
+  "api": {
+    "getClockSettings": {
+      "settings": {
+        "tabStyle": "analog",
+        "sleepStyle": "digital",
+        "widgets": {
+          "order": ["weather", "calendar", "todo", "sports", "fantasy"],
+          "hidden": ["fantasy"]
+        },
+        "defaultAlert": "notify",
+        "keyDebug": false
+      },
+      "widgets": [
+        { "id": "weather", "label": "Weather" },
+        { "id": "calendar", "label": "Calendar" },
+        { "id": "todo", "label": "To-do" },
+        { "id": "sports", "label": "Sports" },
+        { "id": "fantasy", "label": "Fantasy" }
+      ]
+    }
+  }
+}
