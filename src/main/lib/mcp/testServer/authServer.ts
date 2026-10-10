@@ -22,6 +22,8 @@ export interface TestAuthServer {
   expireAccessTokens(): void
   revokeRefreshTokens(): void
   isValidAccessToken(token: string): boolean
+  // A pre-registered client (as if typed in by the user); not in `registrations`.
+  addClient(clientId: string, redirectUris: string[]): void
   authorizeVia(
     url: string,
     opts?: { tamperState?: boolean; deny?: boolean }
@@ -114,6 +116,9 @@ export async function startTestAuthServer(
     expireAccessTokens: () => access.clear(),
     revokeRefreshTokens: () => refresh.clear(),
     isValidAccessToken: t => access.has(t),
+    addClient: (clientId, redirectUris) => {
+      clients.set(clientId, redirectUris)
+    },
     authorizeVia,
     close: () => closeServer(server)
   }
