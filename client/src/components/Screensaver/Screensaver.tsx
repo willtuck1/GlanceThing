@@ -127,7 +127,7 @@ const Screensaver: React.FC<ScreensaverProps> = ({ type }) => {
   }, [type])
 
   return (
-    <div className={styles.screensaver} data-active={type !== 'off'}>
+    <div className={styles.screensaver} data-active={type !== 'off' && type !== 'clock'}>
       {loaded && (
         <>
           {customImage ? (

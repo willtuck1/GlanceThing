@@ -7,4 +7,7 @@ export interface CalendarEvent {
   dayLabel: string
   location?: string
   calendarColor: string
+  // Epoch ms; absent from older hosts.
+  startMs?: number
+  endMs?: number
 }

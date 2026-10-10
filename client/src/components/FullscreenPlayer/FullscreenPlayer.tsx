@@ -13,7 +13,7 @@ import styles from './FullescreenPlayer.module.css'
 
 interface FullescreenPlayerProps {
   shown: boolean
-  setShown: React.Dispatch<React.SetStateAction<boolean>>
+  setShown: (shown: boolean) => void
 }
 
 const FullescreenPlayer: React.FC<FullescreenPlayerProps> = ({

@@ -1,7 +1,7 @@
 import cron from 'node-cron'
 
 import { serverManager } from '../server.js'
-import { formatDate } from '../time.js'
+import { clockSync } from '../time.js'
 
 import { AuthenticatedWebSocket } from '../../types/WebSocketServer.js'
 import { SetupFunction } from '../../types/WebSocketSetup.js'
@@ -19,7 +19,7 @@ export const setup: SetupFunction = async () => {
       ws.send(
         JSON.stringify({
           type: 'time',
-          data: formatDate()
+          data: clockSync()
         })
       )
     })

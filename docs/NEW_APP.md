@@ -216,25 +216,26 @@ Use this when a connector cannot do the job. A module is one host folder, one cl
 1. Put the data source in `src/main/lib/<source>/` with a `fixtures/` folder and tests. Tests use mocked HTTP and committed fixtures, never live calls.
    - The host owns all network calls. The device never sees tokens; store secrets with `setStorageValue(key, value, true)`.
    - The device clock is unreliable, so send preformatted times (labels) in the payload.
-2. Add the feed key to the `FeedKey` union in `src/main/lib/feeds/types.ts`.
-3. Write the handler in `src/main/lib/modules/<id>/handler.ts`. Copy `src/main/lib/modules/weather/handler.ts`: export `name`, `hasActions`, and `handle`, which calls `respondWithFeed(key, ws)`. Handler names must be unique across all modules.
+2. Add the feed key to the `FeedKey` union in `src/main/lib/feeds/types.ts`. Skip this if the module has no feed.
+3. Write the handler in `src/main/lib/modules/<id>/handler.ts`. Copy `src/main/lib/modules/weather/handler.ts`: export `name`, `hasActions`, and `handle`, which calls `respondWithFeed(key, ws)`. Handler names must be unique across all modules. A handler need not serve a feed: `clock/handler.ts` just sends a payload, and `clock/timerHandler.ts` (`timer`) has `actions`. With `hasActions: true`, a plain `{type}` request (no `action`) still reaches `handle`; a request with an `action` goes to the matching entry in `actions`. A module can list several handlers.
 4. Write the manifest in `src/main/lib/modules/<id>/index.ts` (see `weather/index.ts`), typed `ModuleManifest` from `src/main/lib/modules/types.ts`:
    - `id`, `label`
-   - `feeds()`: returns `FeedSource[]`, each with `key`, `fetch`, `interval(items)` (ms), `describeError` (`describeFetchError(e, 'Name')` from `feeds/errors.ts`), and optional `decorate` and `prepare`
-   - `feedKeys`: the same keys, in the same order, as `feeds()` returns
+   - `feeds()`: returns `FeedSource[]` (`() => []` for a module with no feed, like Spotify and Clock), each with `key`, `fetch`, `interval(items)` (ms), `describeError` (`describeFetchError(e, 'Name')` from `feeds/errors.ts`), and optional `decorate` and `prepare`
+   - `feedKeys`: the same keys, in the same order, as `feeds()` returns (`[]` with no feed)
    - `handlers`: `[handler]`
    - `dependsOn`: ids of modules whose feeds must keep running while this one is visible (optional)
-   - `settings`: `{ panel }` if the app has a Settings panel (optional)
-5. Add `import { manifest as <id> }` and one entry to `modules` in `src/main/lib/modules/registry.ts`. Array order is the default tab order.
+   - `settings`: `{ panel }` if the app has a Settings panel (optional). `panel` is the union `'google' | 'fantasy' | 'weather' | 'clock'` in `modules/types.ts`; a new panel needs that union extended and the panel added to `src/renderer/src/pages/Settings/Settings.tsx` (a button and a component, as for Weather and Clock).
+5. Add `import { manifest as <id> }` and one entry to `modules` in `src/main/lib/modules/registry.ts`. Array order is the default tab order. Put a new module last (as Clock is) unless there is a reason not to: existing users' saved tab order gets unknown ids appended last by normalization, so a module placed elsewhere shows up in a different position for them than for new users.
 
 ### Client
 
 1. Create `client/src/modules/<id>/` with the tab component, `types.ts` (payload types) and `index.tsx`:
    `export const module: ClientModule = { id, label, render: active => <Tab active={active} /> }` (type in `client/src/modules/types.ts`).
-2. Fetch data with `useFeed<Item>('<id feed key>', active)` from `client/src/hooks/useFeed.ts`.
-3. Add the key to `FeedType` in `client/src/types/Feeds.ts`, and re-export the payload types there.
+2. Fetch data with `useFeed<Item>('<id feed key>', active)` from `client/src/hooks/useFeed.ts`. A module with no feed gets its data its own way (Clock uses `ClockContext`).
+3. If it has a feed, add the key to `FeedType` in `client/src/types/Feeds.ts`, and re-export the payload types there.
 4. Add one line to `modules` in `client/src/modules/registry.ts`, in the same position as on the host.
-5. The target is Chrome 69 at 800×480. No flexbox `gap`, `aspect-ratio` or `:is()`. Show host labels, do not format times on the device.
+5. Input: buttons `1`-`4`, `m` and `Escape` are global (1/2 previous/next tab, 3 Calendar, 4 sleep on the clock, `m` menu, `Escape` player); do not handle them in a tab. A tab that uses the dial (`wheel`) or `Enter` must act only while it is active, the app is not blurred and the player is hidden: read `blurred` and `playerShown` from `AppBlurContext` (`client/src/contexts/AppBlurContext.tsx`), as `ClockTab.tsx` does (`active && !blurred && !playerShown`); `useListNav` does the same for lists.
+6. The target is Chrome 69 at 800×480. No flexbox `gap`, `aspect-ratio` or `:is()`. Show host labels, do not format times on the device.
 
 ### What you get for free
 
@@ -244,7 +245,7 @@ Use this when a connector cannot do the job. A module is one host folder, one cl
 
 ### Module checklist
 
-- `src/main/lib/modules/registry.test.ts` and `client/src/modules/registry.test.ts`: update the expected id list; the other tests check unique handler names, `dependsOn` targets and `feedKeys` against `feeds()`.
+- `src/main/lib/modules/registry.test.ts` and `client/src/modules/registry.test.ts`: update the expected id list in both (same order); the other tests check unique handler names, `dependsOn` targets and `feedKeys` against `feeds()`.
 - Add tests for the data source and any `view.ts` helpers.
 - `npm run gate -- fast`.
 - Preview: add `scripts/preview/payloads/<type>.json` (copy another payload, shapes are in `client/src/modules/<id>/types.ts`), then follow `scripts/preview/README.md`. Add the tab to the tab order notes there.
@@ -256,4 +257,4 @@ Use this when a connector cannot do the job. A module is one host folder, one cl
 - A screenshot at 800×480 (`scripts/preview/README.md`).
 - `npm run gate -- fast` between steps, `npm run gate` before the PR.
 - `AGENTS.md` updated in the same commit (or "AGENTS.md: no update needed" in the PR body).
-- Releases: only a code-built module or other client change needs a release. Bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N` in the milestone PR, then tag `v0.0.16-tabs.N` or create the release on GitHub after merging. A release marked as a pre-release is invisible to the in-app update check. JSON connectors and recipes need no client release.
+- Releases: only a code-built module or other client change needs a release. Bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N` in the milestone PR. After merging, push the tag `v0.0.16-tabs.N` only; never create the release by hand (`build-release.yml` builds it). A release marked as a pre-release is invisible to the in-app update check. JSON connectors and recipes need no client release.

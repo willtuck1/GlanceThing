@@ -1,6 +1,8 @@
-import { memo, useEffect, useRef, useState } from 'react'
+import { memo, useContext, useEffect, useRef, useState } from 'react'
 
-import { indexAfterChange, keyToIndex } from './keys.ts'
+import { SocketContext } from '@/contexts/SocketContext.tsx'
+
+import { indexAfterChange, isSleepKey, keyToIndex } from './keys.ts'
 import { AXIS_LOCK_PX, resolveSnap } from './snap.ts'
 
 import styles from './TabPager.module.css'
@@ -34,6 +36,7 @@ interface Drag {
 }
 
 const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
+  const { socket } = useContext(SocketContext)
   const keys = pages.map(p => p.key)
   const [indexState, setIndex] = useState(0)
   const [prevKeys, setPrevKeys] = useState(keys)
@@ -53,10 +56,14 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
+      if (isSleepKey(e.key)) {
+        socket?.send(
+          JSON.stringify({ type: 'sleep', data: { method: 'clock' } })
+        )
+        return
+      }
       const pageKeys = pages.map(p => p.key)
-      setIndex(
-        current => keyToIndex(e.key, current, pageKeys) ?? current
-      )
+      setIndex(current => keyToIndex(e.key, current, pageKeys) ?? current)
     }
 
     document.addEventListener('keydown', listener)
@@ -64,7 +71,7 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
     return () => {
       document.removeEventListener('keydown', listener)
     }
-  }, [pages])
+  }, [pages, socket])
 
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0]

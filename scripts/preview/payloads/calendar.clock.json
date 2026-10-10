@@ -1,0 +1,47 @@
+{
+ "items": [
+  {
+   "id": "e1",
+   "title": "Standup",
+   "allDay": false,
+   "startLabel": "3:45 PM",
+   "endLabel": "9:15 AM",
+   "dayLabel": "Today",
+   "calendarColor": "#4285f4",
+   "startMs": 1791664645000,
+   "endMs": 1791665545000
+  },
+  {
+   "id": "e2",
+   "title": "Lunch with Sam",
+   "allDay": false,
+   "startLabel": "12:30 PM",
+   "endLabel": "1:30 PM",
+   "dayLabel": "Today",
+   "location": "Cafe Rio",
+   "calendarColor": "#0b8043"
+  },
+  {
+   "id": "e3",
+   "title": "Dentist",
+   "allDay": false,
+   "startLabel": "4:00 PM",
+   "endLabel": "5:00 PM",
+   "dayLabel": "Tomorrow",
+   "calendarColor": "#d50000"
+  },
+  {
+   "id": "e4",
+   "title": "Trip",
+   "allDay": true,
+   "startLabel": "",
+   "endLabel": "",
+   "dayLabel": "Sat",
+   "calendarColor": "#f6bf26"
+  }
+ ],
+ "fetchedAt": 1791660745000,
+ "fetchedAtLabel": "3:04 PM",
+ "stale": false,
+ "error": null
+}

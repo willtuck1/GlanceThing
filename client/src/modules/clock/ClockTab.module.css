@@ -1,0 +1,73 @@
+.tab {
+  position: relative;
+  height: 100%;
+  padding: 8px 12px 24px;
+  overflow: hidden;
+}
+
+.left {
+  float: left;
+  width: 430px;
+  height: 100%;
+  text-align: center;
+  padding-top: 40px;
+  box-sizing: border-box;
+}
+
+.date {
+  margin-top: 16px;
+  font-size: 28px;
+  color: #aaa;
+}
+
+.right {
+  float: right;
+  width: 336px;
+  height: 100%;
+  padding-top: 70px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.big {
+  font-size: 72px;
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.big[data-dim='true'] {
+  color: #666;
+}
+
+.chips {
+  margin-top: 24px;
+  white-space: nowrap;
+}
+
+.chips[data-second='true'] {
+  margin-top: 8px;
+}
+
+.chip {
+  display: inline-block;
+  margin: 0 3px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  font-size: 16px;
+  color: #888;
+  border: 1px solid #444;
+}
+
+.chip[data-on='true'] {
+  color: #000;
+  background: #fff;
+  border-color: #fff;
+}
+
+.hint {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #888;
+}

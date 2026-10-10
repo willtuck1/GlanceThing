@@ -10,7 +10,8 @@ describe('module registry', () => {
       'todo',
       'sports',
       'fantasy',
-      'spotify'
+      'spotify',
+      'clock'
     ])
   })
 

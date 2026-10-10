@@ -184,6 +184,16 @@ describe('buildCalendarItems', () => {
       location: '12 Example Street',
       calendarColor: '#aaa'
     })
+    const raw1 = raw.find(r => r.title === 'Dentist')!
+    expect(dentist.startMs).toBe(raw1.start)
+    expect(dentist.endMs).toBe(raw1.end)
+    expect(dentist.endMs - dentist.startMs).toBe(60 * 60 * 1000)
+
+    const bday = items.find(i => i.title === 'Birthday: Sam')!
+    const rawB = raw.find(r => r.title === 'Birthday: Sam')!
+    expect(bday.startMs).toBe(rawB.start)
+    expect(bday.endMs).toBe(rawB.end)
+    expect(bday.endMs).toBeGreaterThan(bday.startMs)
     expect(items.find(i => i.title === 'School run')!.calendarColor).toBe(
       '#bbb'
     )

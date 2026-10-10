@@ -159,6 +159,8 @@ export function buildCalendarItems(
       endLabel: e.allDay ? '' : formatTime(e.end),
       dayLabel: dayLabel(day, now),
       ...(e.location ? { location: e.location } : {}),
-      calendarColor: e.color
+      calendarColor: e.color,
+      startMs: e.start,
+      endMs: e.end
     }))
 }

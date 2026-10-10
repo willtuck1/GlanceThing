@@ -6,6 +6,7 @@ import { ModalContext } from '@/contexts/ModalContext.js'
 import Loader from '@/components/Loader/Loader.js'
 import Switch from '@/components/Switch/Switch.js'
 
+import ClockTab from './ClockTab.js'
 import ConnectorsTab from './ConnectorsTab.js'
 
 import styles from './Settings.module.css'
@@ -24,6 +25,7 @@ enum Tab {
   Fantasy,
   Weather,
   Tabs,
+  Clock,
   Connectors,
   Advanced,
   Logs,
@@ -122,6 +124,13 @@ const Settings: React.FC = () => {
               Tabs
             </button>
             <button
+              onClick={() => setCurrentTab(Tab.Clock)}
+              data-active={currentTab === Tab.Clock}
+            >
+              <span className="material-icons">schedule</span>
+              Clock
+            </button>
+            <button
               onClick={() => setCurrentTab(Tab.Connectors)}
               data-active={currentTab === Tab.Connectors}
             >
@@ -171,6 +180,8 @@ const Settings: React.FC = () => {
               <WeatherTab />
             ) : currentTab === Tab.Tabs ? (
               <TabsTab />
+            ) : currentTab === Tab.Clock ? (
+              <ClockTab />
             ) : currentTab === Tab.Connectors ? (
               <ConnectorsTab />
             ) : currentTab === Tab.Advanced ? (
@@ -622,7 +633,8 @@ const ClientTab: React.FC = () => {
             {
               value: 'screensaver',
               label: 'Screensaver'
-            }
+            },
+            { value: 'clock', label: 'Clock' }
           ]}
           onChange={value => {
             window.api.setStorageValue('sleepMethod', value as string)

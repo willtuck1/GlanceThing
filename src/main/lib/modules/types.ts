@@ -22,5 +22,5 @@ export interface ModuleManifest {
   feeds: () => FeedSource[]
   handlers: Handler[]
   dependsOn?: string[]
-  settings?: { panel: 'google' | 'fantasy' | 'weather' }
+  settings?: { panel: 'google' | 'fantasy' | 'weather' | 'clock' }
 }

@@ -144,6 +144,16 @@ type ConnectorView =
   | { layout: 'number'; value: string; unit?: string; caption?: string }
   | { layout: 'keyvalue'; pairs: { label: string; value: string }[] }
 
+type ClockStyle = 'digital' | 'analog'
+type ClockWidgetId = 'weather' | 'calendar' | 'todo' | 'sports' | 'fantasy'
+interface ClockSettings {
+  tabStyle: ClockStyle
+  sleepStyle: ClockStyle
+  widgets: { order: ClockWidgetId[]; hidden: ClockWidgetId[] }
+  defaultAlert: 'off' | 'notify' | 'sound'
+  keyDebug: boolean
+}
+
 declare global {
   interface Window {
     api: {
@@ -255,6 +265,14 @@ declare global {
         sportsTintOpacity: number
         calendarTintOpacity: number
       }>
+      getClockSettings: () => Promise<{
+        settings: ClockSettings
+        widgets: { id: ClockWidgetId; label: string }[]
+      }>
+      setClockSettings: (
+        settings: Partial<ClockSettings>
+      ) => Promise<ClockSettings>
+      sleepDeviceOnClock: () => Promise<boolean>
       getTabSettings: () => Promise<{
         settings: { order: string[]; hidden: string[] }
         modules: { id: string; label: string }[]

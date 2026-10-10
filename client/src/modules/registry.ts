@@ -5,6 +5,8 @@ import { module as sports } from './sports/index.tsx'
 import { module as fantasy } from './fantasy/index.tsx'
 import { module as spotify } from './spotify/index.tsx'
 
+import { module as clock } from './clock/index.tsx'
+
 import type { ClientModule } from './types.ts'
 
 // Tab order. Adding a tab is one folder plus one line here.
@@ -14,5 +16,6 @@ export const modules: ClientModule[] = [
   todo,
   sports,
   fantasy,
-  spotify
+  spotify,
+  clock
 ]

@@ -62,6 +62,9 @@ enum IPCHandler {
   SetFantasyLeague = 'setFantasyLeague',
   GetDisplaySettings = 'getDisplaySettings',
   SetDisplaySettings = 'setDisplaySettings',
+  GetClockSettings = 'getClockSettings',
+  SetClockSettings = 'setClockSettings',
+  SleepDeviceOnClock = 'sleepDeviceOnClock',
   GetTabSettings = 'getTabSettings',
   SetTabSettings = 'setTabSettings',
   SearchWeatherLocations = 'searchWeatherLocations',
@@ -177,6 +180,11 @@ const api = {
     sportsTintOpacity?: number
     calendarTintOpacity?: number
   }) => ipcRenderer.invoke(IPCHandler.SetDisplaySettings, settings),
+  getClockSettings: () => ipcRenderer.invoke(IPCHandler.GetClockSettings),
+  setClockSettings: (settings: Record<string, unknown>) =>
+    ipcRenderer.invoke(IPCHandler.SetClockSettings, settings),
+  sleepDeviceOnClock: () =>
+    ipcRenderer.invoke(IPCHandler.SleepDeviceOnClock),
   getTabSettings: () => ipcRenderer.invoke(IPCHandler.GetTabSettings),
   setTabSettings: (settings: { order: string[]; hidden: string[] }) =>
     ipcRenderer.invoke(IPCHandler.SetTabSettings, settings),

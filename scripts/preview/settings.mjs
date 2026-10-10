@@ -6,15 +6,17 @@
 // <state> is scripts/preview/settings-states/<state>.json:
 //   connectors   listConnectors() result
 //   mcpRecipes   listMcpRecipes() result
+//   panel        sidebar button text to open (default 'Connectors')
+//   outDir       output dir relative to the repo root (default docs/m9c-screenshots)
 //   css          optional CSS added to the page (e.g. a taller Settings box)
 //   signInError  if set, mcpSignIn() resolves {error}
 //   api          optional {method: returnValue} overrides for any other call
-//   clicks       after opening Settings -> Connectors: strings click the first
+//   clicks       after opening the panel: strings click the first
 //                button whose name contains the text; {select: value} picks
 //                an option in the first <select>
 // Every other window.api method resolves null (on() returns a no-op
 // unsubscribe), so add an `api` override if the page needs more.
-// Output: docs/m9c-screenshots/settings-<state>.png. Never put real
+// Output: <outDir>/settings-<state>.png. Never put real
 // secrets in a state file.
 import { createRequire } from 'node:module'
 import { execSync } from 'node:child_process'
@@ -24,7 +26,6 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
-const outDir = path.join(root, 'docs/m9c-screenshots')
 const distDir = path.join(root, 'out/renderer')
 
 async function loadPlaywright() {
@@ -109,22 +110,25 @@ function installStub(state) {
 
 const { chromium } = await loadPlaywright()
 const browser = await chromium.launch()
-fs.mkdirSync(outDir, { recursive: true })
 let failed = false
 try {
   for (const name of states) {
     const file = path.join(root, 'scripts/preview/settings-states', `${name}.json`)
     const state = JSON.parse(fs.readFileSync(file, 'utf-8'))
-    // 900 wide like the BrowserWindow in src/main/index.ts; 30 px taller for tall states.
-    const page = await browser.newPage({ viewport: { width: 900, height: 700 } })
+    // 900 wide like the BrowserWindow in src/main/index.ts; `height` for tall panels.
+    const page = await browser.newPage({
+      viewport: { width: 900, height: state.height ?? 700 }
+    })
     page.on('pageerror', e => console.error(`${name}: page error: ${e.message}`))
     await page.addInitScript(installStub, state)
     await page.goto(url)
     if (state.css) await page.addStyleTag({ content: state.css })
+    const outDir = path.join(root, state.outDir ?? 'docs/m9c-screenshots')
+    fs.mkdirSync(outDir, { recursive: true })
     const press = text =>
       page.getByRole('button', { name: text }).first().click()
     await press('settings')
-    await press('Connectors')
+    await press(state.panel ?? 'Connectors')
     for (const c of state.clicks ?? []) {
       if (typeof c === 'string') await press(c)
       else if (c.select) await page.locator('select').first().selectOption(c.select)
