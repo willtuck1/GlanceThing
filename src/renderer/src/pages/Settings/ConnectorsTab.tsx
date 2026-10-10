@@ -18,6 +18,8 @@ import {
 } from './connectorForm.js'
 import ConnectorPreview from './ConnectorPreview.js'
 import McpConnectorForm from './McpConnectorForm.js'
+import TutorialDialog from './TutorialDialog.js'
+import { TUTORIAL_SEEN_KEY, shouldAutoOpen } from './tutorialSteps.js'
 import {
   McpConnectorRow,
   McpForm,
@@ -44,6 +46,21 @@ const ConnectorsTab: React.FC = () => {
   const [listError, setListError] = useState('')
   const [signingIn, setSigningIn] = useState<string | null>(null)
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({})
+  const [tutorialOpen, setTutorialOpen] = useState(false)
+
+  useEffect(() => {
+    window.api
+      .getStorageValue(TUTORIAL_SEEN_KEY)
+      .then(seen => {
+        if (shouldAutoOpen(seen)) setTutorialOpen(true)
+      })
+      .catch(() => {})
+  }, [])
+
+  function closeTutorial() {
+    setTutorialOpen(false)
+    window.api.setStorageValue(TUTORIAL_SEEN_KEY, true).catch(() => {})
+  }
 
   async function reload() {
     try {
@@ -171,6 +188,12 @@ const ConnectorsTab: React.FC = () => {
           Add a tab to the Car Thing from a JSON web address or an MCP
           server.
         </p>
+        <div className={styles.actions}>
+          <button onClick={() => setTutorialOpen(true)}>
+            How to add a tab
+          </button>
+        </div>
+        <TutorialDialog open={tutorialOpen} onClose={closeTutorial} />
         {connectors.length === 0 && (
           <p className={styles.description}>No connectors yet</p>
         )}
