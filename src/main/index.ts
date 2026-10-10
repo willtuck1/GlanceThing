@@ -96,6 +96,7 @@ import {
   getClockSettings,
   setClockSettings
 } from './lib/clock/settings.js'
+import { getTimer } from './lib/clock/instance.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
 import { allModules } from './lib/modules/registry.js'
 import {
@@ -656,8 +657,11 @@ async function setupIpcHandlers() {
   }))
 
   ipcMain.handle(IPCHandler.SetClockSettings, (_event, value) => {
+    const before = getClockSettings().defaultAlert
     const settings = setClockSettings(value)
     serverManager.broadcast('clock', clockPayload(settings))
+    if (settings.defaultAlert !== before)
+      serverManager.broadcast('timer', getTimer().payload())
     return settings
   })
 

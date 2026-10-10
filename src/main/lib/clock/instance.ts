@@ -10,7 +10,10 @@ import {
   setLastAlert,
   setLastMinutes
 } from './settings.js'
-import { showTimerNotification } from './desktopAlert.js'
+import {
+  closeTimerNotification,
+  showTimerNotification
+} from './desktopAlert.js'
 import { createTimer } from './timer.js'
 
 type Timer = ReturnType<typeof createTimer>
@@ -35,7 +38,10 @@ export function getTimer(): Timer {
     now: () => performance.now(),
     setTimeout: (fn, ms) => setTimeout(fn, ms),
     clearTimeout: h => clearTimeout(h as NodeJS.Timeout),
-    broadcast: p => serverManager.broadcast('timer', p),
+    broadcast: p => {
+      if (p.state !== 'ringing') closeTimerNotification()
+      serverManager.broadcast('timer', p)
+    },
     desktopAlert: (a, d) => {
       showTimerNotification(a, d, () => getTimer().dismiss())
       void lightUpDevice()

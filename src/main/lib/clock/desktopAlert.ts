@@ -2,7 +2,19 @@ import { Notification } from 'electron'
 
 import type { TimerAlert } from './timer.js'
 
-const live = new Set<Notification>()
+/** Only the newest notification is kept; older ones are closed first. */
+let current: Notification | null = null
+
+export function closeTimerNotification() {
+  const n = current
+  current = null
+  if (!n) return
+  try {
+    n.close()
+  } catch {
+    /* ignore */
+  }
+}
 
 export function showTimerNotification(
   alert: TimerAlert,
@@ -12,16 +24,20 @@ export function showTimerNotification(
   if (alert === 'off') return
   try {
     if (!Notification.isSupported()) return
+    closeTimerNotification()
     const minutes = Math.round(durationMs / 60000)
     const n = new Notification({
       title: 'Timer done',
       body: `${minutes} min timer finished`,
       silent: alert !== 'sound'
     })
-    live.add(n)
-    n.on('close', () => live.delete(n))
+    current = n
+    n.on('close', () => {
+      if (current === n) current = null
+    })
     n.on('click', () => {
-      live.delete(n)
+      if (current !== n) return
+      current = null
       try {
         onClick?.()
       } catch {
