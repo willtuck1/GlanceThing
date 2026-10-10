@@ -19,6 +19,11 @@ const CHIPS: { id: Alert; label: string }[] = [
   { id: 'sound', label: 'Notify + sound' }
 ]
 
+const PAUSED_CHIPS: { id: 'resume' | 'reset'; label: string }[] = [
+  { id: 'resume', label: 'Resume' },
+  { id: 'reset', label: 'Reset' }
+]
+
 const ClockTab: React.FC<{ active: boolean }> = ({ active }) => {
   const { clock, timeStrings, timer, timerAt, send } = useClock()
   const { blurred, playerShown } = useContext(AppBlurContext)
@@ -106,11 +111,15 @@ const ClockTab: React.FC<{ active: boolean }> = ({ active }) => {
 
   const chosen: Alert = idleDrafting ? ui.alert : (timer?.alert ?? 'off')
 
+  const pausedChoice: 'resume' | 'reset' =
+    ui.mode === 'pausedChoice' && ui.choice === 'reset'
+      ? 'reset'
+      : 'resume'
+
   let hint: string
   if (state === 'running') hint = 'Press to pause'
   else if (state === 'ringing') hint = 'Press to dismiss'
-  else if (state === 'paused')
-    hint = `Turn: ${ui.mode === 'pausedChoice' && ui.choice === 'reset' ? 'Reset' : 'Resume'} / ${ui.mode === 'pausedChoice' && ui.choice === 'reset' ? 'Resume' : 'Reset'} · Press`
+  else if (state === 'paused') hint = 'Turn to choose · Press'
   else if (ui.mode === 'minutes')
     hint = 'Turn to set · Press to choose alert'
   else if (ui.mode === 'alert') hint = 'Turn to choose · Press to start'
@@ -129,7 +138,20 @@ const ClockTab: React.FC<{ active: boolean }> = ({ active }) => {
         >
           {big}
         </div>
-        <div className={styles.chips}>
+        {state === 'paused' && (
+          <div className={styles.chips}>
+            {PAUSED_CHIPS.map(c => (
+              <span
+                key={c.id}
+                className={styles.chip}
+                data-on={c.id === pausedChoice}
+              >
+                {c.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className={styles.chips} data-second={state === 'paused'}>
           {CHIPS.map(c => (
             <span
               key={c.id}
