@@ -18,3 +18,10 @@ node scripts/preview/shoot.mjs <outDir> weather calendar=3 sports=2,2,2 fantasy=
 - Connector tabs (M9B): `VARIANT_tabs=connectors` (`tabs.connectors.json`) adds four connector tabs after Spotify, indices 6–9: `json:list0001` (Sensors, list), `json:numb0001` (Power, number), `json:keyv0001` (Server, keyvalue), `json:grid0001` (Rooms, grid). Reach them from Weather with `2` six to nine times. A `json:<id>` feed is read from `json-<id>.json` (colon becomes hyphen on disk).
 - MCP example: `VARIANT_tabs=mcp` (`tabs.mcp.json`) adds the example MCP tab `mcp:exmp0001` at index 6, read from `mcp-exmp0001.json` (`mcp:` ids use hyphens on disk too).
 - Connector error/stale: `json-list0001.error.json` (stale, error "Public hosts must use https", no items). Start it with `env "VARIANT_json-list0001=error" VARIANT_tabs=connectors node scripts/preview/server.mjs &`. Bash cannot set a hyphenated variable with a plain `VAR=` prefix, so use `env`.
+
+## Settings screenshots
+
+Screenshots of the desktop Settings → Connectors panel without Electron: `node scripts/preview/settings.mjs <state> [<state>...]` builds the renderer (`npx electron-vite build`), serves `out/renderer` on 127.0.0.1 and shoots it in Chromium with a stub `window.api`. Output: `docs/m9c-screenshots/settings-<state>.png`.
+
+- A state is `scripts/preview/settings-states/<state>.json`: `connectors` (listConnectors), `mcpRecipes` (listMcpRecipes), `signInError` (mcpSignIn resolves `{error}`), `api` (`{method: value}` for any other call), `clicks` (button text to click after Settings → Connectors opens, or `{"select": "<recipe id>"}`), `css` (extra CSS, e.g. a taller Settings box). Any method not defined resolves `null`; add it to `api` if the renderer needs more. Never put real secrets in a state.
+- States: `mcp-list` (JSON row + four MCP rows, every auth state), `mcp-form` (add form, example recipe chosen), `mcp-expired` (expired row after a failed Sign in).

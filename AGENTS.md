@@ -31,6 +31,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 ## Commands
 - `npm run gate`: every CI check, printing one line each (plus the tail of any failure). `npm run gate -- fast` skips the two builds; use it between steps.
 - Single test file: `npx vitest run <path>`.
+- Desktop Settings screenshots (no Electron): `node scripts/preview/settings.mjs <state>`, states in `scripts/preview/settings-states/` (see `scripts/preview/README.md`).
 - Add an MCP connector recipe: `Workflow({name:'add-connector', args:{url, goal, toolsList, sample}})` (`.claude/workflows/add-connector.js`; inputs are saved files or pasted JSON, never a live call).
 - Recipe helper: `node scripts/mcp-recipe-check.mjs tools|tool|sanitize|id ...` (list read-only tools, check one tool, redact a fixture, check a free recipe id).
 - Screenshots of the client at 800×480 with fake data: see `scripts/preview/README.md`. Tab indices start at Weather (0). `VARIANT_<type>=<name>` serves `payloads/<type>.<name>.json` (weather: `metric`, `none`; tabs: `reordered`, `hidden`, `connectors` (adds four connector tabs, indices 6–9), `mcp` (adds the example MCP tab, index 6); no `tabs.json` = old host, every tab). Connector error/stale shot: `env "VARIANT_json-list0001=error" VARIANT_tabs=connectors node scripts/preview/server.mjs &` (hyphenated names need `env`).

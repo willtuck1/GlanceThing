@@ -1,0 +1,127 @@
+{
+  "connectors": [
+    {
+      "id": "json0001",
+      "label": "Sensors",
+      "layout": "list",
+      "mapping": {
+        "itemsPath": "items",
+        "primary": "name",
+        "value": "temp"
+      },
+      "intervalMin": 5,
+      "source": {
+        "kind": "json",
+        "url": "https://example.com/sensors.json"
+      },
+      "headerSet": false
+    },
+    {
+      "id": "mcp00001",
+      "label": "Tasks (work)",
+      "layout": "list",
+      "mapping": {
+        "itemsPath": "tasks",
+        "primary": "title",
+        "secondary": "due",
+        "value": "status"
+      },
+      "intervalMin": 15,
+      "source": {
+        "kind": "mcp",
+        "recipeId": "example-tasks",
+        "serverUrl": "http://127.0.0.1:8931/mcp",
+        "settings": {
+          "list": "work"
+        }
+      },
+      "headerSet": false,
+      "auth": "signedIn",
+      "clientIdSet": false
+    },
+    {
+      "id": "mcp00002",
+      "label": "Tasks (home)",
+      "layout": "list",
+      "mapping": {
+        "itemsPath": "tasks",
+        "primary": "title",
+        "secondary": "due",
+        "value": "status"
+      },
+      "intervalMin": 15,
+      "source": {
+        "kind": "mcp",
+        "recipeId": "example-tasks",
+        "serverUrl": "http://127.0.0.1:8931/mcp",
+        "settings": {
+          "list": "home"
+        }
+      },
+      "headerSet": false,
+      "auth": "expired",
+      "clientIdSet": false
+    },
+    {
+      "id": "mcp00003",
+      "label": "Tasks (open server)",
+      "layout": "list",
+      "mapping": {
+        "itemsPath": "tasks",
+        "primary": "title",
+        "secondary": "due",
+        "value": "status"
+      },
+      "intervalMin": 15,
+      "source": {
+        "kind": "mcp",
+        "recipeId": "example-tasks",
+        "serverUrl": "http://127.0.0.1:8931/mcp"
+      },
+      "headerSet": false,
+      "auth": "notRequired",
+      "clientIdSet": false
+    },
+    {
+      "id": "mcp00004",
+      "label": "Tasks (new)",
+      "layout": "list",
+      "mapping": {
+        "itemsPath": "tasks",
+        "primary": "title",
+        "secondary": "due",
+        "value": "status"
+      },
+      "intervalMin": 15,
+      "source": {
+        "kind": "mcp",
+        "recipeId": "example-tasks",
+        "serverUrl": "http://127.0.0.1:8931/mcp"
+      },
+      "headerSet": false,
+      "auth": "signedOut",
+      "clientIdSet": false
+    }
+  ],
+  "mcpRecipes": [
+    {
+      "id": "example-tasks",
+      "label": "Example tasks",
+      "description": "Tasks due this week from the GlanceThing test MCP server.",
+      "defaultServerUrl": "http://127.0.0.1:8931/mcp",
+      "layout": "list",
+      "source": "tool",
+      "settings": [
+        {
+          "key": "list",
+          "label": "List name",
+          "placeholder": "inbox",
+          "maxLength": 40
+        }
+      ],
+      "intervalMin": 15
+    }
+  ],
+  "clicks": [],
+  "css": "[class*=\"_box_\"] { height: 600px !important; }"
+}

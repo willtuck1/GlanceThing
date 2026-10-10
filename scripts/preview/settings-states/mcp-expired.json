@@ -1,0 +1,50 @@
+{
+  "connectors": [
+    {
+      "id": "mcp00002",
+      "label": "Tasks (home)",
+      "layout": "list",
+      "mapping": {
+        "itemsPath": "tasks",
+        "primary": "title",
+        "secondary": "due",
+        "value": "status"
+      },
+      "intervalMin": 15,
+      "source": {
+        "kind": "mcp",
+        "recipeId": "example-tasks",
+        "serverUrl": "http://127.0.0.1:8931/mcp",
+        "settings": {
+          "list": "home"
+        }
+      },
+      "headerSet": false,
+      "auth": "expired",
+      "clientIdSet": false
+    }
+  ],
+  "mcpRecipes": [
+    {
+      "id": "example-tasks",
+      "label": "Example tasks",
+      "description": "Tasks due this week from the GlanceThing test MCP server.",
+      "defaultServerUrl": "http://127.0.0.1:8931/mcp",
+      "layout": "list",
+      "source": "tool",
+      "settings": [
+        {
+          "key": "list",
+          "label": "List name",
+          "placeholder": "inbox",
+          "maxLength": 40
+        }
+      ],
+      "intervalMin": 15
+    }
+  ],
+  "clicks": [
+    "Sign in"
+  ],
+  "signInError": "Sign-in timed out"
+}

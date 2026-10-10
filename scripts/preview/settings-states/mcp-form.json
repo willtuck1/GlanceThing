@@ -1,0 +1,30 @@
+{
+  "connectors": [],
+  "mcpRecipes": [
+    {
+      "id": "example-tasks",
+      "label": "Example tasks",
+      "description": "Tasks due this week from the GlanceThing test MCP server.",
+      "defaultServerUrl": "http://127.0.0.1:8931/mcp",
+      "layout": "list",
+      "source": "tool",
+      "settings": [
+        {
+          "key": "list",
+          "label": "List name",
+          "placeholder": "inbox",
+          "maxLength": 40
+        }
+      ],
+      "intervalMin": 15
+    }
+  ],
+  "clicks": [
+    "Add connector",
+    "MCP recipe",
+    {
+      "select": "example-tasks"
+    }
+  ],
+  "css": "[class*=\"_box_\"] { height: 640px !important; }"
+}
