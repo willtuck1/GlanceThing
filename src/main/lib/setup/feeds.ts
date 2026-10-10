@@ -10,6 +10,7 @@ import {
 } from '../feeds/registry.js'
 import { afterPublish } from '../fantasy/sportsLink.js'
 import { connectorKey, connectorManifest } from '../connectors/modules.js'
+import { setMcpRunner } from '../connectors/mcpHook.js'
 import {
   connectorRevision,
   getConnectorSecret,
@@ -27,6 +28,7 @@ import {
   tabsPayload
 } from '../modules/tabs.js'
 import { FeedSource } from '../modules/types.js'
+import { runMcp } from '../mcp/client.js'
 import { deleteStorageValue, setStorageValue } from '../storage.js'
 import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
@@ -155,6 +157,7 @@ export function reconcileConnectors() {
 }
 
 export const setup: SetupFunction = async () => {
+  setMcpRunner(c => runMcp(c))
   const sources = allModules().flatMap(m => m.feeds())
   sources.forEach(source => source.prepare?.())
 
