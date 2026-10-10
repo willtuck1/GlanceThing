@@ -56,15 +56,37 @@ type ConnectorMapping =
   | { value: string; caption?: string; unit?: string; decimals?: number }
   | { pairs: { label: string; path: string }[] }
 
-interface ConnectorForSettings {
+interface ConnectorBase {
   id: string
   label: string
   layout: ConnectorLayout
   mapping: ConnectorMapping
   intervalMin: number
+}
+
+interface JsonConnectorForSettings extends ConnectorBase {
   source: { kind: 'json'; url: string; header?: { name: string } }
   headerSet: boolean
 }
+
+interface McpConnectorForSettings extends ConnectorBase {
+  source: {
+    kind: 'mcp'
+    recipeId: string
+    serverUrl: string
+    settings?: Record<string, string>
+  }
+  headerSet: false
+  // Never a token, registration or the full client ID.
+  auth: 'signedIn' | 'expired' | 'signedOut' | 'notRequired'
+  clientIdSet: boolean
+  // '••••' plus the last 4 characters.
+  clientIdHint?: string
+}
+
+type ConnectorForSettings =
+  | JsonConnectorForSettings
+  | McpConnectorForSettings
 
 interface ConnectorDraft {
   // Omit for a new connector.
@@ -77,6 +99,35 @@ interface ConnectorDraft {
   // undefined = keep, null = clear, {name, value} = set both,
   // {name} = rename and keep the stored value.
   header?: { name: string; value?: string } | null
+}
+
+interface McpDraft {
+  // Omit for a new connector; a connector can't change kind.
+  id?: string
+  kind: 'mcp'
+  label: string
+  intervalMin?: number
+  recipeId: string
+  serverUrl: string
+  settings?: Record<string, string>
+  // undefined = keep, null = clear.
+  clientId?: string | null
+}
+
+interface McpRecipeInfo {
+  id: string
+  label: string
+  description: string
+  defaultServerUrl?: string
+  layout: ConnectorLayout
+  source: 'tool' | 'resource'
+  settings: {
+    key: string
+    label: string
+    placeholder?: string
+    maxLength: number
+  }[]
+  intervalMin: number
 }
 
 type ConnectorView =
@@ -246,13 +297,16 @@ declare global {
       listConnectors: () => Promise<ConnectorForSettings[]>
       // Rejects with a readable message when the draft is invalid.
       saveConnector: (
-        draft: ConnectorDraft
+        draft: ConnectorDraft | McpDraft
       ) => Promise<ConnectorForSettings>
       deleteConnector: (id: string) => Promise<boolean>
       // Never rejects.
       testConnector: (
-        draft: ConnectorDraft
+        draft: ConnectorDraft | McpDraft
       ) => Promise<{ view?: ConnectorView; error?: string }>
+      listMcpRecipes: () => Promise<McpRecipeInfo[]>
+      mcpSignIn: (id: string) => Promise<{ ok: true } | { error: string }>
+      mcpSignOut: (id: string) => Promise<boolean>
     }
   }
 }

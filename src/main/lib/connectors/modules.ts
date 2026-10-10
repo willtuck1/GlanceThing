@@ -14,10 +14,11 @@ import {
   getConnector,
   getConnectorSecret
 } from './store.js'
-import { Connector, CONNECTOR_PREFIX } from './types.js'
+import { runMcpConnector } from './mcpHook.js'
+import { Connector, connectorModuleId } from './types.js'
 
-export function connectorKey(id: string): FeedKey {
-  return `${CONNECTOR_PREFIX}${id}`
+export function connectorKey(c: Connector): FeedKey {
+  return connectorModuleId(c) as FeedKey
 }
 
 function describeError(e: unknown): FeedError {
@@ -28,7 +29,7 @@ function describeError(e: unknown): FeedError {
 }
 
 export function connectorManifest(c: Connector): ModuleManifest {
-  const key = connectorKey(c.id)
+  const key = connectorKey(c)
   const handle: HandlerFunction = async ws => {
     respondWithFeed(key, ws)
   }
@@ -43,6 +44,9 @@ export function connectorManifest(c: Connector): ModuleManifest {
         fetch: async () => {
           const current = getConnector(c.id)
           if (!current) throw new Error('Connector was removed')
+          if (current.source.kind === 'mcp') {
+            return [await runMcpConnector(current)]
+          }
           const name = current.source.header?.name
           const value = name ? getConnectorSecret(c.id) : null
           const data = await fetchConnectorJson(current.source.url, {

@@ -2,8 +2,12 @@
 // may contain a header value: list/save return the header name and
 // `headerSet` only, and error messages are scrubbed of the draft's value.
 
+import { getManualClientId } from '../mcp/auth/store.js'
+import { authStatus } from '../mcp/client.js'
+
 import {
   ConnectorDraft,
+  McpDraft,
   ConnectorForSettings,
   deleteConnector,
   getConnectorSecret,
@@ -11,15 +15,37 @@ import {
   saveConnector,
   testDraft
 } from './store.js'
-import { Connector, ConnectorView } from './types.js'
+import { Connector, ConnectorView, JsonSource } from './types.js'
 
 function toSettings(c: Connector): ConnectorForSettings {
-  const out: ConnectorForSettings = {
+  const base = {
     id: c.id,
     label: c.label,
     layout: c.layout,
     mapping: c.mapping,
-    intervalMin: c.intervalMin,
+    intervalMin: c.intervalMin
+  }
+  if (c.source.kind === 'mcp') {
+    const { recipeId, serverUrl, settings } = c.source
+    const clientId = getManualClientId(c.id)
+    return {
+      ...base,
+      source: {
+        kind: 'mcp',
+        recipeId,
+        serverUrl,
+        ...(settings ? { settings: { ...settings } } : {})
+      },
+      headerSet: false,
+      auth: authStatus(c.id),
+      clientIdSet: clientId !== null,
+      ...(clientId !== null
+        ? { clientIdHint: `••••${clientId.slice(-4)}` }
+        : {})
+    }
+  }
+  const out: ConnectorForSettings & { source: JsonSource } = {
+    ...base,
     source: { kind: 'json', url: c.source.url },
     headerSet: false
   }
@@ -44,7 +70,7 @@ export function ipcListConnectors(): ConnectorForSettings[] {
 // Rejects with a readable message (shown in Settings) on invalid input.
 export function ipcSaveConnector(draft: unknown): ConnectorForSettings {
   try {
-    return toSettings(saveConnector(draft as ConnectorDraft))
+    return toSettings(saveConnector(draft as ConnectorDraft | McpDraft))
   } catch (e) {
     const raw =
       e instanceof Error && e.message

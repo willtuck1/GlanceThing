@@ -5,7 +5,7 @@ import { ModuleManifest } from './types.js'
 import { allModules } from './registry.js'
 import { listConnectors } from '../connectors/store.js'
 import {
-  CONNECTOR_PREFIX,
+  connectorModuleId,
   ConnectorDescriptor
 } from '../connectors/types.js'
 
@@ -57,7 +57,7 @@ export function tabsPayload(): TabsPayload {
   return {
     ...getTabSettings(),
     connectors: listConnectors().map(c => ({
-      id: `${CONNECTOR_PREFIX}${c.id}`,
+      id: connectorModuleId(c),
       label: c.label,
       layout: c.layout
     }))

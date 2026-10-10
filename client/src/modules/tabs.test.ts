@@ -50,6 +50,21 @@ describe('parseTabs connectors', () => {
     ])
   })
 
+  it('accepts mcp: ids alongside json: and drops other prefixes', () => {
+    const parsed = parseTabs({
+      ...base,
+      connectors: [
+        { id: 'mcp:abcd1234', label: 'Tasks', layout: 'list' },
+        { id: 'foo:abcd1234', label: 'Nope', layout: 'list' },
+        { id: 'json:abcd1234', label: 'Home', layout: 'grid' }
+      ]
+    })
+    expect(parsed?.connectors).toEqual([
+      { id: 'mcp:abcd1234', label: 'Tasks', layout: 'list' },
+      { id: 'json:abcd1234', label: 'Home', layout: 'grid' }
+    ])
+  })
+
   it('caps long labels', () => {
     const parsed = parseTabs({
       ...base,

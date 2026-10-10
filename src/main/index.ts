@@ -85,6 +85,11 @@ import {
   ipcSaveConnector,
   ipcTestConnector
 } from './lib/connectors/ipc.js'
+import {
+  ipcListMcpRecipes,
+  ipcMcpSignIn,
+  ipcMcpSignOut
+} from './lib/mcp/ipc.js'
 import { getDisplaySettings, setDisplaySettings } from './lib/display.js'
 import { allModules } from './lib/modules/registry.js'
 import {
@@ -293,7 +298,10 @@ enum IPCHandler {
   ListConnectors = 'listConnectors',
   SaveConnector = 'saveConnector',
   DeleteConnector = 'deleteConnector',
-  TestConnector = 'testConnector'
+  TestConnector = 'testConnector',
+  ListMcpRecipes = 'listMcpRecipes',
+  McpSignIn = 'mcpSignIn',
+  McpSignOut = 'mcpSignOut'
 }
 
 async function setupIpcHandlers() {
@@ -677,6 +685,12 @@ async function setupIpcHandlers() {
   ipcMain.handle(IPCHandler.TestConnector, (_event, draft) =>
     ipcTestConnector(draft)
   )
+
+  ipcMain.handle(IPCHandler.ListMcpRecipes, () => ipcListMcpRecipes())
+
+  ipcMain.handle(IPCHandler.McpSignIn, (_event, id) => ipcMcpSignIn(id))
+
+  ipcMain.handle(IPCHandler.McpSignOut, (_event, id) => ipcMcpSignOut(id))
 }
 
 async function setupTray() {

@@ -5,6 +5,7 @@ export type FeedType =
   | 'fantasy'
   | 'weather'
   | `json:${string}`
+  | `mcp:${string}`
 
 export interface FeedPayload<T> {
   items: T[]

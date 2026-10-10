@@ -11,9 +11,25 @@ import {
   setStorageValue
 } from '../storage.js'
 
+import {
+  cancelSignIn,
+  clearAuthOnOriginChange,
+  authState,
+  isSecureStorageAvailable,
+  SECURE_STORAGE_UNAVAILABLE,
+  setManualClientId
+} from '../mcp/auth/store.js'
+import { SIGN_IN_AGAIN, testMcpConnector } from '../mcp/client.js'
+
 import { fetchConnectorJson } from './fetch.js'
 import { applyMapping } from './mapping.js'
-import { Connector, ConnectorView } from './types.js'
+import { isMcpDraft, McpDraft, validateMcpDraft } from './mcpDraft.js'
+import {
+  Connector,
+  ConnectorView,
+  JsonSource,
+  McpSource
+} from './types.js'
 import {
   validateHeaderName,
   validateHeaderValue,
@@ -25,15 +41,23 @@ import {
 
 export const CONNECTORS_KEY = 'connectors'
 export const SECRET_PREFIX = 'connectorSecret.'
+export const MCP_AUTH_PREFIX = 'mcpAuth.'
 export const MAX_CONNECTORS = 20
+export const SIGN_IN_FIRST = 'Sign-in required: save, then sign in'
 
 const ID_RE = /^[a-z0-9]{8}$/
+const RECIPE_RE = /^[a-z0-9-]{1,32}$/
+const SETTING_KEY_RE = /^[a-zA-Z]\w{0,31}$/
 const ID_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789'
 
 // The generic storage IPC must never read or write these keys.
 export function isProtectedStorageKey(key: unknown): boolean {
   const k = String(key)
-  return k === CONNECTORS_KEY || k.startsWith(SECRET_PREFIX)
+  return (
+    k === CONNECTORS_KEY ||
+    k.startsWith(SECRET_PREFIX) ||
+    k.startsWith(MCP_AUTH_PREFIX)
+  )
 }
 
 function secretKey(id: string): string {
@@ -52,7 +76,50 @@ export interface ConnectorDraft {
   header?: { name: string; value?: string } | null
 }
 
-export type ConnectorForSettings = Connector & { headerSet: boolean }
+export type { McpDraft }
+
+export type ConnectorForSettings = Connector & {
+  headerSet: boolean
+  // MCP connectors only (filled in by ipc.ts toSettings).
+  auth?: 'signedIn' | 'expired' | 'signedOut' | 'notRequired'
+  clientIdSet?: boolean
+  // '••••' plus the last 4 characters of the manual client ID.
+  clientIdHint?: string
+}
+
+function parseMcpSettings(
+  raw: unknown
+): Record<string, string> | undefined {
+  if (raw === undefined || raw === null) return undefined
+  if (typeof raw !== 'object' || Array.isArray(raw))
+    throw new Error('Invalid settings')
+  const entries = Object.entries(raw as Record<string, unknown>)
+  if (entries.length > 5) throw new Error('Too many settings')
+  const out: Record<string, string> = {}
+  for (const [k, v] of entries) {
+    if (!SETTING_KEY_RE.test(k)) throw new Error('Invalid setting name')
+    if (typeof v !== 'string' || v.length > 200)
+      throw new Error('Invalid setting value')
+    out[k] = v
+  }
+  return out
+}
+
+function parseMcpSource(source: Record<string, unknown>): McpSource {
+  if (
+    typeof source.recipeId !== 'string' ||
+    !RECIPE_RE.test(source.recipeId)
+  )
+    throw new Error('Invalid recipe')
+  const out: McpSource = {
+    kind: 'mcp',
+    recipeId: source.recipeId,
+    serverUrl: validateUrl(source.serverUrl).href
+  }
+  const settings = parseMcpSettings(source.settings)
+  if (settings) out.settings = settings
+  return out
+}
 
 // Re-validates one stored entry; null when it is malformed.
 function parseStored(raw: unknown): Connector | null {
@@ -61,16 +128,31 @@ function parseStored(raw: unknown): Connector | null {
     const r = raw as Record<string, unknown>
     if (typeof r.id !== 'string' || !ID_RE.test(r.id)) return null
     const source = r.source as Record<string, unknown> | undefined
-    if (!source || typeof source !== 'object' || source.kind !== 'json')
-      return null
+    if (!source || typeof source !== 'object') return null
+    if (source.kind === 'mcp') {
+      const { layout, mapping } = validateMapping(r.layout, r.mapping)
+      return {
+        id: r.id,
+        label: validateLabel(r.label),
+        layout,
+        mapping,
+        intervalMin: validateInterval(r.intervalMin),
+        source: parseMcpSource(source)
+      }
+    }
+    if (source.kind !== 'json') return null
     const { layout, mapping } = validateMapping(r.layout, r.mapping)
-    const connector: Connector = {
+    const jsonSource: JsonSource = {
+      kind: 'json',
+      url: validateUrl(source.url).href
+    }
+    const connector: Connector & { source: JsonSource } = {
       id: r.id,
       label: validateLabel(r.label),
       layout,
       mapping,
       intervalMin: validateInterval(r.intervalMin),
-      source: { kind: 'json', url: validateUrl(source.url).href }
+      source: jsonSource
     }
     if (source.header !== undefined && source.header !== null) {
       const h = source.header as Record<string, unknown>
@@ -119,13 +201,17 @@ export function getConnectorSecret(id: string): string | null {
 export function listConnectorsForSettings(): ConnectorForSettings[] {
   return listConnectors().map(c => ({
     ...c,
-    headerSet: !!c.source.header && getConnectorSecret(c.id) !== null
+    headerSet:
+      c.source.kind === 'json' &&
+      !!c.source.header &&
+      getConnectorSecret(c.id) !== null
   }))
 }
 
 // A kept secret must not follow the connector to another host: changing the
 // URL's origin (protocol, host, port) needs the value typed again.
 function assertSameOrigin(existing: Connector, url: string): void {
+  if (existing.source.kind !== 'json') return
   if (new URL(existing.source.url).origin !== new URL(url).origin)
     throw new Error(
       "Enter the header value again when changing the URL's host"
@@ -158,20 +244,23 @@ export function validateDraft(
   const intervalMin = validateInterval(d.intervalMin)
   const { layout, mapping } = validateMapping(d.layout, d.mapping)
 
-  const connector: Connector = {
+  const jsonSource: JsonSource = { kind: 'json', url }
+  const connector: Connector & { source: JsonSource } = {
     id: existing?.id ?? '',
     label,
     layout,
     mapping,
     intervalMin,
-    source: { kind: 'json', url }
+    source: jsonSource
   }
+  const existingJson =
+    existing?.source.kind === 'json' ? existing.source : undefined
 
   let secret: string | null | undefined
   const header = d.header
   if (header === undefined) {
-    if (existing?.source.header) {
-      connector.source.header = { name: existing.source.header.name }
+    if (existing && existingJson?.header) {
+      connector.source.header = { name: existingJson.header.name }
       assertSameOrigin(existing, url)
     }
     secret = undefined
@@ -203,7 +292,10 @@ export function resolveDraftSecret(
   connector: Connector,
   secret: string | null | undefined
 ): { name: string; value: string } | undefined {
-  const name = connector.source.header?.name
+  const name =
+    connector.source.kind === 'json'
+      ? connector.source.header?.name
+      : undefined
   if (!name || secret === null) return undefined
   const value =
     typeof secret === 'string'
@@ -223,6 +315,19 @@ export function onConnectorsChanged(fn: Listener): () => void {
     const i = listeners.indexOf(fn)
     if (i !== -1) listeners.splice(i, 1)
   }
+}
+
+const revisions = new Map<string, number>()
+
+export function connectorRevision(id: string): number {
+  return revisions.get(id) ?? 0
+}
+
+// Called on MCP sign-in/sign-out and delete so the feed is rebuilt and its
+// cache dropped; auth providers drop writes made for an older revision.
+export function bumpConnectorRevision(id: string): void {
+  revisions.set(id, connectorRevision(id) + 1)
+  emitChanged()
 }
 
 function emitChanged() {
@@ -252,7 +357,34 @@ function findExisting(list: Connector[], id: unknown): Connector {
   return found
 }
 
-export function saveConnector(draft: ConnectorDraft): Connector {
+function saveMcpConnector(
+  draft: unknown,
+  list: Connector[],
+  existing: Connector | undefined
+): Connector {
+  const { connector, clientId } = validateMcpDraft(draft, existing)
+  if (typeof clientId === 'string' && !isSecureStorageAvailable())
+    throw new Error(SECURE_STORAGE_UNAVAILABLE)
+  if (!existing) connector.id = newId(new Set(list.map(c => c.id)))
+  const next = existing
+    ? list.map(c => (c.id === connector.id ? connector : c))
+    : [...list, connector]
+  setStorageValue(CONNECTORS_KEY, next)
+  if (
+    existing?.source.kind === 'mcp' &&
+    connector.source.kind === 'mcp' &&
+    new URL(existing.source.serverUrl).origin !==
+      new URL(connector.source.serverUrl).origin
+  )
+    clearAuthOnOriginChange(connector.id)
+  if (clientId !== undefined) setManualClientId(connector.id, clientId)
+  emitChanged()
+  return connector
+}
+
+export function saveConnector(
+  draft: ConnectorDraft | McpDraft
+): Connector {
   const list = listConnectors()
   const rawId = (draft as { id?: unknown } | null)?.id
   const existing =
@@ -261,6 +393,9 @@ export function saveConnector(draft: ConnectorDraft): Connector {
       : undefined
   if (!existing && list.length >= MAX_CONNECTORS)
     throw new Error(`At most ${MAX_CONNECTORS} connectors`)
+  if (isMcpDraft(draft)) return saveMcpConnector(draft, list, existing)
+  if (existing && existing.source.kind !== 'json')
+    throw new Error("A connector can't change type")
 
   const { connector, secret } = validateDraft(draft, existing)
   if (!existing) connector.id = newId(new Set(list.map(c => c.id)))
@@ -281,10 +416,52 @@ export function deleteConnector(id: string): boolean {
   const list = listConnectors()
   const next = list.filter(c => c.id !== id)
   if (next.length === list.length) return false
+  cancelSignIn(id)
   setStorageValue(CONNECTORS_KEY, next)
   deleteStorageValue(secretKey(id))
-  emitChanged()
+  for (const part of ['tokens', 'client', 'verifier'])
+    deleteStorageValue(`${MCP_AUTH_PREFIX}${id}.${part}`)
+  bumpConnectorRevision(id)
   return true
+}
+
+// Unsaved MCP drafts, and saved ones whose server origin was edited, run
+// under a throwaway id that has no stored auth, so a saved token never goes
+// to a new origin.
+async function testMcpDraft(
+  draft: unknown
+): Promise<{ view?: ConnectorView; error?: string }> {
+  try {
+    const list = listConnectors()
+    const rawId = (draft as { id?: unknown } | null)?.id
+    const existing =
+      rawId !== undefined && rawId !== null
+        ? findExisting(list, rawId)
+        : undefined
+    const { connector } = validateMcpDraft(draft, existing)
+    const sameServer =
+      existing?.source.kind === 'mcp' &&
+      connector.source.kind === 'mcp' &&
+      new URL(existing.source.serverUrl).origin ===
+        new URL(connector.source.serverUrl).origin
+    if (!sameServer) {
+      const taken = new Set(list.map(c => c.id))
+      let id: string
+      do id = `tmp${newId(new Set()).slice(0, 5)}`
+      while (taken.has(id))
+      connector.id = id
+    }
+    const result = await testMcpConnector(connector)
+    if ('view' in result) return { view: result.view }
+    const needsSignIn =
+      result.error === SIGN_IN_AGAIN &&
+      (!existing || !sameServer || authState(existing.id) === 'signedOut')
+    return { error: needsSignIn ? SIGN_IN_FIRST : result.error }
+  } catch (e) {
+    return {
+      error: e instanceof Error && e.message ? e.message : 'Test failed'
+    }
+  }
 }
 
 // Validates and fetches a draft without saving it (Settings "Test").
@@ -292,6 +469,7 @@ export function deleteConnector(id: string): boolean {
 export async function testDraft(
   draft: unknown
 ): Promise<{ view?: ConnectorView; error?: string }> {
+  if (isMcpDraft(draft)) return testMcpDraft(draft)
   let header: { name: string; value: string } | undefined
   try {
     const rawId = (draft as { id?: unknown } | null)?.id
@@ -301,6 +479,7 @@ export async function testDraft(
         : undefined
     const { connector, secret } = validateDraft(draft, existing)
     header = resolveDraftSecret(connector, secret)
+    if (connector.source.kind !== 'json') throw new Error('Test failed')
     const data = await fetchConnectorJson(connector.source.url, { header })
     const view = applyMapping(connector.layout, connector.mapping, data)
     assertNoSecret(view, header?.value)

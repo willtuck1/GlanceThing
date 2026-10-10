@@ -49,8 +49,18 @@ export interface JsonSource {
   header?: { name: string }
 }
 
-// Part C adds { kind: 'mcp', ... } here.
-export type ConnectorSource = JsonSource
+// MCP connector: a committed recipe run against an MCP server. Layout and
+// mapping are copied from the recipe. `settings` are recipe parameters.
+export interface McpSource {
+  kind: 'mcp'
+  // ^[a-z0-9-]{1,32}$
+  recipeId: string
+  serverUrl: string
+  settings?: Record<string, string>
+}
+
+export type ConnectorSource = JsonSource | McpSource
+export type ConnectorKind = ConnectorSource['kind']
 
 export interface Connector {
   // ^[a-z0-9]{8}$, assigned once; stable across edits and renames.
@@ -89,6 +99,17 @@ export interface ConnectorDescriptor {
 }
 
 export const CONNECTOR_PREFIX = 'json:'
+export const CONNECTOR_PREFIXES = ['json:', 'mcp:'] as const
+
+export function isConnectorModuleId(s: string): boolean {
+  return (
+    typeof s === 'string' && CONNECTOR_PREFIXES.some(p => s.startsWith(p))
+  )
+}
+
+export function connectorModuleId(c: Connector): string {
+  return `${c.source.kind}:${c.id}`
+}
 
 export const LIMITS = {
   listRows: 20,

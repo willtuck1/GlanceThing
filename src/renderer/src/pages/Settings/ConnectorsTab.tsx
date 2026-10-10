@@ -16,21 +16,34 @@ import {
   shouldWarnHttpSecret,
   validateForm
 } from './connectorForm.js'
+import ConnectorPreview from './ConnectorPreview.js'
+import McpConnectorForm from './McpConnectorForm.js'
+import {
+  McpConnectorRow,
+  McpForm,
+  McpRecipe,
+  authBadge,
+  canSignIn,
+  canSignOut,
+  emptyMcpForm,
+  formFromMcpConnector,
+  serverHost
+} from './mcpForm.js'
 
-function hostOf(url: string): string {
-  try {
-    return new URL(url).host
-  } catch {
-    return ''
-  }
-}
+type FormState =
+  | { kind: 'json'; form: ConnectorForm }
+  | { kind: 'mcp'; form: McpForm }
+  | { kind: 'choose' }
 
 const ConnectorsTab: React.FC = () => {
-  const [connectors, setConnectors] = useState<
-    ConnectorForSettings[] | null
-  >(null)
-  const [form, setForm] = useState<ConnectorForm | null>(null)
+  const [connectors, setConnectors] = useState<Awaited<
+    ReturnType<Window['api']['listConnectors']>
+  > | null>(null)
+  const [recipes, setRecipes] = useState<McpRecipe[]>([])
+  const [form, setForm] = useState<FormState | null>(null)
   const [listError, setListError] = useState('')
+  const [signingIn, setSigningIn] = useState<string | null>(null)
+  const [rowErrors, setRowErrors] = useState<Record<string, string>>({})
 
   async function reload() {
     try {
@@ -39,13 +52,18 @@ const ConnectorsTab: React.FC = () => {
       setConnectors([])
       setListError('Could not load connectors')
     }
+    try {
+      setRecipes(await window.api.listMcpRecipes())
+    } catch {
+      setRecipes([])
+    }
   }
 
   useEffect(() => {
     reload()
   }, [])
 
-  async function remove(c: ConnectorForSettings) {
+  async function remove(c: { id: string; label: string }) {
     if (!window.confirm(`Delete connector "${c.label}"?`)) return
     setListError('')
     try {
@@ -56,54 +74,195 @@ const ConnectorsTab: React.FC = () => {
     await reload()
   }
 
+  async function signIn(id: string) {
+    setRowErrors(prev => ({ ...prev, [id]: '' }))
+    setSigningIn(id)
+    try {
+      const r = await window.api.mcpSignIn(id)
+      if ('error' in r) setRowErrors(prev => ({ ...prev, [id]: r.error }))
+    } catch (e) {
+      setRowErrors(prev => ({
+        ...prev,
+        [id]: e instanceof Error ? e.message : 'Sign-in failed'
+      }))
+    }
+    setSigningIn(null)
+    await reload()
+  }
+
+  async function signOut(id: string) {
+    setRowErrors(prev => ({ ...prev, [id]: '' }))
+    try {
+      await window.api.mcpSignOut(id)
+    } catch (e) {
+      setRowErrors(prev => ({
+        ...prev,
+        [id]: e instanceof Error ? e.message : 'Sign-out failed'
+      }))
+    }
+    await reload()
+  }
+
   if (!connectors) return null
 
-  if (form)
+  async function closeAndReload() {
+    setForm(null)
+    await reload()
+  }
+
+  if (form?.kind === 'json')
     return (
       <ConnectorEditor
-        initial={form}
+        initial={form.form}
         onClose={() => setForm(null)}
-        onSaved={async () => {
-          setForm(null)
-          await reload()
-        }}
+        onSaved={closeAndReload}
       />
     )
+
+  if (form?.kind === 'mcp')
+    return (
+      <McpConnectorForm
+        initial={form.form}
+        onClose={() => setForm(null)}
+        onSaved={closeAndReload}
+      />
+    )
+
+  if (form?.kind === 'choose')
+    return (
+      <div className={styles.settingsTab}>
+        <div className={styles.googleSection}>
+          <p>Add connector</p>
+          <p className={styles.description}>
+            JSON URL: map any JSON web address. MCP recipe: use a
+            ready-made recipe with an MCP server
+            {recipes.length === 0 ? ' (none available)' : ''}.
+          </p>
+          <div className={styles.actions}>
+            <button
+              onClick={() => setForm({ kind: 'json', form: emptyForm() })}
+            >
+              JSON URL
+            </button>
+            <button
+              disabled={recipes.length === 0}
+              onClick={() =>
+                setForm({ kind: 'mcp', form: emptyMcpForm() })
+              }
+            >
+              MCP recipe
+            </button>
+            <button onClick={() => setForm(null)}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    )
+
+  const recipeLabel = (id: string) =>
+    recipes.find(r => r.id === id)?.label ?? id
+  const layoutLabel = (l: string) =>
+    LAYOUT_LABELS.find(x => x.id === l)?.label ?? l
 
   return (
     <div className={styles.settingsTab}>
       <div className={styles.googleSection}>
         <p>Connectors</p>
         <p className={styles.description}>
-          Add a tab to the Car Thing from any JSON web address.
+          Add a tab to the Car Thing from a JSON web address or an MCP
+          server.
         </p>
         {connectors.length === 0 && (
           <p className={styles.description}>No connectors yet</p>
         )}
-        {connectors.map(c => (
-          <div key={c.id} className={styles.connectorRow}>
-            <div className={styles.info}>
-              <p>{c.label}</p>
-              <p className={`${styles.description} ${styles.meta}`}>
-                <span>
-                  {LAYOUT_LABELS.find(l => l.id === c.layout)?.label ??
-                    c.layout}
-                </span>
-                <span>· {hostOf(c.source.url)}</span>
-                <span>· every {c.intervalMin} min</span>
-              </p>
+        {connectors.map(c => {
+          if (c.source.kind === 'mcp') {
+            const m = c as McpConnectorRow
+            const badge = authBadge(m.auth)
+            return (
+              <div key={m.id}>
+                <div className={styles.connectorRow}>
+                  <div className={styles.info}>
+                    <p>{m.label}</p>
+                    <p className={`${styles.description} ${styles.meta}`}>
+                      <span>{recipeLabel(m.source.recipeId)}</span>
+                      <span>· {serverHost(m.source.serverUrl)}</span>
+                      <span>· {layoutLabel(m.layout)}</span>
+                      <span>· every {m.intervalMin} min</span>
+                    </p>
+                    <p
+                      className={
+                        badge.variant === 'ok'
+                          ? styles.success
+                          : badge.variant === 'warn'
+                            ? styles.warning
+                            : styles.description
+                      }
+                    >
+                      {badge.text}
+                    </p>
+                  </div>
+                  <div className={styles.actions}>
+                    {canSignIn(m.auth) && (
+                      <button
+                        disabled={signingIn !== null}
+                        onClick={() => signIn(m.id)}
+                      >
+                        {signingIn === m.id
+                          ? 'Waiting for browser…'
+                          : 'Sign in'}
+                      </button>
+                    )}
+                    {canSignOut(m.auth) && (
+                      <button onClick={() => signOut(m.id)}>
+                        Sign out
+                      </button>
+                    )}
+                    <button
+                      onClick={() =>
+                        setForm({
+                          kind: 'mcp',
+                          form: formFromMcpConnector(m)
+                        })
+                      }
+                    >
+                      Edit
+                    </button>
+                    <button onClick={() => remove(m)}>Delete</button>
+                  </div>
+                </div>
+                {rowErrors[m.id] && (
+                  <p className={styles.error}>{rowErrors[m.id]}</p>
+                )}
+              </div>
+            )
+          }
+          const j = c as ConnectorForSettings
+          return (
+            <div key={j.id} className={styles.connectorRow}>
+              <div className={styles.info}>
+                <p>{j.label}</p>
+                <p className={`${styles.description} ${styles.meta}`}>
+                  <span>{layoutLabel(j.layout)}</span>
+                  <span>· {serverHost(j.source.url)}</span>
+                  <span>· every {j.intervalMin} min</span>
+                </p>
+              </div>
+              <div className={styles.actions}>
+                <button
+                  onClick={() =>
+                    setForm({ kind: 'json', form: formFromConnector(j) })
+                  }
+                >
+                  Edit
+                </button>
+                <button onClick={() => remove(j)}>Delete</button>
+              </div>
             </div>
-            <div className={styles.actions}>
-              <button onClick={() => setForm(formFromConnector(c))}>
-                Edit
-              </button>
-              <button onClick={() => remove(c)}>Delete</button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
         {listError && <p className={styles.error}>{listError}</p>}
         <div className={styles.actions}>
-          <button onClick={() => setForm(emptyForm())}>
+          <button onClick={() => setForm({ kind: 'choose' })}>
             Add connector
           </button>
         </div>
@@ -376,7 +535,7 @@ const ConnectorEditor: React.FC<{
       {testResult?.error && (
         <p className={styles.error}>{testResult.error}</p>
       )}
-      {testResult?.view && <Preview view={testResult.view} />}
+      {testResult?.view && <ConnectorPreview view={testResult.view} />}
 
       <div className={styles.actions}>
         <button disabled={busy} onClick={test}>
@@ -389,53 +548,6 @@ const ConnectorEditor: React.FC<{
           Cancel
         </button>
       </div>
-    </div>
-  )
-}
-
-const Preview: React.FC<{ view: ConnectorView }> = ({ view }) => {
-  const row = (
-    key: string,
-    left: string,
-    right?: string,
-    sub?: string
-  ) => (
-    <div key={key} className={styles.previewRow}>
-      <span>
-        {left}
-        {sub ? ` (${sub})` : ''}
-      </span>
-      <span>{right}</span>
-    </div>
-  )
-  return (
-    <div className={styles.preview}>
-      <p className={styles.success}>Mapped OK</p>
-      {view.layout === 'list' && (
-        <>
-          {view.rows.map((r, i) =>
-            row(String(i), r.primary, r.value, r.secondary)
-          )}
-          {view.more > 0 && <span>+{view.more} more</span>}
-        </>
-      )}
-      {view.layout === 'grid' && (
-        <>
-          {view.cells.map((c, i) => row(String(i), c.label, c.value))}
-          {view.more > 0 && <span>+{view.more} more</span>}
-        </>
-      )}
-      {view.layout === 'number' && (
-        <>
-          <span className={styles.big}>
-            {view.value}
-            {view.unit ? ` ${view.unit}` : ''}
-          </span>
-          {view.caption && <span>{view.caption}</span>}
-        </>
-      )}
-      {view.layout === 'keyvalue' &&
-        view.pairs.map((p, i) => row(String(i), p.label, p.value))}
     </div>
   )
 }

@@ -43,7 +43,12 @@ import { findHandler } from '../handlers/handlers.js'
 import { modules } from '../modules/registry.js'
 import { tabsPayload } from '../modules/tabs.js'
 import { setup } from '../setup/feeds.js'
-import { deleteConnector, saveConnector } from './store.js'
+import { setMcpRunner } from './mcpHook.js'
+import {
+  bumpConnectorRevision,
+  deleteConnector,
+  saveConnector
+} from './store.js'
 
 vi.stubGlobal('__GOOGLE_CLIENT_ID__', '')
 vi.stubGlobal('__GOOGLE_CLIENT_SECRET__', '')
@@ -245,5 +250,51 @@ describe('connector runtime', () => {
       )
     ).not.toContain(SECRET)
     expect(JSON.stringify(mem.broadcasts)).not.toContain(SECRET)
+  })
+
+  it('mcp connector registers, replaces on revision bump, and unregisters', async () => {
+    const runner = vi.fn(async () => ({
+      layout: 'number' as const,
+      value: '7'
+    }))
+    setMcpRunner(runner)
+    const id = 'mcpmcp01'
+    const k: FeedKey = `mcp:${id}`
+    mem.store.set('connectors', [
+      {
+        id,
+        label: 'Mail',
+        layout: 'number',
+        mapping: { value: 'n' },
+        intervalMin: 5,
+        source: {
+          kind: 'mcp',
+          recipeId: 'gmail-unread',
+          serverUrl: 'https://mcp.example.com/mcp'
+        }
+      }
+    ])
+    bumpConnectorRevision(id)
+    await flush()
+    const first = getFeed(k)
+    expect(first).not.toBeNull()
+    expect(findHandler(k)?.name).toBe(k)
+    expect(runner).toHaveBeenCalledTimes(1)
+    expect(first?.getPayload().items).toEqual([
+      { layout: 'number', value: '7' }
+    ])
+    expect(mem.store.has(`feedCache.${k}`)).toBe(true)
+
+    bumpConnectorRevision(id)
+    await flush()
+    expect(getFeed(k)).not.toBe(first)
+    expect(runner).toHaveBeenCalledTimes(2)
+
+    deleteConnector(id)
+    await flush()
+    expect(getFeed(k)).toBeNull()
+    expect(mem.store.has(`feedCache.${k}`)).toBe(false)
+    expect(findHandler(k)).toBeUndefined()
+    setMcpRunner(null)
   })
 })

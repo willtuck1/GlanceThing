@@ -10,12 +10,14 @@ import {
 } from '../feeds/registry.js'
 import { afterPublish } from '../fantasy/sportsLink.js'
 import { connectorKey, connectorManifest } from '../connectors/modules.js'
+import { setMcpRunner } from '../connectors/mcpHook.js'
 import {
+  connectorRevision,
   getConnectorSecret,
   listConnectors,
   onConnectorsChanged
 } from '../connectors/store.js'
-import { CONNECTOR_PREFIX, Connector } from '../connectors/types.js'
+import { Connector, isConnectorModuleId } from '../connectors/types.js'
 import { loadCache } from '../modules/cache.js'
 import { allModules } from '../modules/registry.js'
 import {
@@ -26,6 +28,7 @@ import {
   tabsPayload
 } from '../modules/tabs.js'
 import { FeedSource } from '../modules/types.js'
+import { runMcp } from '../mcp/client.js'
 import { deleteStorageValue, setStorageValue } from '../storage.js'
 import { serverManager } from '../server.js'
 import { formatDate } from '../time.js'
@@ -86,10 +89,20 @@ function createFeed({
 // Everything that changes what a connector fetches or shows. The secret is
 // only hashed, in memory.
 function contentOf(c: Connector) {
+  const src = c.source
+  if (src.kind === 'mcp')
+    return JSON.stringify([
+      src.recipeId,
+      src.serverUrl,
+      src.settings ?? null,
+      c.layout,
+      c.mapping,
+      connectorRevision(c.id)
+    ])
   const secret = getConnectorSecret(c.id)
   return JSON.stringify([
-    c.source.url,
-    c.source.header?.name ?? null,
+    src.url,
+    src.header?.name ?? null,
     secret ? createHash('sha256').update(secret).digest('hex') : null,
     c.layout,
     c.mapping
@@ -106,21 +119,21 @@ function removeConnectorFeed(key: FeedKey) {
 }
 
 /**
- * Brings the `json:*` feeds in line with the stored connectors: adds new
+ * Brings the `json:*` and `mcp:*` feeds in line with the stored connectors: adds new
  * ones, replaces edited ones, removes deleted ones, then re-applies the tab
  * settings and tells the clients. A visible new or edited connector fetches
  * right away (starting a feed fetches).
  */
 export function reconcileConnectors() {
   const connectors = listConnectors()
-  const wanted = new Set(connectors.map(c => connectorKey(c.id)))
+  const wanted = new Set(connectors.map(c => connectorKey(c)))
 
   for (const key of [...registered.keys()])
-    if (key.startsWith(CONNECTOR_PREFIX) && !wanted.has(key))
+    if (isConnectorModuleId(key) && !wanted.has(key))
       removeConnectorFeed(key)
 
   for (const c of connectors) {
-    const key = connectorKey(c.id)
+    const key = connectorKey(c)
     const content = contentOf(c)
     const interval = c.intervalMin * 60_000
     const previous = connectorState.get(key)
@@ -144,6 +157,7 @@ export function reconcileConnectors() {
 }
 
 export const setup: SetupFunction = async () => {
+  setMcpRunner(c => runMcp(c))
   const sources = allModules().flatMap(m => m.feeds())
   sources.forEach(source => source.prepare?.())
 
@@ -152,7 +166,7 @@ export const setup: SetupFunction = async () => {
   // Feeds built above for connectors are current, so record them.
   connectorState.clear()
   for (const c of listConnectors()) {
-    const key = connectorKey(c.id)
+    const key = connectorKey(c)
     if (!registered.has(key)) continue
     connectorState.set(key, {
       content: contentOf(c),

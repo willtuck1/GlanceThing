@@ -213,4 +213,30 @@ describe('connector tabs', () => {
     expect(text).not.toContain('X-Key')
     expect(text).not.toContain('price')
   })
+
+  it('includes mcp connectors with only id, label and layout', () => {
+    store.set('connectors', [
+      {
+        id: 'bbbb2222',
+        label: 'Mail',
+        layout: 'number',
+        mapping: { value: 'secretpath' },
+        intervalMin: 5,
+        source: {
+          kind: 'mcp',
+          recipeId: 'gmail-unread',
+          serverUrl: 'https://mcp.example.com/mcp'
+        }
+      }
+    ])
+    const payload = tabsPayload()
+    expect(payload.connectors).toEqual([
+      { id: 'mcp:bbbb2222', label: 'Mail', layout: 'number' }
+    ])
+    expect(payload.order).toContain('mcp:bbbb2222')
+    const text = JSON.stringify(payload)
+    expect(text).not.toContain('example.com')
+    expect(text).not.toContain('gmail-unread')
+    expect(text).not.toContain('secretpath')
+  })
 })
