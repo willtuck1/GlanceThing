@@ -1,0 +1,27 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"tasks\":[{\"title\":\"Review report\",\"due\":\"Mon 9:00\",\"status\":\"open\"},{\"title\":\"Water plants\",\"due\":\"Tue 18:30\",\"status\":\"open\"},{\"title\":\"Send invoice\",\"due\":\"Wed 12:00\",\"status\":\"done\"}]}"
+    }
+  ],
+  "structuredContent": {
+    "tasks": [
+      {
+        "title": "Review report",
+        "due": "Mon 9:00",
+        "status": "open"
+      },
+      {
+        "title": "Water plants",
+        "due": "Tue 18:30",
+        "status": "open"
+      },
+      {
+        "title": "Send invoice",
+        "due": "Wed 12:00",
+        "status": "done"
+      }
+    ]
+  }
+}
