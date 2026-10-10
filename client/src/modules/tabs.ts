@@ -1,4 +1,4 @@
-import { CONNECTOR_PREFIX, LAYOUTS } from './connector/types.ts'
+import { isConnectorId, LAYOUTS } from './connector/types.ts'
 
 import type { ConnectorDescriptor } from './connector/types.ts'
 
@@ -16,7 +16,7 @@ function descriptors(value: unknown): ConnectorDescriptor[] {
   for (const d of value) {
     if (typeof d !== 'object' || d === null) continue
     const { id, label, layout } = d as Record<string, unknown>
-    if (typeof id !== 'string' || !id.startsWith(CONNECTOR_PREFIX))
+    if (typeof id !== 'string' || !isConnectorId(id))
       continue
     if (typeof label !== 'string') continue
     if (!LAYOUTS.some(l => l === layout)) continue

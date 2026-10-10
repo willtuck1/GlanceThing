@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "layout": "list",
+      "rows": [
+        { "primary": "Water the plants", "secondary": "Mon 9:00", "value": "open" },
+        { "primary": "Renew library books", "secondary": "Wed 18:00", "value": "open" },
+        { "primary": "Book dentist", "secondary": "Fri 12:00", "value": "done" }
+      ],
+      "more": 0
+    }
+  ],
+  "fetchedAt": 1760000000000,
+  "fetchedAtLabel": "3:04 PM",
+  "stale": false,
+  "error": null
+}

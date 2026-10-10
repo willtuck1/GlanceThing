@@ -1,0 +1,7 @@
+{
+  "order": ["weather", "calendar", "todo", "sports", "fantasy", "spotify", "mcp:exmp0001"],
+  "hidden": [],
+  "connectors": [
+    { "id": "mcp:exmp0001", "label": "Example tasks", "layout": "list" }
+  ]
+}

@@ -26,4 +26,9 @@ export interface ConnectorDescriptor {
   layout: Layout
 }
 
-export const CONNECTOR_PREFIX = 'json:'
+// Tab ids: `json:<id>` (JSON connectors) or `mcp:<id>` (MCP recipes).
+export const CONNECTOR_PREFIXES = ['json:', 'mcp:']
+
+export function isConnectorId(id: string): boolean {
+  return CONNECTOR_PREFIXES.some(p => id.startsWith(p))
+}
