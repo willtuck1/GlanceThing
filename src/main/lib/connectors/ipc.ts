@@ -11,15 +11,31 @@ import {
   saveConnector,
   testDraft
 } from './store.js'
-import { Connector, ConnectorView } from './types.js'
+import { Connector, ConnectorView, JsonSource } from './types.js'
 
 function toSettings(c: Connector): ConnectorForSettings {
-  const out: ConnectorForSettings = {
+  const base = {
     id: c.id,
     label: c.label,
     layout: c.layout,
     mapping: c.mapping,
-    intervalMin: c.intervalMin,
+    intervalMin: c.intervalMin
+  }
+  if (c.source.kind === 'mcp') {
+    const { recipeId, serverUrl, settings } = c.source
+    return {
+      ...base,
+      source: {
+        kind: 'mcp',
+        recipeId,
+        serverUrl,
+        ...(settings ? { settings: { ...settings } } : {})
+      },
+      headerSet: false
+    }
+  }
+  const out: ConnectorForSettings & { source: JsonSource } = {
+    ...base,
     source: { kind: 'json', url: c.source.url },
     headerSet: false
   }

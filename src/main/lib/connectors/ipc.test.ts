@@ -23,6 +23,8 @@ import {
 } from './ipc.js'
 import { getConnectorSecret } from './store.js'
 
+import type { JsonSource } from './types.js'
+
 const SECRET = 'sk-very-secret-value-123'
 
 function draft(over: Record<string, unknown> = {}) {
@@ -60,7 +62,7 @@ describe('connector IPC', () => {
         draft({ header: { name: 'X-Api-Key', value: SECRET } })
       )
     )
-    expect(c.source.header).toEqual({ name: 'X-Api-Key' })
+    expect((c.source as JsonSource).header).toEqual({ name: 'X-Api-Key' })
     expect(c.headerSet).toBe(true)
     const list = record(ipcListConnectors())
     expect(list).toEqual([c])
@@ -90,14 +92,18 @@ describe('connector IPC', () => {
     const kept = record(
       ipcSaveConnector(draft({ id: c.id, label: 'Kept' }))
     )
-    expect(kept.source.header).toEqual({ name: 'X-Api-Key' })
+    expect((kept.source as JsonSource).header).toEqual({
+      name: 'X-Api-Key'
+    })
     expect(kept.headerSet).toBe(true)
     expect(getConnectorSecret(c.id)).toBe(SECRET)
 
     const renamed = record(
       ipcSaveConnector(draft({ id: c.id, header: { name: 'X-Token' } }))
     )
-    expect(renamed.source.header).toEqual({ name: 'X-Token' })
+    expect((renamed.source as JsonSource).header).toEqual({
+      name: 'X-Token'
+    })
     expect(getConnectorSecret(c.id)).toBe(SECRET)
 
     const replaced = record(
@@ -108,13 +114,15 @@ describe('connector IPC', () => {
         })
       )
     )
-    expect(replaced.source.header).toEqual({ name: 'Authorization' })
+    expect((replaced.source as JsonSource).header).toEqual({
+      name: 'Authorization'
+    })
     expect(getConnectorSecret(c.id)).toBe('new')
 
     const cleared = record(
       ipcSaveConnector(draft({ id: c.id, header: null }))
     )
-    expect(cleared.source.header).toBeUndefined()
+    expect((cleared.source as JsonSource).header).toBeUndefined()
     expect(cleared.headerSet).toBe(false)
     expect(getConnectorSecret(c.id)).toBeNull()
     expect(record(ipcListConnectors())[0].headerSet).toBe(false)

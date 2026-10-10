@@ -63,5 +63,7 @@ describe('module registry', () => {
     expect(findHandler('weather')?.name).toBe('weather')
     expect(findHandler('json:abcd1234')).toBeUndefined()
     expect(getHandlers().some(h => h.name.startsWith('json:'))).toBe(false)
+    expect(findHandler('mcp:abcd1234')).toBeUndefined()
+    expect(getHandlers().some(h => h.name.startsWith('mcp:'))).toBe(false)
   })
 })

@@ -20,6 +20,8 @@ const fetchMock = vi.hoisted(() => vi.fn())
 vi.mock('./fetch.js', () => ({ fetchConnectorJson: fetchMock }))
 
 import {
+  bumpConnectorRevision,
+  connectorRevision,
   deleteConnector,
   getConnector,
   getConnectorSecret,
@@ -30,6 +32,8 @@ import {
   saveConnector,
   testDraft
 } from './store.js'
+
+import type { JsonSource } from './types.js'
 
 const SECRET = 'sk-very-secret-value-123'
 
@@ -92,7 +96,9 @@ describe('saveConnector', () => {
     const forSettings = listConnectorsForSettings()
     expect(JSON.stringify(forSettings)).not.toContain(SECRET)
     expect(forSettings[0].headerSet).toBe(true)
-    expect(forSettings[0].source.header).toEqual({ name: 'X-Api-Key' })
+    expect((forSettings[0].source as JsonSource).header).toEqual({
+      name: 'X-Api-Key'
+    })
   })
 
   it('header undefined keeps name and secret', () => {
@@ -100,7 +106,7 @@ describe('saveConnector', () => {
       draft({ header: { name: 'X-Api-Key', value: SECRET } })
     )
     saveConnector(draft({ id: c.id, label: 'Other' }))
-    expect(getConnector(c.id)?.source.header).toEqual({
+    expect((getConnector(c.id)?.source as JsonSource).header).toEqual({
       name: 'X-Api-Key'
     })
     expect(getConnectorSecret(c.id)).toBe(SECRET)
@@ -111,7 +117,9 @@ describe('saveConnector', () => {
       draft({ header: { name: 'X-Api-Key', value: SECRET } })
     )
     saveConnector(draft({ id: c.id, header: null }))
-    expect(getConnector(c.id)?.source.header).toBeUndefined()
+    expect(
+      (getConnector(c.id)?.source as JsonSource).header
+    ).toBeUndefined()
     expect(mem.store.has(`connectorSecret.${c.id}`)).toBe(false)
     expect(listConnectorsForSettings()[0].headerSet).toBe(false)
   })
@@ -123,7 +131,7 @@ describe('saveConnector', () => {
     saveConnector(
       draft({ id: c.id, header: { name: 'Authorization', value: 'new' } })
     )
-    expect(getConnector(c.id)?.source.header).toEqual({
+    expect((getConnector(c.id)?.source as JsonSource).header).toEqual({
       name: 'Authorization'
     })
     expect(getConnectorSecret(c.id)).toBe('new')
@@ -134,7 +142,9 @@ describe('saveConnector', () => {
       draft({ header: { name: 'X-Api-Key', value: SECRET } })
     )
     saveConnector(draft({ id: c.id, header: { name: 'X-Token' } }))
-    expect(getConnector(c.id)?.source.header).toEqual({ name: 'X-Token' })
+    expect((getConnector(c.id)?.source as JsonSource).header).toEqual({
+      name: 'X-Token'
+    })
     expect(getConnectorSecret(c.id)).toBe(SECRET)
   })
 
@@ -158,7 +168,7 @@ describe('saveConnector', () => {
     expect(() =>
       saveConnector(draft({ id: c.id, url, header: { name: 'X-B' } }))
     ).toThrow(msg)
-    expect(getConnector(c.id)?.source.url).toBe(
+    expect((getConnector(c.id)?.source as JsonSource).url).toBe(
       'https://api.example.com/price'
     )
     // A new value, or clearing the header, may move it.
@@ -386,5 +396,74 @@ describe('isProtectedStorageKey', () => {
     expect(isProtectedStorageKey('connectorSecret.')).toBe(true)
     expect(isProtectedStorageKey('weatherUnits')).toBe(false)
     expect(isProtectedStorageKey('connectorsX')).toBe(false)
+  })
+})
+
+const MCP_BASE = {
+  label: 'Mail',
+  layout: 'number',
+  mapping: { value: 'n' },
+  intervalMin: 5
+}
+function mcpEntry(source: Record<string, unknown>, id = 'abcd1234') {
+  return {
+    id,
+    ...MCP_BASE,
+    source: {
+      kind: 'mcp',
+      recipeId: 'gmail-unread',
+      serverUrl: 'https://mcp.example.com/mcp',
+      ...source
+    }
+  }
+}
+
+describe('mcp connectors', () => {
+  it('round-trips through parseStored', () => {
+    const e = mcpEntry({ settings: { query: 'is:unread' } })
+    mem.store.set('connectors', [e])
+    expect(listConnectors()).toEqual([e])
+    const s = listConnectorsForSettings()[0]
+    expect(s.headerSet).toBe(false)
+  })
+
+  it('rejects bad recipeId, serverUrl and settings', () => {
+    mem.store.set('connectors', [
+      mcpEntry({ recipeId: 'Bad_ID' }, 'aaaaaaa1'),
+      mcpEntry({ recipeId: '' }, 'aaaaaaa2'),
+      mcpEntry({ serverUrl: 'ftp://x' }, 'aaaaaaa3'),
+      mcpEntry({ serverUrl: 'https://u:p@x.com/' }, 'aaaaaaa4'),
+      mcpEntry({ settings: { '1a': 'x' } }, 'aaaaaaa5'),
+      mcpEntry({ settings: { a: 'x'.repeat(201) } }, 'aaaaaaa6'),
+      mcpEntry({ settings: { a: 1 } }, 'aaaaaaa7'),
+      mcpEntry(
+        { settings: { a: '', b: '', c: '', d: '', e: '', f: '' } },
+        'aaaaaaa8'
+      )
+    ])
+    expect(listConnectors()).toEqual([])
+  })
+
+  it('protects mcpAuth keys', () => {
+    expect(isProtectedStorageKey('mcpAuth.x.tokens')).toBe(true)
+  })
+
+  it('delete removes the mcpAuth keys', () => {
+    mem.store.set('connectors', [mcpEntry({})])
+    for (const p of ['tokens', 'client', 'verifier'])
+      mem.store.set(`mcpAuth.abcd1234.${p}`, 'v')
+    expect(deleteConnector('abcd1234')).toBe(true)
+    for (const p of ['tokens', 'client', 'verifier'])
+      expect(mem.store.has(`mcpAuth.abcd1234.${p}`)).toBe(false)
+  })
+
+  it('bumpConnectorRevision increments and fires listeners', () => {
+    const fn = vi.fn()
+    const off = onConnectorsChanged(fn)
+    expect(connectorRevision('zzzzzzzz')).toBe(0)
+    bumpConnectorRevision('zzzzzzzz')
+    expect(connectorRevision('zzzzzzzz')).toBe(1)
+    expect(fn).toHaveBeenCalledTimes(1)
+    off()
   })
 })

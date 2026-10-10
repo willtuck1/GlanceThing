@@ -1,4 +1,4 @@
-import { CONNECTOR_PREFIX } from '../connectors/types.js'
+import { isConnectorModuleId } from '../connectors/types.js'
 import { Handler } from '../../types/WebSocketHandler.js'
 import { allModules, modules } from '../modules/registry.js'
 
@@ -43,12 +43,12 @@ export function getHandlers(): Handler[] {
 }
 
 /**
- * Looks up the handler for a message type. `json:` names are connector
+ * Looks up the handler for a message type. `json:` and `mcp:` names are connector
  * handlers, read at call time because connectors come and go at runtime;
  * every other name is the static list.
  */
 export function findHandler(name: string): Handler | undefined {
-  if (typeof name === 'string' && name.startsWith(CONNECTOR_PREFIX))
+  if (typeof name === 'string' && isConnectorModuleId(name))
     return allModules()
       .flatMap(m => m.handlers)
       .find(h => h.name === name)
