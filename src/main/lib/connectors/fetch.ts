@@ -4,12 +4,16 @@
 // Error messages never include the URL or the secret header value, and this
 // module logs nothing.
 
-import { promises as dns } from 'node:dns'
 import http from 'node:http'
 import https from 'node:https'
-import { isIP, type LookupFunction } from 'node:net'
 
-import { checkHop, ConnectorFetchError } from './address'
+import {
+  ConnectorFetchError,
+  defaultResolve,
+  pinnedRequestOptions,
+  prepareHop,
+  toFetchError
+} from './hop'
 
 export { ConnectorFetchError }
 
@@ -44,69 +48,12 @@ const DEFAULT_MAX_BYTES = 1_000_000
 const MAX_REDIRECTS = 3
 const REDIRECTS = new Set([301, 302, 303, 307, 308])
 
-async function defaultResolve(host: string): Promise<string[]> {
-  const res = await dns.lookup(host, { all: true, verbatim: true })
-  return res.map(r => r.address)
-}
-
-const NETWORK_MESSAGES: Record<string, string> = {
-  ECONNREFUSED: 'Connection refused',
-  ECONNRESET: 'Connection reset',
-  EPIPE: 'Connection reset',
-  ENOTFOUND: 'Could not resolve host',
-  EAI_AGAIN: 'Could not resolve host',
-  ETIMEDOUT: 'Timed out',
-  EHOSTUNREACH: 'Host unreachable',
-  ENETUNREACH: 'Host unreachable'
-}
-
-const TLS_CODES = new Set([
-  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
-  'UNABLE_TO_GET_ISSUER_CERT',
-  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
-  'DEPTH_ZERO_SELF_SIGNED_CERT',
-  'SELF_SIGNED_CERT_IN_CHAIN',
-  'CERT_HAS_EXPIRED',
-  'CERT_NOT_YET_VALID',
-  'CERT_REVOKED',
-  'CERT_UNTRUSTED',
-  'CERT_REJECTED',
-  'ERR_TLS_CERT_ALTNAME_INVALID'
-])
-
-// Never passes through the original message: Node puts hosts and header
-// names/values in some of them.
-function toFetchError(e: unknown): ConnectorFetchError {
-  if (e instanceof ConnectorFetchError) return e
-  const code = (e as { code?: unknown } | null)?.code
-  if (typeof code === 'string') {
-    if (NETWORK_MESSAGES[code])
-      return new ConnectorFetchError(NETWORK_MESSAGES[code])
-    if (TLS_CODES.has(code) || code.startsWith('CERT_'))
-      return new ConnectorFetchError('TLS certificate error')
-    if (code.startsWith('ERR_SSL_') || code.startsWith('ERR_TLS_'))
-      return new ConnectorFetchError('TLS error')
-    if (code === 'ERR_INVALID_CHAR' || code === 'ERR_INVALID_HTTP_TOKEN')
-      return new ConnectorFetchError('Invalid header')
-  }
-  return new ConnectorFetchError('Request failed')
-}
-
 function isJsonType(contentType: string | undefined): boolean {
   if (!contentType) return false
   const type = contentType.split(';')[0].trim().toLowerCase()
   return (
     type === 'application/json' || /^[^/\s]+\/[^/\s]+\+json$/.test(type)
   )
-}
-
-function pinnedLookup(address: string): LookupFunction {
-  const family = isIP(address)
-  return ((_host, options, callback) => {
-    if ((options as { all?: boolean }).all)
-      callback(null, [{ address, family }])
-    else callback(null, address, family)
-  }) as LookupFunction
 }
 
 function requestHop(
@@ -117,21 +64,13 @@ function requestHop(
   signal: AbortSignal
 ): Promise<HopResult> {
   return new Promise((resolve, reject) => {
-    const hostname = url.hostname.replace(/^\[|\]$/g, '')
-    const literal = isIP(hostname) !== 0
     const isHttps = url.protocol === 'https:'
     const options: https.RequestOptions = {
+      ...pinnedRequestOptions(url, address),
       method: 'GET',
-      protocol: url.protocol,
-      hostname: literal ? address : hostname,
-      port: url.port || (isHttps ? 443 : 80),
-      path: `${url.pathname}${url.search}`,
       headers,
-      agent: false,
-      signal,
-      lookup: pinnedLookup(address)
+      signal
     }
-    if (isHttps && !literal) options.servername = hostname
 
     const req = (isHttps ? https : http).request(options, res => {
       const status = res.statusCode ?? 0
@@ -229,22 +168,7 @@ export async function fetchConnectorJson(
       if (hop > MAX_REDIRECTS)
         throw new ConnectorFetchError('Too many redirects')
 
-      const hostname = current.hostname.replace(/^\[|\]$/g, '')
-      let addrs: string[]
-      if (isIP(hostname)) addrs = [hostname]
-      else if (
-        current.protocol !== 'http:' &&
-        current.protocol !== 'https:'
-      )
-        addrs = []
-      else {
-        try {
-          addrs = await resolveHost(hostname)
-        } catch {
-          throw new ConnectorFetchError('Could not resolve host')
-        }
-      }
-      checkHop(current, addrs, prev)
+      const address = await prepareHop(current, resolveHost, prev)
 
       const headers: Record<string, string> = {
         Accept: 'application/json',
@@ -256,7 +180,7 @@ export async function fetchConnectorJson(
 
       const result = await request(
         current,
-        addrs[0],
+        address,
         headers,
         maxBytes,
         controller.signal
