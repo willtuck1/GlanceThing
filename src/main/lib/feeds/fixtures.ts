@@ -9,7 +9,9 @@ export const calendarFixture: CalendarEvent[] = [
     endLabel: '09:45',
     dayLabel: 'Today',
     location: 'Zoom',
-    calendarColor: '#4285f4'
+    calendarColor: '#4285f4',
+    startMs: 0,
+    endMs: 0
   },
   {
     id: 'ev2',
@@ -19,7 +21,9 @@ export const calendarFixture: CalendarEvent[] = [
     endLabel: '15:00',
     dayLabel: 'Today',
     location: '12 Example Street',
-    calendarColor: '#0b8043'
+    calendarColor: '#0b8043',
+    startMs: 0,
+    endMs: 0
   },
   {
     id: 'ev3',
@@ -28,7 +32,9 @@ export const calendarFixture: CalendarEvent[] = [
     startLabel: '',
     endLabel: '',
     dayLabel: 'Tomorrow',
-    calendarColor: '#d50000'
+    calendarColor: '#d50000',
+    startMs: 0,
+    endMs: 0
   },
   {
     id: 'ev4',
@@ -37,7 +43,9 @@ export const calendarFixture: CalendarEvent[] = [
     startLabel: '11:00',
     endLabel: '12:00',
     dayLabel: 'Tomorrow',
-    calendarColor: '#4285f4'
+    calendarColor: '#4285f4',
+    startMs: 0,
+    endMs: 0
   }
 ]
 

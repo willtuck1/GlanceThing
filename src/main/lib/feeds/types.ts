@@ -24,6 +24,8 @@ export interface CalendarEvent {
   dayLabel: string
   location?: string
   calendarColor: string
+  startMs: number
+  endMs: number
 }
 
 export interface Task {
