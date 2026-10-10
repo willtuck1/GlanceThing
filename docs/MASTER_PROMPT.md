@@ -51,4 +51,4 @@ you did with each, model escalations, what's unverified, and what changed in AGE
 - Every prompt written for a future session must keep the AGENTS.md update rule.
 - Every prompt written for a future session must also keep the coordinator-on-Opus-5.5 and cascading-inference rules (see AGENTS.md "Agent harness").
 - If coder keeps failing one hard step, raise just that call one tier (Sonnet → Opus).
-- To release after merging: tag `v0.0.16-tabs.N` (matching the bumped version) or create the release on GitHub.
+- To release after merging: push the tag `v0.0.16-tabs.N` (matching the bumped version). The release workflow names it `GlanceThing_v0.NN` (next in sequence).

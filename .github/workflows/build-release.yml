@@ -23,7 +23,25 @@ env:
   GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
 
 jobs:
+  # Release title: GlanceThing_v0.NN, one more than the number of existing
+  # releases (this tag's own release excluded, so re-runs keep the name).
+  # The tag stays v0.0.16-tabs.N; the in-app update check reads the tag.
+  release-name:
+    runs-on: ubuntu-latest
+    outputs:
+      name: ${{ steps.name.outputs.name }}
+    steps:
+      - id: name
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          count=$(gh api "repos/${{ github.repository }}/releases?per_page=100" --paginate \
+            --jq "[.[] | select(.tag_name != \"$TAG\")] | length" | awk '{s+=$1} END {print s+0}')
+          printf 'name=GlanceThing_v0.%02d\n' "$((count + 1))" >> "$GITHUB_OUTPUT"
+
   build-windows:
+    needs: release-name
     runs-on: windows-latest
 
     steps:
@@ -51,9 +69,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ needs.release-name.outputs.name }}
           files: ./dist/glancething-*-setup.exe
 
   build-macos:
+    needs: release-name
     runs-on: macos-latest
 
     steps:
@@ -81,9 +101,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ needs.release-name.outputs.name }}
           files: ./dist/glancething-*.dmg
 
   build-linux:
+    needs: release-name
     runs-on: ubuntu-latest
 
     steps:
@@ -111,9 +133,11 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ needs.release-name.outputs.name }}
           files: ./dist/glancething-*.AppImage
 
   build-client:
+    needs: release-name
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -148,4 +172,5 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ needs.release-name.outputs.name }}
           files: /tmp/glancething-client-*.zip
