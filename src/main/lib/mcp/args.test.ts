@@ -50,6 +50,64 @@ describe('resolveArgs', () => {
     )
     expect(o.a).toBe('2026-11-03T00:00:00.000-05:00')
   })
+  it('spring-forward at midnight: the day starts at 01:00', () => {
+    // 2026-09-06 America/Santiago: 23:59:59 -04 is followed by 01:00 -03.
+    const o = r(
+      {
+        s: { $host: 'dayStart' },
+        ms: { $host: 'dayStart', format: 'epochMs' },
+        t: { $host: 'today' },
+        prev: { $host: 'dayEnd', offsetDays: -1 }
+      },
+      'America/Santiago',
+      '2026-09-06T12:00:00Z'
+    )
+    expect(o).toEqual({
+      s: '2026-09-06T01:00:00.000-03:00',
+      ms: Date.parse('2026-09-06T04:00:00Z'),
+      t: '2026-09-06',
+      prev: '2026-09-05T23:59:59.999-04:00'
+    })
+    // Asia/Beirut 2026-03-29 and America/Havana 2026-03-08 do the same.
+    expect(
+      r({ s: { $host: 'dayStart' } }, 'Asia/Beirut', '2026-03-29T09:00:00Z')
+        .s
+    ).toBe('2026-03-29T01:00:00.000+03:00')
+    expect(
+      r({ s: { $host: 'dayStart' } }, 'America/Havana', '2026-03-08T15:00:00Z')
+        .s
+    ).toBe('2026-03-08T01:00:00.000-04:00')
+  })
+  it('fall-back at midnight: the day ends after the repeated hour', () => {
+    // 2026-04-05 America/Santiago: 23:59:59 -03 is followed by 23:00 -04.
+    const o = r(
+      {
+        s: { $host: 'dayStart' },
+        e: { $host: 'dayEnd' },
+        e2: { $host: 'dayEnd', format: 'epochMs' },
+        next: { $host: 'dayStart', offsetDays: 1 }
+      },
+      'America/Santiago',
+      '2026-04-04T15:00:00Z'
+    )
+    expect(o).toEqual({
+      s: '2026-04-04T00:00:00.000-03:00',
+      e: '2026-04-04T23:59:59.999-04:00',
+      e2: Date.parse('2026-04-05T03:59:59.999Z'),
+      next: '2026-04-05T00:00:00.000-04:00'
+    })
+    // 2026-11-01 America/Havana: 00:59:59 -04 is followed by 00:00 -05; the
+    // day starts at the first midnight.
+    const h = r(
+      { s: { $host: 'dayStart' }, prev: { $host: 'dayEnd', offsetDays: -1 } },
+      'America/Havana',
+      '2026-11-01T15:00:00Z'
+    )
+    expect(h).toEqual({
+      s: '2026-11-01T00:00:00.000-04:00',
+      prev: '2026-10-31T23:59:59.999-04:00'
+    })
+  })
   it('handles Asia/Kolkata', () => {
     const o = r(
       {

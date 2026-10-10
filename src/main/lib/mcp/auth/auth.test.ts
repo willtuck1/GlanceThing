@@ -24,11 +24,14 @@ vi.mock('../../storage.js', () => ({
   }
 }))
 
-import { connectorRevision } from '../../connectors/store.js'
+import {
+  connectorRevision,
+  deleteConnector
+} from '../../connectors/store.js'
 import { startTestMcpServer, type TestMcp } from '../testServer/index.js'
 
 import { startLoopback } from './loopback.js'
-import { McpAuthRequiredError } from './provider.js'
+import { createProvider, McpAuthRequiredError } from './provider.js'
 import { ensureFresh, NO_DCR_MESSAGE, signIn } from './signIn.js'
 import {
   authState,
@@ -177,13 +180,11 @@ describe('signIn', () => {
     expect(s.auth!.tokenRequests).toBe(2)
   })
 
-  it('refuses a tampered state and stores no tokens', async () => {
+  it('ignores a tampered state, keeps waiting, then times out', async () => {
     const s = await start()
     const o = opener(s, { tamperState: true })
-    const r = await run({ openExternal: o.openExternal })
-    expect(r).toEqual({
-      error: "Sign-in failed: the response didn't match. Try again"
-    })
+    const r = await run({ openExternal: o.openExternal, timeoutMs: 400 })
+    expect(r).toEqual({ error: 'Sign-in timed out' })
     expect(mem.store.has(KEYS.tokens)).toBe(false)
     expect(mem.store.has(KEYS.verifier)).toBe(false)
     expect(s.auth!.tokenRequests).toBe(0)
@@ -395,10 +396,103 @@ describe('ensureFresh', () => {
   })
 })
 
+// Holds /token responses while `held` is set; `waitFor` polls a condition.
+function tokenGate(): {
+  gate: () => Promise<void>
+  hold: () => void
+  release: () => void
+} {
+  let held: Promise<void> | null = null
+  let release = (): void => {}
+  return {
+    gate: () => held ?? Promise.resolve(),
+    hold: () => {
+      held = new Promise<void>(r => (release = r))
+    },
+    release: () => {
+      held = null
+      release()
+    }
+  }
+}
+
+async function waitFor(cond: () => boolean): Promise<void> {
+  for (let i = 0; i < 200 && !cond(); i++)
+    await new Promise(r => setTimeout(r, 10))
+  expect(cond()).toBe(true)
+}
+
+describe('late writes', () => {
+  it('a refresh that resolves after signOut stores no tokens', async () => {
+    const g = tokenGate()
+    const s = await start({ accessTtlSec: 1, tokenGate: g.gate })
+    const o = opener(s)
+    expect(await run({ openExternal: o.openExternal })).toEqual({
+      ok: true
+    })
+    rememberTokens()
+    vi.spyOn(clock, 'now').mockReturnValue(Date.now() + 120_000)
+    g.hold()
+    const before = s.auth!.tokenRequests
+    const refresh = ensureFresh(ID).catch(e => e)
+    await waitFor(() => s.auth!.tokenRequests > before)
+    signOut(ID)
+    g.release()
+    await refresh
+    expect(s.auth!.refreshRequests).toBe(1)
+    expect(mem.store.has(KEYS.tokens)).toBe(false)
+    expect(authState(ID)).toBe('signedOut')
+  })
+
+  it('deleting the connector during sign-in leaves no keys', async () => {
+    const g = tokenGate()
+    const s = await start({ tokenGate: g.gate })
+    g.hold()
+    const pending = signIn(ID, {
+      openExternal: async url => {
+        await s.auth!.authorizeVia(url)
+      }
+    })
+    await waitFor(() => s.auth!.tokenRequests > 0)
+    expect(deleteConnector(ID)).toBe(true)
+    g.release()
+    expect(await pending).toEqual({ error: 'Sign-in was cancelled' })
+    expect(
+      [...mem.store.keys()].filter(k => k.startsWith('mcpAuth.'))
+    ).toEqual([])
+  })
+
+  it('a stale background provider cannot expire a newer sign-in', async () => {
+    const s = await start()
+    const o = opener(s)
+    expect(await run({ openExternal: o.openExternal })).toEqual({
+      ok: true
+    })
+    const stale = createProvider(ID, {
+      mode: 'background',
+      serverUrl: s.url
+    })
+    expect(await run({ openExternal: o.openExternal })).toEqual({
+      ok: true
+    })
+    rememberTokens()
+    expect(() =>
+      stale.redirectToAuthorization(new URL('https://example.com/'))
+    ).toThrow(McpAuthRequiredError)
+    expect(() => stale.invalidateCredentials?.('tokens')).toThrow(
+      McpAuthRequiredError
+    )
+    stale.saveTokens({ access_token: 'stale', token_type: 'Bearer' })
+    expect(authState(ID)).toBe('signedIn')
+    expect(readTokens(ID)?.tokens?.access_token).not.toBe('stale')
+  })
+})
+
 describe('loopback', () => {
   it('is one-shot and does not reflect input', async () => {
     const lb = await startLoopback()
     const evil = '<script>alert(1)</script>'
+    const wait = lb.waitForCallback('s1')
     const res = await fetch(
       `${lb.redirectUrl}?state=s1&code=${encodeURIComponent(evil)}`
     )
@@ -409,7 +503,7 @@ describe('loopback', () => {
     expect(res.headers.get('content-security-policy')).toContain(
       "default-src 'none'"
     )
-    expect(await lb.waitForCallback('s1')).toBe(evil)
+    expect(await wait).toBe(evil)
     const again = await fetch(`${lb.redirectUrl}?state=s1&code=x`).then(
       r => r.status,
       () => 'refused'
@@ -422,6 +516,7 @@ describe('loopback', () => {
   it('answers 404 elsewhere and 405 for other methods without consuming', async () => {
     const lb = await startLoopback()
     const base = new URL(lb.redirectUrl)
+    const wait = lb.waitForCallback('s')
     expect(
       (await fetch(`${base.origin}/other?code=x&state=s`)).status
     ).toBe(404)
@@ -430,15 +525,29 @@ describe('loopback', () => {
         .status
     ).toBe(405)
     await fetch(`${lb.redirectUrl}?code=c&state=s`)
-    expect(await lb.waitForCallback('s')).toBe('c')
+    expect(await wait).toBe('c')
   })
 
-  it('handles a state of a different length', async () => {
+  it('answers 400 to a missing or wrong state and keeps waiting', async () => {
+    const lb = await startLoopback({ timeoutMs: 2000 })
+    // Nothing is accepted before the expected state is known.
+    expect((await fetch(`${lb.redirectUrl}?code=c&state=s`)).status).toBe(400)
+    const wait = lb.waitForCallback('a-much-longer-state')
+    for (const q of ['code=c', 'code=c&state=short', 'error=x&state=bad'])
+      expect((await fetch(`${lb.redirectUrl}?${q}`)).status).toBe(400)
+    const ok = await fetch(
+      `${lb.redirectUrl}?code=good&state=a-much-longer-state`
+    )
+    expect(ok.status).toBe(200)
+    expect(await wait).toBe('good')
+  })
+
+  it('a matching state with error= is denied', async () => {
     const lb = await startLoopback()
-    await fetch(`${lb.redirectUrl}?code=c&state=short`)
-    await expect(
-      lb.waitForCallback('a-much-longer-state')
-    ).rejects.toThrow("didn't match")
+    const wait = lb.waitForCallback('s')
+    wait.catch(() => {})
+    await fetch(`${lb.redirectUrl}?error=access_denied&state=s`)
+    await expect(wait).rejects.toThrow('Sign-in was denied')
   })
 
   it('times out and closes', async () => {

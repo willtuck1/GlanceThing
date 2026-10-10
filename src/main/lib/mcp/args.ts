@@ -42,11 +42,31 @@ function offsetAt(ms: number, timeZone: string): number {
   )
 }
 
-// Instant for a wall-clock time in the zone (wall is given as a UTC-shaped ms).
-function wallToInstant(wall: number, timeZone: string): number {
-  const first = wall - offsetAt(wall, timeZone)
-  const second = wall - offsetAt(first, timeZone)
-  return second
+// Local calendar date at an instant, as a UTC-midnight ms (comparable).
+function localDay(ms: number, timeZone: string): number {
+  const p = partsAt(ms, timeZone)
+  return Date.UTC(p.y, p.mo - 1, p.d)
+}
+
+// First instant whose local date is `day` (a UTC-midnight ms). Midnight may
+// not exist (spring-forward at 00:00) or occur twice (fall-back to 00:00).
+function dayStartInstant(day: number, timeZone: string): number {
+  const isStart = (t: number): boolean =>
+    localDay(t, timeZone) >= day && localDay(t - 1, timeZone) < day
+  // Usual case: midnight exists once at the offset in force around it.
+  const first = day - offsetAt(day, timeZone)
+  const guess = day - offsetAt(first, timeZone)
+  if (isStart(guess)) return guess
+  if (isStart(first)) return first
+  // Local dates only move forward; UTC offsets lie within -12h..+14h.
+  let lo = day - 15 * 3_600_000
+  let hi = day + 13 * 3_600_000
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2)
+    if (localDay(mid, timeZone) >= day) hi = mid
+    else lo = mid
+  }
+  return hi
 }
 
 function pad(n: number, w = 2): string {
@@ -66,23 +86,13 @@ function resolveHost(
 ): string | number {
   const days = v.offsetDays ?? 0
   const base = partsAt(now.getTime(), timeZone)
-  let wall: number
-  if (v.$host === 'now')
-    wall = Date.UTC(
-      base.y,
-      base.mo - 1,
-      base.d,
-      base.h,
-      base.mi,
-      base.s,
-      now.getUTCMilliseconds()
-    )
-  else if (v.$host === 'dayEnd')
-    wall = Date.UTC(base.y, base.mo - 1, base.d + days, 23, 59, 59, 999)
-  else wall = Date.UTC(base.y, base.mo - 1, base.d + days, 0, 0, 0, 0)
-
+  const day = Date.UTC(base.y, base.mo - 1, base.d + days)
   const instant =
-    v.$host === 'now' ? now.getTime() : wallToInstant(wall, timeZone)
+    v.$host === 'now'
+      ? now.getTime()
+      : v.$host === 'dayEnd'
+        ? dayStartInstant(day + 86_400_000, timeZone) - 1
+        : dayStartInstant(day, timeZone)
   const format = v.format ?? (v.$host === 'today' ? 'date' : 'iso')
   if (format === 'epochMs') return instant
   const local = new Date(instant + offsetAt(instant, timeZone))

@@ -1,6 +1,6 @@
 // Secure per-connector OAuth state for MCP connectors. Every value lives in
 // secure storage (Electron safeStorage) under `mcpAuth.<id>.*`:
-//   tokens   = JSON { tokens?: OAuthTokens, savedAt, expired? }
+//   tokens   = JSON { tokens?: OAuthTokens, savedAt, expired?, origin? }
 //   client   = JSON { manualClientId?, info?: OAuthClientInformationFull }
 //   verifier = PKCE code verifier (only during a sign-in)
 // Writes are refused when OS encryption is unavailable, so nothing is ever
@@ -30,6 +30,9 @@ export interface StoredTokens {
   tokens?: OAuthTokens
   savedAt: number
   expired?: boolean
+  // Origin of the server the tokens were issued for. Tokens are only ever
+  // sent to that origin; a missing or different origin reads as signed out.
+  origin?: string
 }
 
 export interface StoredClient {
@@ -91,6 +94,25 @@ export function readTokens(id: string): StoredTokens | null {
   return t
 }
 
+export function originOf(url: string): string | null {
+  try {
+    return new URL(url).origin
+  } catch {
+    return null
+  }
+}
+
+// Stored tokens only when they were issued for serverUrl's origin.
+export function tokensFor(
+  id: string,
+  serverUrl: string
+): StoredTokens | null {
+  const t = readTokens(id)
+  if (!t) return null
+  const origin = originOf(serverUrl)
+  return origin !== null && t.origin === origin ? t : null
+}
+
 export function writeTokens(id: string, value: StoredTokens): void {
   writeSecure(id, 'tokens', JSON.stringify(value))
 }
@@ -104,7 +126,7 @@ export function markExpired(id: string): void {
   const t = readTokens(id)
   if (!t) return
   try {
-    writeTokens(id, { savedAt: t.savedAt, expired: true })
+    writeTokens(id, { savedAt: t.savedAt, expired: true, origin: t.origin })
   } catch {
     // Without secure storage the tokens can't be rewritten; drop them.
     deleteTokens(id)
@@ -173,7 +195,9 @@ export function accessExpiresAt(t: StoredTokens): number | null {
 }
 
 export function authState(id: string): AuthState {
-  const t = readTokens(id)
+  const c = typeof id === 'string' ? getConnector(id) : null
+  const t =
+    c && c.source.kind === 'mcp' ? tokensFor(id, c.source.serverUrl) : null
   if (!t) return 'signedOut'
   if (t.expired || !t.tokens) return 'expired'
   const exp = accessExpiresAt(t)
@@ -214,9 +238,31 @@ export function setManualClientId(
   bumpConnectorRevision(id)
 }
 
+// A running sign-in registers its cancel here so signOut and deleteConnector
+// can stop it (signIn.ts imports this module, not the other way round).
+const signInCancels = new Map<string, () => void>()
+
+export function registerSignInCancel(
+  id: string,
+  cancel: () => void
+): () => void {
+  signInCancels.set(id, cancel)
+  return () => {
+    if (signInCancels.get(id) === cancel) signInCancels.delete(id)
+  }
+}
+
+export function cancelSignIn(id: string): void {
+  const cancel = signInCancels.get(id)
+  signInCancels.delete(id)
+  cancel?.()
+}
+
 // Removes tokens, verifier and the DCR registration; keeps the manual client id.
+// Bumps the revision, so late writes from older providers are dropped.
 export function signOut(id: string): void {
   authKey(id, 'tokens')
+  cancelSignIn(id)
   deleteTokens(id)
   deleteVerifier(id)
   const manual = readClient(id).manualClientId

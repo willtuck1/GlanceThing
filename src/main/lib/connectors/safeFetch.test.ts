@@ -310,6 +310,37 @@ describe('safeFetch', () => {
     expect(seen[1]).toMatchObject({ method: 'GET', body: '' })
   })
 
+  it('refuses a cross-origin 307/308 with a body; same-origin keeps it', async () => {
+    handler = (req, res) => {
+      if (req.url === '/x307') {
+        res.writeHead(307, { Location: at('/target', 'other.test') })
+        res.end()
+      } else if (req.url === '/x308') {
+        res.writeHead(308, { Location: at('/target', 'other.test') })
+        res.end()
+      } else if (req.url === '/s308') {
+        res.writeHead(308, { Location: '/target' })
+        res.end()
+      } else res.end('done')
+    }
+    const f = sf()
+    const init = () => ({
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{"k":1}'
+    })
+    for (const path of ['/x307', '/x308']) {
+      seen = []
+      const e = await failure(f(at(path), init()))
+      expect(String(e)).toContain('Cross-origin redirect with a body refused')
+      expect(seen).toHaveLength(1)
+    }
+    seen = []
+    const ok = await f(at('/s308'), init())
+    expect(await ok.text()).toBe('done')
+    expect(seen[1]).toMatchObject({ method: 'POST', body: '{"k":1}' })
+  })
+
   it('returns the redirect unfollowed with redirect: manual', async () => {
     handler = (_req, res) => {
       res.writeHead(302, { Location: '/elsewhere' })

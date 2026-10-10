@@ -12,6 +12,8 @@ export interface TestAuthOptions {
   accessTtlSec?: number
   dcr?: boolean
   metadataOverrides?: Record<string, string>
+  // Awaited by /token after counting the request (tests hold a response).
+  tokenGate?: () => Promise<void>
 }
 
 export interface TestAuthServer {
@@ -198,6 +200,7 @@ export async function startTestAuthServer(
         const form = new URLSearchParams(await readBody(req))
         const grant = form.get('grant_type')
         state.tokenRequests++
+        if (opts.tokenGate) await opts.tokenGate()
         const issue = (clientId: string): void => {
           const a = rand()
           const r = rand()

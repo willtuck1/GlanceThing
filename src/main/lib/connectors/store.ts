@@ -12,6 +12,7 @@ import {
 } from '../storage.js'
 
 import {
+  cancelSignIn,
   clearAuthOnOriginChange,
   authState,
   isSecureStorageAvailable,
@@ -322,7 +323,8 @@ export function connectorRevision(id: string): number {
   return revisions.get(id) ?? 0
 }
 
-// Called on MCP sign-in/sign-out so the feed is rebuilt and its cache dropped.
+// Called on MCP sign-in/sign-out and delete so the feed is rebuilt and its
+// cache dropped; auth providers drop writes made for an older revision.
 export function bumpConnectorRevision(id: string): void {
   revisions.set(id, connectorRevision(id) + 1)
   emitChanged()
@@ -414,15 +416,18 @@ export function deleteConnector(id: string): boolean {
   const list = listConnectors()
   const next = list.filter(c => c.id !== id)
   if (next.length === list.length) return false
+  cancelSignIn(id)
   setStorageValue(CONNECTORS_KEY, next)
   deleteStorageValue(secretKey(id))
   for (const part of ['tokens', 'client', 'verifier'])
     deleteStorageValue(`${MCP_AUTH_PREFIX}${id}.${part}`)
-  emitChanged()
+  bumpConnectorRevision(id)
   return true
 }
 
-// Unsaved MCP drafts run under a throwaway id that has no stored auth.
+// Unsaved MCP drafts, and saved ones whose server origin was edited, run
+// under a throwaway id that has no stored auth, so a saved token never goes
+// to a new origin.
 async function testMcpDraft(
   draft: unknown
 ): Promise<{ view?: ConnectorView; error?: string }> {
@@ -434,7 +439,12 @@ async function testMcpDraft(
         ? findExisting(list, rawId)
         : undefined
     const { connector } = validateMcpDraft(draft, existing)
-    if (!existing) {
+    const sameServer =
+      existing?.source.kind === 'mcp' &&
+      connector.source.kind === 'mcp' &&
+      new URL(existing.source.serverUrl).origin ===
+        new URL(connector.source.serverUrl).origin
+    if (!sameServer) {
       const taken = new Set(list.map(c => c.id))
       let id: string
       do id = `tmp${newId(new Set()).slice(0, 5)}`
@@ -445,7 +455,7 @@ async function testMcpDraft(
     if ('view' in result) return { view: result.view }
     const needsSignIn =
       result.error === SIGN_IN_AGAIN &&
-      (!existing || authState(existing.id) === 'signedOut')
+      (!existing || !sameServer || authState(existing.id) === 'signedOut')
     return { error: needsSignIn ? SIGN_IN_FIRST : result.error }
   } catch (e) {
     return {

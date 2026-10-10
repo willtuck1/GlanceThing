@@ -1,6 +1,8 @@
-// One-shot OAuth redirect receiver on 127.0.0.1 (RFC 8252 loopback). The
-// first GET /callback is consumed and the server closes; the page it serves is
-// static and never echoes the request. Nothing here logs.
+// One-shot OAuth redirect receiver on 127.0.0.1 (RFC 8252 loopback). Only a
+// GET /callback whose state matches the one passed to waitForCallback is
+// consumed (then the server closes); any other gets 400 and the wait goes on
+// until the timeout. The page it serves is static and never echoes the
+// request. Nothing here logs.
 
 import { timingSafeEqual } from 'node:crypto'
 import {
@@ -19,7 +21,6 @@ export interface Loopback {
 type Outcome =
   | {
       kind: 'params'
-      state: string | null
       code: string | null
       error: boolean
     }
@@ -55,6 +56,8 @@ export async function startLoopback({
     }
   })
   let closed = false
+  // Set by waitForCallback; until then every callback is refused.
+  let expected: string | null = null
 
   const server = createServer(
     (req: IncomingMessage, res: ServerResponse) => {
@@ -82,9 +85,12 @@ export async function startLoopback({
         res.writeHead(410, { 'content-type': 'text/plain' }).end('Gone')
         return
       }
+      if (expected === null || !stateMatches(expected, params.get('state'))) {
+        res.writeHead(400, { 'content-type': 'text/plain' }).end('Bad request')
+        return
+      }
       settle({
         kind: 'params',
-        state: params.get('state'),
         code: params.get('code'),
         error: params.has('error')
       })
@@ -128,12 +134,9 @@ export async function startLoopback({
     redirectUrl: `http://127.0.0.1:${port}/callback`,
     close,
     async waitForCallback(expectedState: string): Promise<string> {
+      expected = expectedState
       const o = await outcome
       if (o.kind === 'failed') throw new Error(o.message)
-      if (!stateMatches(expectedState, o.state))
-        throw new Error(
-          "Sign-in failed: the response didn't match. Try again"
-        )
       if (o.error) throw new Error('Sign-in was denied')
       if (!o.code) throw new Error('Sign-in failed: no authorization code')
       return o.code

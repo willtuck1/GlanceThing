@@ -2,6 +2,9 @@
 // interactive: a Settings sign-in with a loopback redirect.
 // background: feed runs; anything that would need the user marks the
 //   connector expired and throws McpAuthRequiredError.
+// Writes are dropped once the connector is gone or its revision moved on
+// (sign-out, delete, a newer sign-in), so a late write can't resurrect auth.
+// Tokens are only handed out for the origin they were issued for.
 // Nothing here logs.
 
 import type {
@@ -16,15 +19,21 @@ import type {
 } from '@modelcontextprotocol/sdk/shared/auth.js'
 
 import {
+  connectorRevision,
+  getConnector
+} from '../../connectors/store.js'
+
+import {
   clock,
   deleteTokens,
   deleteVerifier,
   forgetClientInfo,
   markExpired,
   readClient,
-  readTokens,
+  originOf,
   readVerifier,
   saveClientInfo,
+  tokensFor,
   writeTokens,
   writeVerifier
 } from './store.js'
@@ -38,6 +47,12 @@ export class McpAuthRequiredError extends Error {
 
 export interface ProviderOptions {
   mode: 'interactive' | 'background'
+  // The connector's current server URL: tokens are bound to its origin.
+  serverUrl: string
+  // Revision the writes belong to (default: the current one).
+  revision?: number
+  // Interactive only: true once the sign-in was cancelled.
+  cancelled?: () => boolean
   redirectUrl?: string
   state?: string
   onRedirect?: (url: URL) => void
@@ -56,6 +71,16 @@ export function createProvider(
   // Interactive sign-ins keep their verifier in memory too, so a parallel
   // attempt that overwrote the stored one can't swap it.
   let verifier: string | null = null
+  const revision = opts.revision ?? connectorRevision(id)
+  const origin = originOf(opts.serverUrl)
+  const current = (): boolean =>
+    !opts.cancelled?.() &&
+    connectorRevision(id) === revision &&
+    getConnector(id) !== null
+  // Only tokens issued for this origin can be the ones that stopped working.
+  const expire = (): void => {
+    if (current() && tokensFor(id, opts.serverUrl)) markExpired(id)
+  }
 
   const redirectUrl = (): string =>
     opts.redirectUrl ??
@@ -95,23 +120,24 @@ export function createProvider(
       // always wins, so there is nothing to keep.
       if (readClient(id).manualClientId) return
       if (!interactive) throw new McpAuthRequiredError()
-      saveClientInfo(id, info as OAuthClientInformationFull)
+      if (current()) saveClientInfo(id, info as OAuthClientInformationFull)
     },
 
     tokens(): OAuthTokens | undefined {
-      const t = readTokens(id)
+      const t = tokensFor(id, opts.serverUrl)
       if (!t || t.expired) return undefined
       return t.tokens
     },
 
     saveTokens(tokens: OAuthTokens): void {
-      writeTokens(id, { tokens, savedAt: clock.now() })
+      if (!origin || !current()) return
+      writeTokens(id, { tokens, savedAt: clock.now(), origin })
     },
 
     saveCodeVerifier(v: string): void {
       if (!interactive) return
       verifier = v
-      writeVerifier(id, v)
+      if (current()) writeVerifier(id, v)
     },
 
     codeVerifier(): string {
@@ -123,22 +149,22 @@ export function createProvider(
     invalidateCredentials(scope): void {
       if (!interactive) {
         if (scope === 'tokens' || scope === 'all' || scope === 'client') {
-          markExpired(id)
+          expire()
           throw new McpAuthRequiredError()
         }
         return
       }
+      if (scope === 'all' || scope === 'verifier') verifier = null
+      // A stale sign-in must not delete what a newer one stored.
+      if (!current()) return
       if (scope === 'all' || scope === 'tokens') deleteTokens(id)
-      if (scope === 'all' || scope === 'verifier') {
-        verifier = null
-        deleteVerifier(id)
-      }
+      if (scope === 'all' || scope === 'verifier') deleteVerifier(id)
       if (scope === 'all' || scope === 'client') forgetClientInfo(id)
     },
 
     redirectToAuthorization(url: URL): void {
       if (!interactive) {
-        markExpired(id)
+        expire()
         throw new McpAuthRequiredError()
       }
       opts.onRedirect?.(url)

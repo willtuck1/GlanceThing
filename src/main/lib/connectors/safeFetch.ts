@@ -5,7 +5,8 @@
 //
 // - Redirects are followed manually (at most `maxRedirects`) and every target
 //   is re-checked. 301/302/303 become GET without a body (301/302 from HEAD
-//   stay HEAD); 307/308 keep method and body. A cross-origin hop drops
+//   stay HEAD); 307/308 keep method and body (refused cross-origin when
+//   there is a body). A cross-origin hop drops
 //   Authorization, Cookie, Proxy-Authorization and `sensitiveHeaders` for
 //   the rest of the chain. `redirect: 'manual'` returns the 3xx response
 //   unfollowed (the MCP SDK uses this); `redirect: 'error'` refuses it.
@@ -290,8 +291,14 @@ export function createSafeFetch(opts: SafeFetchOptions = {}): typeof fetch {
           body = null
           for (const h of BODY_HEADERS) delete headers[h]
         }
-        if (next.origin !== current.origin)
+        if (next.origin !== current.origin) {
+          // 307/308 would resend the body; never hand it to another origin.
+          if (body && body.length > 0)
+            throw new ConnectorFetchError(
+              'Cross-origin redirect with a body refused'
+            )
           for (const h of dropCrossOrigin) delete headers[h]
+        }
 
         prev = current
         current = next

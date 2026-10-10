@@ -111,7 +111,10 @@ async function execute(
   const transport = new StreamableHTTPClientTransport(
     new URL(c.source.serverUrl),
     {
-      authProvider: createProvider(c.id, { mode: 'background' }),
+      authProvider: createProvider(c.id, {
+        mode: 'background',
+        serverUrl: c.source.serverUrl
+      }),
       fetch: safeFetch
     }
   )

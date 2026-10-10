@@ -16,6 +16,7 @@ import { shell } from 'electron'
 import { ConnectorFetchError } from '../../connectors/address.js'
 import {
   bumpConnectorRevision,
+  connectorRevision,
   getConnector
 } from '../../connectors/store.js'
 import { safeFetch } from '../../connectors/safeFetch.js'
@@ -35,7 +36,9 @@ import {
   isSecureStorageAvailable,
   readClient,
   readTokens,
-  SECURE_STORAGE_UNAVAILABLE
+  registerSignInCancel,
+  SECURE_STORAGE_UNAVAILABLE,
+  tokensFor
 } from './store.js'
 
 export interface SignInDeps {
@@ -145,8 +148,20 @@ export async function signIn(
   }
   const attempt: Attempt = { cancelled: false }
   active.set(id, attempt)
+  // signOut and deleteConnector cancel through this and bump the revision;
+  // this attempt's provider may write only while the revision is unchanged.
+  const unregister = registerSignInCancel(id, () => {
+    attempt.cancelled = true
+    attempt.loopback?.close()
+  })
+  const revision = connectorRevision(id)
   const checkCancelled = (): void => {
-    if (attempt.cancelled) throw new SignInError('Sign-in was cancelled')
+    if (
+      attempt.cancelled ||
+      connectorRevision(id) !== revision ||
+      !getConnector(id)
+    )
+      throw new SignInError('Sign-in was cancelled')
   }
 
   let ok = false
@@ -169,6 +184,9 @@ export async function signIn(
     let authorizationUrl: URL | null = null
     const provider = createProvider(id, {
       mode: 'interactive',
+      serverUrl,
+      revision,
+      cancelled: () => attempt.cancelled,
       redirectUrl: loopback.redirectUrl,
       state,
       discovery,
@@ -194,6 +212,7 @@ export async function signIn(
         authorizationCode: code,
         fetchFn: safeFetch
       })
+      checkCancelled()
       if (second !== 'AUTHORIZED') throw new SignInError('Sign-in failed')
     }
     ok = true
@@ -201,6 +220,7 @@ export async function signIn(
   } catch (e) {
     return { error: readableError(e) }
   } finally {
+    unregister()
     attempt.loopback?.close()
     if (active.get(id) === attempt) {
       active.delete(id)
@@ -210,6 +230,7 @@ export async function signIn(
         // Storage failures must not turn a result into a rejection.
       }
     }
+    // After this attempt's own writes: older providers can no longer write.
     if (ok) bumpConnectorRevision(id)
   }
 }
@@ -219,17 +240,22 @@ export async function signIn(
 export async function ensureFresh(id: string): Promise<void> {
   // No stored tokens (including an unsaved draft under a temporary id):
   // proceed without auth; the server decides whether that is enough.
-  const t = readTokens(id)
-  if (!t) return
+  if (!readTokens(id)) return
   const source = mcpSource(id)
   if (!source) throw new Error('Connector not found')
+  // Tokens issued for another origin are never used: as if signed out.
+  const t = tokensFor(id, source.serverUrl)
+  if (!t) return
   if (t.expired || !t.tokens) throw new McpAuthRequiredError()
   const exp = accessExpiresAt(t)
   if (exp === null || clock.now() < exp - REFRESH_MARGIN_MS) return
   if (!t.tokens.refresh_token) throw new McpAuthRequiredError()
   const c = readClient(id)
   if (!c.manualClientId && !c.info) throw new McpAuthRequiredError()
-  const provider = createProvider(id, { mode: 'background' })
+  const provider = createProvider(id, {
+    mode: 'background',
+    serverUrl: source.serverUrl
+  })
   const result = await auth(provider, {
     serverUrl: source.serverUrl,
     fetchFn: safeFetch

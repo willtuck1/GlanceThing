@@ -38,8 +38,10 @@ import { connectorManifest } from '../connectors/modules.js'
 import { Connector } from '../connectors/types.js'
 import { Feed } from '../feeds/Feed.js'
 
+import { testDraft } from '../connectors/store.js'
+
 import { signIn } from './auth/signIn.js'
-import { readTokens } from './auth/store.js'
+import { authState, readTokens } from './auth/store.js'
 import {
   assertNoTokens,
   authStatus,
@@ -241,6 +243,72 @@ describe('runMcp with auth', () => {
     expect(message).toBe(SIGN_IN_AGAIN)
     expect(message).not.toContain(tokens!.access_token)
     expect(authStatus(ID)).toBe('expired')
+  })
+})
+
+describe('a stored token never goes to another origin', () => {
+  it('Test of a draft edited to server B, and a run against B, send B no token', async () => {
+    server = await startTestMcpServer({ auth: true })
+    const s = server
+    const c = connector(s.url)
+    expect(
+      await signIn(ID, {
+        openExternal: async url => {
+          await s.auth!.authorizeVia(url)
+        }
+      })
+    ).toEqual({ ok: true })
+    const token = readTokens(ID)!.tokens!.access_token
+    expect(readTokens(ID)!.origin).toBe(new URL(s.url).origin)
+
+    const seen: (string | undefined)[] = []
+    hang = http.createServer((req, res) => {
+      seen.push(req.headers.authorization)
+      req.resume()
+      res.writeHead(401).end()
+    })
+    await new Promise<void>(r => hang!.listen(0, '127.0.0.1', () => r()))
+    const other = `http://127.0.0.1:${(hang.address() as AddressInfo).port}/mcp`
+
+    const r = await testDraft({
+      kind: 'mcp',
+      id: ID,
+      label: 'Tasks',
+      recipeId: 'example-tasks',
+      serverUrl: other,
+      settings: { list: 'inbox' }
+    })
+    expect(r.view).toBeUndefined()
+    expect(r.error).toBeTruthy()
+
+    // Defence in depth: the runner itself, under the saved id.
+    const moved: Connector = {
+      ...c,
+      source: { ...c.source, serverUrl: other } as Connector['source']
+    }
+    await expect(runMcp(moved)).rejects.toThrow()
+
+    expect(seen.length).toBeGreaterThan(0)
+    for (const a of seen) expect(a).toBeUndefined()
+    expect(seen.join(' ')).not.toContain(token)
+    // B's 401 doesn't expire the tokens issued for A.
+    expect(authState(ID)).toBe('signedIn')
+    hang.closeAllConnections()
+  })
+
+  it('reads tokens stored without an origin as signed out and never sends them', async () => {
+    server = await startTestMcpServer({ auth: true })
+    const c = connector(server.url)
+    mem.store.set(
+      `mcpAuth.${ID}.tokens`,
+      JSON.stringify({
+        tokens: { access_token: 'legacy-token', token_type: 'Bearer' },
+        savedAt: Date.now()
+      })
+    )
+    expect(authState(ID)).toBe('signedOut')
+    await expect(runMcp(c)).rejects.toThrow(SIGN_IN_AGAIN)
+    expect(server.calls).toEqual([])
   })
 })
 

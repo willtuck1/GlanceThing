@@ -113,7 +113,8 @@ describe('mcpSignOut / mcpSignIn', () => {
       `mcpAuth.${ID}.tokens`,
       JSON.stringify({
         tokens: { access_token: 'a', token_type: 'Bearer' },
-        savedAt: Date.now()
+        savedAt: Date.now(),
+        origin: 'https://mcp.example.com'
       })
     )
     expect(authState(ID)).toBe('signedIn')
