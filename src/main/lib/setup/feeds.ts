@@ -21,7 +21,6 @@ import { allModules } from '../modules/registry.js'
 import {
   activeFeedKeys,
   getTabSettings,
-  Startable,
   syncFeeds,
   TabSettings,
   tabsPayload
@@ -37,7 +36,7 @@ import { SetupFunction } from '../../types/WebSocketSetup.js'
 
 export const name = 'feeds'
 
-const registered = new Map<FeedKey, Startable>()
+const registered = new Map<FeedKey, Feed<unknown>>()
 let running = new Set<FeedKey>()
 // What each connector feed was built from, to tell edits apart.
 const connectorState = new Map<
@@ -98,7 +97,7 @@ function contentOf(c: Connector) {
 }
 
 function removeConnectorFeed(key: FeedKey) {
-  registered.get(key)?.stop()
+  registered.get(key)?.dispose()
   registered.delete(key)
   running.delete(key)
   connectorState.delete(key)
@@ -129,7 +128,7 @@ export function reconcileConnectors() {
       continue
 
     const had = registered.has(key)
-    registered.get(key)?.stop()
+    registered.get(key)?.dispose()
     running.delete(key)
     // Data from the old url or mapping must not show under the new one.
     if (had && previous?.content !== content)

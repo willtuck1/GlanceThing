@@ -123,6 +123,25 @@ export function listConnectorsForSettings(): ConnectorForSettings[] {
   }))
 }
 
+// A kept secret must not follow the connector to another host: changing the
+// URL's origin (protocol, host, port) needs the value typed again.
+function assertSameOrigin(existing: Connector, url: string): void {
+  if (new URL(existing.source.url).origin !== new URL(url).origin)
+    throw new Error(
+      "Enter the header value again when changing the URL's host"
+    )
+}
+
+// Throws when a mapped view contains the secret header value, so a server
+// that echoes the header back can't leak it to Settings or the device.
+export function assertNoSecret(
+  view: unknown,
+  secret: string | null | undefined
+): void {
+  if (secret && JSON.stringify(view).includes(secret))
+    throw new Error('Response contains the secret header value')
+}
+
 // `id` of the result is the existing id, or '' for a new connector (assigned
 // by saveConnector). `secret`: undefined = unchanged, null = delete,
 // string = set.
@@ -151,8 +170,10 @@ export function validateDraft(
   let secret: string | null | undefined
   const header = d.header
   if (header === undefined) {
-    if (existing?.source.header)
+    if (existing?.source.header) {
       connector.source.header = { name: existing.source.header.name }
+      assertSameOrigin(existing, url)
+    }
     secret = undefined
   } else if (header === null) {
     secret = null
@@ -167,6 +188,7 @@ export function validateDraft(
     if (h.value === undefined || h.value === null || h.value === '') {
       if (!existing || getConnectorSecret(existing.id) === null)
         throw new Error('Enter a header value')
+      assertSameOrigin(existing, url)
       secret = undefined
     } else {
       secret = validateHeaderValue(h.value)
@@ -241,8 +263,7 @@ export function saveConnector(draft: ConnectorDraft): Connector {
     throw new Error(`At most ${MAX_CONNECTORS} connectors`)
 
   const { connector, secret } = validateDraft(draft, existing)
-  if (!existing)
-    connector.id = newId(new Set(list.map(c => c.id)))
+  if (!existing) connector.id = newId(new Set(list.map(c => c.id)))
 
   if (typeof secret === 'string')
     setStorageValue(secretKey(connector.id), secret, true)
@@ -282,9 +303,7 @@ export async function testDraft(
     header = resolveDraftSecret(connector, secret)
     const data = await fetchConnectorJson(connector.source.url, { header })
     const view = applyMapping(connector.layout, connector.mapping, data)
-    // A server that echoes the header back must not leak it to Settings.
-    if (header && JSON.stringify(view).includes(header.value))
-      return { error: 'Response contains the header value' }
+    assertNoSecret(view, header?.value)
     return { view }
   } catch (e) {
     const raw = e instanceof Error && e.message ? e.message : 'Test failed'

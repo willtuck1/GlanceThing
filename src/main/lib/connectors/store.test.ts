@@ -85,7 +85,9 @@ describe('saveConnector', () => {
     })
     expect(mem.store.get(`connectorSecret.${c.id}`)).toBe(SECRET)
     expect(getConnectorSecret(c.id)).toBe(SECRET)
-    expect(JSON.stringify(mem.store.get('connectors'))).not.toContain(SECRET)
+    expect(JSON.stringify(mem.store.get('connectors'))).not.toContain(
+      SECRET
+    )
     expect(JSON.stringify(listConnectors())).not.toContain(SECRET)
     const forSettings = listConnectorsForSettings()
     expect(JSON.stringify(forSettings)).not.toContain(SECRET)
@@ -98,7 +100,9 @@ describe('saveConnector', () => {
       draft({ header: { name: 'X-Api-Key', value: SECRET } })
     )
     saveConnector(draft({ id: c.id, label: 'Other' }))
-    expect(getConnector(c.id)?.source.header).toEqual({ name: 'X-Api-Key' })
+    expect(getConnector(c.id)?.source.header).toEqual({
+      name: 'X-Api-Key'
+    })
     expect(getConnectorSecret(c.id)).toBe(SECRET)
   })
 
@@ -142,6 +146,35 @@ describe('saveConnector', () => {
     expect(() =>
       saveConnector(draft({ id: c.id, header: { name: 'X-Token' } }))
     ).toThrow('Enter a header value')
+  })
+
+  it('a kept secret cannot follow the URL to another origin', () => {
+    const c = saveConnector(
+      draft({ header: { name: 'X-Api-Key', value: SECRET } })
+    )
+    const msg = "Enter the header value again when changing the URL's host"
+    const url = 'https://evil.example.net/price'
+    expect(() => saveConnector(draft({ id: c.id, url }))).toThrow(msg)
+    expect(() =>
+      saveConnector(draft({ id: c.id, url, header: { name: 'X-B' } }))
+    ).toThrow(msg)
+    expect(getConnector(c.id)?.source.url).toBe(
+      'https://api.example.com/price'
+    )
+    // A new value, or clearing the header, may move it.
+    saveConnector(
+      draft({ id: c.id, url, header: { name: 'X-B', value: 'v2' } })
+    )
+    expect(getConnectorSecret(c.id)).toBe('v2')
+    // Same origin with a new path keeps the secret.
+    saveConnector(
+      draft({ id: c.id, url: 'https://evil.example.net/v2?q=1' })
+    )
+    expect(getConnectorSecret(c.id)).toBe('v2')
+    saveConnector(
+      draft({ id: c.id, url: 'https://other.example.org/', header: null })
+    )
+    expect(getConnectorSecret(c.id)).toBeNull()
   })
 
   it('allows at most 20 connectors', () => {
@@ -205,7 +238,11 @@ describe('listConnectors', () => {
       { ...good },
       { ...good, id: 'BAD' },
       { ...good, id: 'abcdefgh', layout: 'pie' },
-      { ...good, id: 'abcdefgi', source: { kind: 'json', url: 'ftp://x' } },
+      {
+        ...good,
+        id: 'abcdefgi',
+        source: { kind: 'json', url: 'ftp://x' }
+      },
       { ...good, id: 'abcdefgj', intervalMin: 'x' }
     ])
     expect(listConnectors()).toEqual([good])
@@ -236,9 +273,12 @@ describe('testDraft', () => {
     fetchMock.mockResolvedValue({ price: 42 })
     const res = await testDraft(draft({ id: c.id }))
     expect(res).toEqual({ view: { layout: 'number', value: '42' } })
-    expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/price', {
-      header: { name: 'X-Api-Key', value: SECRET }
-    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/price',
+      {
+        header: { name: 'X-Api-Key', value: SECRET }
+      }
+    )
     expect(JSON.stringify(res)).not.toContain(SECRET)
   })
 
@@ -247,7 +287,9 @@ describe('testDraft', () => {
       draft({ header: { name: 'X-Api-Key', value: SECRET } })
     )
     fetchMock.mockResolvedValue({ price: 1 })
-    await testDraft(draft({ id: c.id, header: { name: 'X-B', value: 'v2' } }))
+    await testDraft(
+      draft({ id: c.id, header: { name: 'X-B', value: 'v2' } })
+    )
     expect(fetchMock.mock.calls[0][1]).toEqual({
       header: { name: 'X-B', value: 'v2' }
     })
@@ -298,6 +340,36 @@ describe('testDraft', () => {
       draft({ header: { name: 'X-Api-Key', value: SECRET } })
     )
     expect(JSON.stringify(res2)).not.toContain(SECRET)
+  })
+
+  it('refuses the stored secret for a URL on another origin', async () => {
+    const c = saveConnector(
+      draft({ header: { name: 'X-Api-Key', value: SECRET } })
+    )
+    fetchMock.mockResolvedValue({ price: 1 })
+    const msg = "Enter the header value again when changing the URL's host"
+    for (const url of [
+      'https://evil.example.net/price',
+      'http://api.example.com/price',
+      'https://api.example.com:8443/price'
+    ]) {
+      expect(await testDraft(draft({ id: c.id, url }))).toEqual({
+        error: msg
+      })
+      expect(
+        await testDraft(
+          draft({ id: c.id, url, header: { name: 'X-Api-Key' } })
+        )
+      ).toEqual({ error: msg })
+    }
+    expect(fetchMock).not.toHaveBeenCalled()
+    // Same origin, new path and query: the stored secret is still used.
+    await testDraft(
+      draft({ id: c.id, url: 'https://api.example.com/v2?x=1' })
+    )
+    expect(fetchMock.mock.calls[0][1]).toEqual({
+      header: { name: 'X-Api-Key', value: SECRET }
+    })
   })
 
   it('reports an unknown id', async () => {

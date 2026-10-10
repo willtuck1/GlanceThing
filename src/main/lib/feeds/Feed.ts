@@ -43,7 +43,7 @@ export class Feed<T> {
   private timer: ReturnType<typeof setTimeout> | null = null
   private running = false
   private inFlight: Promise<void> | null = null
-  // Bumped by reset() so a fetch that started before it is discarded.
+  // Bumped by reset(), refetch() and dispose() so a fetch that started before it is discarded.
   private generation = 0
 
   constructor(
@@ -89,6 +89,14 @@ export class Feed<T> {
     this.running = false
     if (this.timer) clearTimeout(this.timer)
     this.timer = null
+  }
+
+  // Stops for good: a fetch already running is dropped, so it neither
+  // caches nor publishes. Unlike reset(), keeps the data and the cache.
+  dispose() {
+    this.stop()
+    this.generation++
+    this.inFlight = null
   }
 
   // Called when a client asks for the feed (e.g. tab focus). Limited to one

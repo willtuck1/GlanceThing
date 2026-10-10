@@ -240,6 +240,7 @@ export function headerFromForm(
 ): ConnectorDraft['header'] {
   const name = f.headerName.trim()
   const value = f.headerValue.trim()
+  if (f.id && !name && f.originalHeaderName) return null
   if (!f.headerSet) return name && value ? { name, value } : undefined
   if (f.headerCleared) return name && value ? { name, value } : null
   if (value) return { name, value }

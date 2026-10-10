@@ -84,10 +84,13 @@ const ConnectorsTab: React.FC = () => {
           <div key={c.id} className={styles.connectorRow}>
             <div className={styles.info}>
               <p>{c.label}</p>
-              <p className={styles.description}>
-                {LAYOUT_LABELS.find(l => l.id === c.layout)?.label ??
-                  c.layout}{' '}
-                · {hostOf(c.source.url)} · every {c.intervalMin} min
+              <p className={`${styles.description} ${styles.meta}`}>
+                <span>
+                  {LAYOUT_LABELS.find(l => l.id === c.layout)?.label ??
+                    c.layout}
+                </span>
+                <span>· {hostOf(c.source.url)}</span>
+                <span>· every {c.intervalMin} min</span>
               </p>
             </div>
             <div className={styles.actions}>

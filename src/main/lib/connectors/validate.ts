@@ -202,5 +202,10 @@ export function validateHeaderValue(raw: unknown): string {
     throw new Error('Header value must be 1-4096 characters')
   if (hasControlChar(raw))
     throw new Error('Header value must not contain control characters')
+  for (let i = 0; i < raw.length; i++)
+    if (raw.charCodeAt(i) > 0xff)
+      throw new Error(
+        'Header value must use plain ASCII/Latin-1 characters'
+      )
   return raw
 }

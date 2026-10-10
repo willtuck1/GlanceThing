@@ -184,4 +184,66 @@ describe('connector runtime', () => {
     expect(payload?.error).toBe('Connection refused')
     expect(JSON.stringify(mem.broadcasts)).not.toContain(SECRET)
   })
+
+  it('delete while a fetch is pending writes no cache and broadcasts nothing', async () => {
+    let resolve: (v: unknown) => void = () => {}
+    fetchMock.mockImplementation(() => new Promise(r => (resolve = r)))
+    const { id } = saveConnector(draft())
+    await flush()
+    deleteConnector(id)
+    await flush()
+    mem.broadcasts.length = 0
+    resolve({ price: 1 })
+    await flush()
+    expect(mem.store.has(`feedCache.${key(id)}`)).toBe(false)
+    expect(mem.broadcasts.filter(b => b.type === key(id))).toEqual([])
+  })
+
+  it('edit while a fetch is pending drops the old result', async () => {
+    const resolvers: ((v: unknown) => void)[] = []
+    fetchMock.mockImplementation(() => new Promise(r => resolvers.push(r)))
+    const { id } = saveConnector(draft())
+    await flush()
+    saveConnector({
+      ...draft({ id, url: 'https://example.com/other' }),
+      header: undefined
+    })
+    await flush()
+    expect(resolvers).toHaveLength(2)
+    mem.broadcasts.length = 0
+    resolvers[0]({ price: 1 })
+    await flush()
+    expect(mem.broadcasts.filter(b => b.type === key(id))).toEqual([])
+    expect(getFeed(key(id))?.getPayload().items).toEqual([])
+    resolvers[1]({ price: 2 })
+    await flush()
+    expect(getFeed(key(id))?.getPayload().items).toEqual([
+      { layout: 'number', value: '2' }
+    ])
+  })
+
+  it('a response echoing the secret errors and publishes nothing with it', async () => {
+    fetchMock.mockResolvedValue({ echo: SECRET })
+    const { id } = saveConnector(
+      draft({
+        layout: 'keyvalue',
+        mapping: { pairs: [{ label: 'Echo', path: 'echo' }] }
+      })
+    )
+    await flush()
+    const payload = getFeed(key(id))?.getPayload()
+    expect(payload?.stale).toBe(true)
+    expect(payload?.error).toBe(
+      'Response contains the secret header value'
+    )
+    expect(payload?.items).toEqual([])
+    expect(
+      JSON.stringify(
+        [...mem.store.entries()].filter(
+          ([k]) => k !== `connectorSecret.${id}`
+        )
+      )
+    ).not.toContain(SECRET)
+    expect(JSON.stringify(mem.broadcasts)).not.toContain(SECRET)
+  })
 })

@@ -4,14 +4,14 @@ import type { AddressInfo } from 'node:net'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { ConnectorFetchError } from './address'
-import { fetchConnectorJson } from './fetch'
+import { fetchConnectorJson, type HopRequest } from './fetch'
 
 // DNS is always injected. Fake names map onto the in-process server on
 // 127.0.0.1; "public" and link-local names must be refused before any
 // request is made.
 //
-// Not covered here: real https (no test certificate). The https → http
-// redirect rule is covered by the checkHop unit tests in address.test.ts.
+// Real https has no test certificate, so the https → http redirect test
+// injects the hop request (deps.request).
 
 type Handler = (
   req: http.IncomingMessage,
@@ -262,6 +262,40 @@ describe('fetchConnectorJson', () => {
         fetchIt(`http://example.test:${port}/`, { timeoutMs: 200 })
       )
     ).toBe('Timed out')
+  })
+
+  it('times out on a body that drips forever', async () => {
+    const timers: ReturnType<typeof setInterval>[] = []
+    handler = (_req, res) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.write('[')
+      timers.push(setInterval(() => res.write(' '), 50))
+      res.on('close', () => timers.forEach(clearInterval))
+    }
+    try {
+      expect(
+        await failure(
+          fetchIt(`http://example.test:${port}/`, { timeoutMs: 300 })
+        )
+      ).toBe('Timed out')
+    } finally {
+      timers.forEach(clearInterval)
+    }
+  })
+
+  it('refuses an https → http redirect before a second request', async () => {
+    const calls: string[] = []
+    const request: HopRequest = async url => {
+      calls.push(url.href)
+      return { redirect: new URL('http://example.test/data') }
+    }
+    const message = await failure(
+      fetchConnectorJson('https://public.test/start', {
+        deps: { resolve, request, timeoutMs: 2000 }
+      })
+    )
+    expect(message).toBe('Redirect from https to http is not allowed')
+    expect(calls).toEqual(['https://public.test/start'])
   })
 
   it('refuses non-JSON content types', async () => {

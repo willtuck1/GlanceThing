@@ -13,8 +13,23 @@ import { checkHop, ConnectorFetchError } from './address'
 
 export { ConnectorFetchError }
 
+export interface HopResult {
+  redirect?: URL
+  body?: unknown
+}
+
+// One request to an already-checked hop. Injected only by tests.
+export type HopRequest = (
+  url: URL,
+  address: string,
+  headers: Record<string, string>,
+  maxBytes: number,
+  signal: AbortSignal
+) => Promise<HopResult>
+
 export interface FetchDeps {
   resolve?: (host: string) => Promise<string[]>
+  request?: HopRequest
   timeoutMs?: number
   maxBytes?: number
 }
@@ -92,11 +107,6 @@ function pinnedLookup(address: string): LookupFunction {
       callback(null, [{ address, family }])
     else callback(null, address, family)
   }) as LookupFunction
-}
-
-interface HopResult {
-  redirect?: URL
-  body?: unknown
 }
 
 function requestHop(
@@ -192,6 +202,7 @@ export async function fetchConnectorJson(
   opts: FetchOptions = {}
 ): Promise<unknown> {
   const resolveHost = opts.deps?.resolve ?? defaultResolve
+  const request = opts.deps?.request ?? requestHop
   const timeoutMs = opts.deps?.timeoutMs ?? DEFAULT_TIMEOUT_MS
   const maxBytes = opts.deps?.maxBytes ?? DEFAULT_MAX_BYTES
 
@@ -243,7 +254,7 @@ export async function fetchConnectorJson(
       if (opts.header && current.origin === origin)
         headers[opts.header.name] = opts.header.value
 
-      const result = await requestHop(
+      const result = await request(
         current,
         addrs[0],
         headers,

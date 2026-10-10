@@ -70,6 +70,17 @@ function classifyV6(b: number[]): AddressClass {
     return classifyV4(b.slice(12))
   // IPv4-compatible ::a.b.c.d (deprecated, still unwrap)
   if (zero(0, 12)) return classifyV4(b.slice(12))
+  // NAT64 well-known prefix 64:ff9b::/96
+  if (
+    b[0] === 0 &&
+    b[1] === 0x64 &&
+    b[2] === 0xff &&
+    b[3] === 0x9b &&
+    zero(4, 12)
+  )
+    return classifyV4(b.slice(12))
+  // 6to4 2002::/16 embeds the IPv4 in bits 16-48
+  if (b[0] === 0x20 && b[1] === 0x02) return classifyV4(b.slice(2, 6))
 
   if (b[0] === 0xff) return 'refused' // ff00::/8 multicast
   if (b[0] === 0xfe && (b[1] & 0xc0) === 0x80) return 'refused' // fe80::/10

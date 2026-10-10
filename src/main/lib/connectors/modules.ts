@@ -9,7 +9,11 @@ import { HandlerFunction } from '../../types/WebSocketHandler.js'
 
 import { fetchConnectorJson } from './fetch.js'
 import { applyMapping } from './mapping.js'
-import { getConnector, getConnectorSecret } from './store.js'
+import {
+  assertNoSecret,
+  getConnector,
+  getConnectorSecret
+} from './store.js'
 import { Connector, CONNECTOR_PREFIX } from './types.js'
 
 export function connectorKey(id: string): FeedKey {
@@ -44,7 +48,9 @@ export function connectorManifest(c: Connector): ModuleManifest {
           const data = await fetchConnectorJson(current.source.url, {
             header: name && value ? { name, value } : undefined
           })
-          return [applyMapping(current.layout, current.mapping, data)]
+          const view = applyMapping(current.layout, current.mapping, data)
+          assertNoSecret(view, value)
+          return [view]
         },
         interval: () => c.intervalMin * 60_000,
         describeError

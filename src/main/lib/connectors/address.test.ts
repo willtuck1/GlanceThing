@@ -45,6 +45,12 @@ describe('classifyAddress', () => {
     ['0:0:0:0:0:ffff:7f00:1', 'local'],
     ['::127.0.0.1', 'local'],
     ['::169.254.1.1', 'refused'],
+    ['64:ff9b::a9fe:a9fe', 'refused'],
+    ['64:ff9b::808:808', 'public'],
+    ['64:ff9b::c0a8:0101', 'local'],
+    ['2002:a9fe:a9fe::', 'refused'],
+    ['2002:c0a8:0101::', 'local'],
+    ['2002:808:808::1', 'public'],
     ['[::1]', 'local'],
     ['not-an-ip', 'refused']
   ])('%s is %s', (ip, expected) => {

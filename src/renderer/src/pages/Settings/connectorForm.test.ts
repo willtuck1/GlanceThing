@@ -235,3 +235,16 @@ describe('shouldWarnHttpSecret', () => {
     ).toBe(false)
   })
 })
+
+describe('draftFromForm header clearing', () => {
+  it('clears the header when the name is emptied, even without a stored secret', () => {
+    const f = formFromConnector({ ...stored, headerSet: false })
+    expect(f.originalHeaderName).toBe('X-Key')
+    expect(draftFromForm({ ...f, headerName: '  ' }).header).toBeNull()
+  })
+
+  it('keeps the header untouched when nothing changed', () => {
+    const f = formFromConnector({ ...stored, headerSet: false })
+    expect(draftFromForm(f).header).toBeUndefined()
+  })
+})

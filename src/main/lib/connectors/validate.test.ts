@@ -171,4 +171,11 @@ describe('label, interval, headers', () => {
     ])
       expect(() => validateHeaderValue(v)).toThrow()
   })
+  it('header value allows Latin-1 but not wider characters', () => {
+    expect(validateHeaderValue('caf\u00e9')).toBe('caf\u00e9')
+    for (const v of ['\u20ac5', 'key\u{1f511}'])
+      expect(() => validateHeaderValue(v)).toThrow(
+        'Header value must use plain ASCII/Latin-1 characters'
+      )
+  })
 })

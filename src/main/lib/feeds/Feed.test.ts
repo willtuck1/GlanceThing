@@ -192,12 +192,39 @@ describe('Feed.reset', () => {
     let calls = 0
     const { feed } = setup({
       fetch: () =>
-        ++calls === 1 ? new Promise<number[]>(() => {}) : Promise.resolve([7])
+        ++calls === 1
+          ? new Promise<number[]>(() => {})
+          : Promise.resolve([7])
     })
     void feed.refresh()
     feed.reset()
     await feed.refresh()
     expect(feed.getPayload().items).toEqual([7])
+  })
+})
+
+describe('Feed.dispose', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('drops a fetch that resolves after dispose', async () => {
+    let resolve: (items: number[]) => void = () => {}
+    const { feed, published, saved } = setup({
+      fetch: () => new Promise(r => (resolve = r))
+    })
+    feed.start()
+    feed.dispose()
+    resolve([9])
+    await vi.advanceTimersByTimeAsync(0)
+    expect(feed.getPayload().items).toEqual([])
+    expect(published).toHaveLength(0)
+    expect(saved).toEqual({})
+    await vi.advanceTimersByTimeAsync(120_000)
+    expect(published).toHaveLength(0)
   })
 })
 
