@@ -1,7 +1,11 @@
-import { useEffect } from 'react'
+import { useContext, useEffect } from 'react'
 
 import { useClock } from '@/contexts/ClockContext.tsx'
+import { SleepContext } from '@/contexts/SleepContext.tsx'
+import { SocketContext } from '@/contexts/SocketContext.tsx'
 import { formatRemaining } from '@/lib/clockTime.ts'
+
+import { createDismissHandler, shouldDismiss } from './dismiss.ts'
 
 import styles from './TimerAlert.module.css'
 
@@ -9,20 +13,24 @@ const EVENTS = ['keydown', 'wheel', 'mousedown', 'touchstart']
 
 const TimerAlert: React.FC = () => {
   const { timer, send } = useClock()
-  const ringing = timer?.state === 'ringing'
+  const { sleepState, setSleepState } = useContext(SleepContext)
+  const { socket } = useContext(SocketContext)
+  const ringing = shouldDismiss(timer?.state)
+  const asleep = sleepState !== 'off'
 
   useEffect(() => {
     if (!ringing) return
-    const listener = (e: Event) => {
-      e.stopImmediatePropagation()
-      if (e.cancelable) e.preventDefault()
-      send('dismiss')
-    }
+    // The dismissing key never reaches SleepContext, so wake here too.
+    const listener = createDismissHandler(send, () => {
+      if (!asleep) return
+      setSleepState('off')
+      socket?.send(JSON.stringify({ type: 'wake' }))
+    })
     EVENTS.forEach(t => window.addEventListener(t, listener, true))
     return () => {
       EVENTS.forEach(t => window.removeEventListener(t, listener, true))
     }
-  }, [ringing, send])
+  }, [ringing, send, asleep, setSleepState, socket])
 
   if (!ringing || !timer) return null
 

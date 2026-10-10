@@ -15,7 +15,7 @@ const AnalogClock: React.FC<AnalogClockProps> = ({
   fields,
   showSeconds
 }) => {
-  const px = size === 'tab' ? 300 : 380
+  const px = size === 'tab' ? 240 : 380
   const a = fields ? handAngles(fields.h, fields.m, fields.s) : null
 
   return (

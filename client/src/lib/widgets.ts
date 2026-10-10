@@ -12,6 +12,8 @@ export interface Widget {
   line2: string
 }
 
+const MAX_AGE_MS = 30 * 60 * 1000
+
 type Line = { line1: string; line2: string } | null
 
 const weather = (items: WeatherView[]): Line => {
@@ -63,19 +65,27 @@ const fantasy = (items: FantasyView[]): Line => {
 export function selectWidgets(
   ids: string[],
   feeds: Record<string, FeedPayload<unknown> | null>,
-  hostNow: number
+  hostNow: number | null
 ): Widget[] {
   const out: Widget[] = []
   for (const id of ids) {
     const p = feeds[id]
     if (!p || p.stale || p.error || !Array.isArray(p.items)) continue
     if (p.items.length === 0) continue
+    if (
+      hostNow !== null &&
+      typeof p.fetchedAt === 'number' &&
+      hostNow - p.fetchedAt > MAX_AGE_MS
+    )
+      continue
     let line: Line = null
     switch (id) {
       case 'weather':
         line = weather(p.items as WeatherView[])
         break
       case 'calendar':
+        // Without host time, past events would look current.
+        if (hostNow === null) break
         line = calendar(p.items as CalendarEvent[], hostNow)
         break
       case 'todo':

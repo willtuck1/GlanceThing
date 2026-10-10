@@ -12,12 +12,13 @@ import styles from './SleepClock.module.css'
 const BURN_IN_MS = 3 * 60 * 1000
 const ALL_IDS = ['weather', 'calendar', 'todo', 'sports', 'fantasy']
 
-const useWidgetFeeds = () => {
-  const weather = useFeed<unknown>('weather', true).payload
-  const calendar = useFeed<unknown>('calendar', true).payload
-  const todo = useFeed<unknown>('todo', true).payload
-  const sports = useFeed<unknown>('sports', true).payload
-  const fantasy = useFeed<unknown>('fantasy', true).payload
+const useWidgetFeeds = (ids: string[]) => {
+  const on = (id: string) => ids.indexOf(id) !== -1
+  const weather = useFeed<unknown>('weather', on('weather')).payload
+  const calendar = useFeed<unknown>('calendar', on('calendar')).payload
+  const todo = useFeed<unknown>('todo', on('todo')).payload
+  const sports = useFeed<unknown>('sports', on('sports')).payload
+  const fantasy = useFeed<unknown>('fantasy', on('fantasy')).payload
   return { weather, calendar, todo, sports, fantasy } as Record<
     string,
     FeedPayload<unknown> | null
@@ -28,15 +29,15 @@ const SleepClock: React.FC = () => {
   const { clock, timeStrings } = useClock()
   const now = useNow(30000)
   const [n, setN] = useState(0)
-  const feeds = useWidgetFeeds()
+  const ids = clock.widgets.filter(id => ALL_IDS.indexOf(id) !== -1)
+  const feeds = useWidgetFeeds(ids)
 
   useEffect(() => {
     const id = setInterval(() => setN(v => v + 1), BURN_IN_MS)
     return () => clearInterval(id)
   }, [])
 
-  const ids = clock.widgets.filter(id => ALL_IDS.indexOf(id) !== -1)
-  const widgets = selectWidgets(ids, feeds, now ?? 0).slice(0, 5)
+  const widgets = selectWidgets(ids, feeds, now).slice(0, 5)
   const off = burnInOffset(n)
 
   return (

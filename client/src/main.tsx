@@ -28,10 +28,10 @@ root.render(
             <SleepContextProvider>
               <MediaContextProvider>
                 <App />
+                <TimerAlert />
               </MediaContextProvider>
             </SleepContextProvider>
           </AppBlurContextProvider>
-          <TimerAlert />
           <KeyDebug />
         </TabsContextProvider>
       </ClockProvider>

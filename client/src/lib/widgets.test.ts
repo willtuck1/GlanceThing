@@ -70,6 +70,22 @@ describe('selectWidgets', () => {
     expect(selectWidgets(['calendar'], feeds, 1000)).toEqual([])
   })
 
+  it('skips calendar while host time is unknown, keeps others', () => {
+    const f = { ...feeds, todo: p([{ done: false }]) }
+    expect(selectWidgets(['calendar'], f, null)).toEqual([])
+    expect(
+      selectWidgets(['calendar', 'todo'], f, null).map(x => x.id)
+    ).toEqual(['todo'])
+  })
+
+  it('hides widgets whose data is older than 30 minutes', () => {
+    const min = 60000
+    const old = { todo: p([{ done: false }], { fetchedAt: 1000 }) }
+    expect(selectWidgets(['todo'], old, 1000 + 29 * min)).toHaveLength(1)
+    expect(selectWidgets(['todo'], old, 1000 + 31 * min)).toEqual([])
+    expect(selectWidgets(['todo'], old, null)).toHaveLength(1)
+  })
+
   it('skips calendar events without endMs', () => {
     const f = { calendar: p([ev('Old host')]) }
     expect(selectWidgets(['calendar'], f, 0)).toEqual([])
