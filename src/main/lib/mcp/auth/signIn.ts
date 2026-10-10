@@ -217,10 +217,12 @@ export async function signIn(
 // Refreshes the access token before a background run when it is within a
 // minute of expiry. Throws McpAuthRequiredError when the user must sign in.
 export async function ensureFresh(id: string): Promise<void> {
-  const source = mcpSource(id)
-  if (!source) throw new Error('Connector not found')
+  // No stored tokens (including an unsaved draft under a temporary id):
+  // proceed without auth; the server decides whether that is enough.
   const t = readTokens(id)
   if (!t) return
+  const source = mcpSource(id)
+  if (!source) throw new Error('Connector not found')
   if (t.expired || !t.tokens) throw new McpAuthRequiredError()
   const exp = accessExpiresAt(t)
   if (exp === null || clock.now() < exp - REFRESH_MARGIN_MS) return

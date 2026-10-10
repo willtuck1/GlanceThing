@@ -70,7 +70,10 @@ enum IPCHandler {
   ListConnectors = 'listConnectors',
   SaveConnector = 'saveConnector',
   DeleteConnector = 'deleteConnector',
-  TestConnector = 'testConnector'
+  TestConnector = 'testConnector',
+  ListMcpRecipes = 'listMcpRecipes',
+  McpSignIn = 'mcpSignIn',
+  McpSignOut = 'mcpSignOut'
 }
 
 // Custom APIs for renderer
@@ -191,7 +194,10 @@ const api = {
   deleteConnector: (id: string) =>
     ipcRenderer.invoke(IPCHandler.DeleteConnector, id),
   testConnector: (draft: unknown) =>
-    ipcRenderer.invoke(IPCHandler.TestConnector, draft)
+    ipcRenderer.invoke(IPCHandler.TestConnector, draft),
+  listMcpRecipes: () => ipcRenderer.invoke(IPCHandler.ListMcpRecipes),
+  mcpSignIn: (id: string) => ipcRenderer.invoke(IPCHandler.McpSignIn, id),
+  mcpSignOut: (id: string) => ipcRenderer.invoke(IPCHandler.McpSignOut, id)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

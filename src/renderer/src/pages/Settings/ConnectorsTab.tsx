@@ -34,7 +34,11 @@ const ConnectorsTab: React.FC = () => {
 
   async function reload() {
     try {
-      setConnectors(await window.api.listConnectors())
+      setConnectors(
+        (await window.api.listConnectors()).filter(
+          (c): c is ConnectorForSettings => c.source.kind === 'json'
+        )
+      )
     } catch {
       setConnectors([])
       setListError('Could not load connectors')

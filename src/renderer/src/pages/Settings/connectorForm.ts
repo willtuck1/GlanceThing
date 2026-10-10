@@ -1,9 +1,11 @@
 // Pure helpers for the Connectors settings form. No DOM, no window.api.
 
 type Api = Window['api']
-export type ConnectorForSettings = Awaited<
-  ReturnType<Api['listConnectors']>
->[number]
+// JSON connectors only; the MCP rows get their own UI.
+export type ConnectorForSettings = Extract<
+  Awaited<ReturnType<Api['listConnectors']>>[number],
+  { source: { kind: 'json' } }
+>
 export type ConnectorMapping = ConnectorForSettings['mapping']
 type NumberMapping = {
   value: string
@@ -11,7 +13,10 @@ type NumberMapping = {
   unit?: string
   decimals?: number
 }
-export type ConnectorDraft = Parameters<Api['saveConnector']>[0]
+export type ConnectorDraft = Exclude<
+  Parameters<Api['saveConnector']>[0],
+  { kind: 'mcp' }
+>
 export type ConnectorView = NonNullable<
   Awaited<ReturnType<Api['testConnector']>>['view']
 >
