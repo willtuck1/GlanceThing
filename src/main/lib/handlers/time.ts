@@ -1,5 +1,5 @@
 import { HandlerFunction } from '../../types/WebSocketHandler.js'
-import { formatDate } from '../time.js'
+import { clockSync } from '../time.js'
 
 export const name = 'time'
 
@@ -9,7 +9,7 @@ export const handle: HandlerFunction = async ws => {
   ws.send(
     JSON.stringify({
       type: 'time',
-      data: formatDate()
+      data: clockSync()
     })
   )
 }

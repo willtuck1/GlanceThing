@@ -23,7 +23,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 ## Rules
 - Client must run on Chrome 69: no flexbox `gap`, `aspect-ratio` or `:is()`. The legacy Vite plugin handles JS syntax, not new browser APIs.
 - The host owns all network calls. The device never sees tokens. Secrets go through `setStorageValue(key, value, true)`.
-- The device clock is unreliable: send preformatted times from the host.
+- The device clock is unreliable: send preformatted times from the host. The `time` message (cron every minute + reply to `{type:'time'}`) is `lib/time.ts` `clockSync()` = `{time, date, now (host epoch ms), offsetMin (minutes east of UTC), hour12 (timeFormat has `h`)}`; a client clock runs from `now` + monotonic elapsed time, never `Date`.
 - The Car Thing has no speaker. Alerts on the device are visual; sound has to come from the desktop.
 - Tests use committed fixtures and mocked HTTP, never live calls.
 - Releases: bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N` in the milestone PR. After merging, push the tag `v0.0.16-tabs.N` (don't create the release by hand). `build-release.yml` builds it and titles the release `GlanceThing_v0.NN`: one more than the number of existing releases, so titles stay sequential even when a version is never released (tabs.10 is `GlanceThing_v0.08`). The tag is what the update check reads; the title is display only. A release marked as a pre-release is invisible to the in-app update check and the "latest" link.

@@ -18,6 +18,18 @@ export function formatDate(d = new Date()) {
   }
 }
 
+export function clockSync(d = new Date()) {
+  const timeFormat = getStorageValue('timeFormat') || 'HH:mm'
+  const now = d.getTime()
+
+  return {
+    ...formatDate(d),
+    now,
+    offsetMin: -new Date(now).getTimezoneOffset(),
+    hour12: /h/.test(String(timeFormat).replace(/\[[^\]]*\]/g, ''))
+  }
+}
+
 export async function updateTime() {
   const wss = serverManager.getServer()
   if (!wss) return
@@ -28,7 +40,7 @@ export async function updateTime() {
     ws.send(
       JSON.stringify({
         type: 'time',
-        data: formatDate()
+        data: clockSync()
       })
     )
   })
