@@ -26,7 +26,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 - The device clock is unreliable: send preformatted times from the host.
 - The Car Thing has no speaker. Alerts on the device are visual; sound has to come from the desktop.
 - Tests use committed fixtures and mocked HTTP, never live calls.
-- Releases: bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N` in the milestone PR. Tag `v0.0.16-tabs.N`, or create the release on GitHub, after merging. A release marked as a pre-release is invisible to the in-app update check and the "latest" link.
+- Releases: bump `version` in `package.json` and `client/package.json` (and both lockfiles) to the next `0.0.16-tabs.N` in the milestone PR. After merging, push the tag `v0.0.16-tabs.N` (don't create the release by hand). `build-release.yml` builds it and titles the release `GlanceThing_v0.NN`: one more than the number of existing releases, so titles stay sequential even when a version is never released (tabs.10 is `GlanceThing_v0.08`). The tag is what the update check reads; the title is display only. A release marked as a pre-release is invisible to the in-app update check and the "latest" link.
 
 ## Commands
 - `npm run gate`: every CI check, printing one line each (plus the tail of any failure). `npm run gate -- fast` skips the two builds; use it between steps.
