@@ -103,8 +103,7 @@ Host (security-sensitive steps go to Opus per the harness):
    - Notification asking for permission or input → waiting;
      Notification meaning "idle / waiting for your input" → idle
    - Stop → idle
-   - SessionEnd → stopped; the card is removed 10 min later
-   - working with no event for 15 min → stopped, detail "No signal"
+   - SessionEnd → end:true
    sessionId = session_id, label = basename of cwd, detail built only from
    fixed phrases plus tool_name ("Running Bash", "Needs approval: Edit",
    "Waiting for you", "Done", "Session ended"). NEVER forward prompts,
@@ -173,6 +172,28 @@ ingest listener, token handling and the privacy filter in the mapping go to
 Opus. Coder writes feature code, one step per call; run independent steps
 in parallel. Every subagent call must be self-contained: goal, exact files,
 constraints, acceptance test. Use explorer for repo searches.
+
+Single source of truth: AGENTS.md (standing facts) + docs/m11-plan.md (this
+milestone). The planner writes docs/m11-plan.md and you commit it before any
+code: every step with its workstream, files, tier, dependency and status
+(todo / doing / done + commit SHA). Update a step's status in the same
+commit that finishes it, so a crashed or resumed session restarts from the
+file (the old M11 lost its plan this way). Subagents read only their step
+in the plan plus the AGENTS.md sections it names, and report back to you;
+they never talk to each other.
+
+Workstreams (one agent per discrete workflow; you own ordering, the gate
+and commits):
+- W0 Housekeeping: git and branch ops → Haiku; doc edits → Sonnet.
+- W1 Contract + ingest: AgentStatus types, listener, token, store and
+  timing → Opus (security). Lands FIRST; W2–W4 build against its types.
+- W2 Claude Code adapter + fixtures: hooks-docs lookup → Haiku; adapter,
+  tests, config snippet → Sonnet.
+- W3 Settings → Agents panel → Sonnet.
+- W4 Client tab + auto-jump → Sonnet.
+- W5 Previews and screenshots → Haiku; /apple-design check → Opus.
+- W6 Diff review → Opus reviewer.
+Order: W0 ∥ W1 → W2 ∥ W3 ∥ W4 (parallel) → W5 → W6 → docs, bump, PR.
 
 1. Call planner. Show me the plan, what runs in parallel and what can't be
    verified in the cloud. Proceed unless it departs from the spec.
