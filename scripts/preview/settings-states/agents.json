@@ -1,0 +1,25 @@
+{
+  "panel": "Agents",
+  "outDir": "docs/m11-screenshots",
+  "height": 900,
+  "css": "[class*=\"_box_\"] { height: 840px !important; }",
+  "api": {
+    "getAgentsSettings": {
+      "listener": { "running": true, "port": 47816 },
+      "adapters": [
+        {
+          "id": "claude-code",
+          "label": "Claude Code",
+          "setupSteps": [
+            "Open ~/.claude/settings.json.",
+            "Merge the copied hooks into it.",
+            "Start a new Claude Code session."
+          ]
+        }
+      ]
+    },
+    "getAgentsToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "regenerateAgentsToken": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "getAgentsSnippet": "{}"
+  }
+}
