@@ -1,0 +1,9 @@
+{
+  "session_id": "sess-0000-17",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-17.jsonl",
+  "cwd": "C:\\Users\\someone\\proj\\glance-app",
+  "permission_mode": "default",
+  "hook_event_name": "StopFailure",
+  "error": "LEAKCHECK api error",
+  "last_assistant_message": "LEAKCHECK partial"
+}

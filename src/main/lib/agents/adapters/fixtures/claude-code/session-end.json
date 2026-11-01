@@ -1,0 +1,8 @@
+{
+  "session_id": "sess-0000-18",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-18.jsonl",
+  "cwd": "/home/someone/work/my-repo",
+  "permission_mode": "default",
+  "hook_event_name": "SessionEnd",
+  "reason": "LEAKCHECK-other"
+}

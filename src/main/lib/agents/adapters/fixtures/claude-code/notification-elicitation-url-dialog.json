@@ -1,0 +1,9 @@
+{
+  "session_id": "sess-0000-11",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-11.jsonl",
+  "cwd": "C:\\Users\\someone\\proj\\glance-app",
+  "permission_mode": "default",
+  "hook_event_name": "Notification",
+  "message": "Open https://example.invalid/LEAKCHECK",
+  "notification_type": "elicitation_url_dialog"
+}
