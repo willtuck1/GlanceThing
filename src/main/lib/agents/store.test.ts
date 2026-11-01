@@ -214,18 +214,35 @@ describe('createAgentStore', () => {
     ).toEqual(['claude:s1', 'codex:s1'])
   })
 
-  it('revives an ended session', () => {
+  it('revives an ended session on a fresh start (idle)', () => {
     store.apply(status({ end: true }), 'Claude')
     t += 5 * MIN
-    store.apply(status({ state: 'working' }), 'Claude')
+    store.apply(status({ state: 'idle' }), 'Claude')
     expect(store.payload().sessions[0]).toMatchObject({
-      state: 'working',
+      state: 'idle',
       sinceMs: t
     })
     t += 20 * MIN
-    store.apply(status({ state: 'idle' }), 'Claude')
     store.sweep()
     expect(store.payload().sessions).toHaveLength(1)
+  })
+
+  it('ignores a stray working event after the end', () => {
+    store.apply(status({ end: true }), 'Claude')
+    const endedAt = t
+    t += 2 * MIN
+    store.apply(status({ state: 'working' }), 'Claude')
+    expect(store.payload().sessions[0]).toMatchObject({
+      state: 'stopped',
+      detail: 'Session ended',
+      sinceMs: endedAt
+    })
+    t = endedAt + ENDED_TTL_MS - 1
+    store.sweep()
+    expect(store.payload().sessions).toHaveLength(1)
+    t = endedAt + ENDED_TTL_MS
+    store.sweep()
+    expect(store.payload().sessions).toEqual([])
   })
 
   it('clear empties the store', () => {

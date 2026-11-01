@@ -246,9 +246,13 @@ export async function startAgentsListener(
   const timeoutMs = opts.timeoutMs ?? 2000
   let boundPort = 0
 
+  // connectionsCheckingInterval makes headersTimeout/requestTimeout fire
+  // promptly instead of on Node's 30 s default check.
   const server = http.createServer(
+    { connectionsCheckingInterval: 1000 },
     makeHandler(opts, timeoutMs, () => boundPort)
   )
+  server.maxConnections = 32
   server.headersTimeout = timeoutMs
   server.requestTimeout = timeoutMs + 500
   server.maxHeadersCount = 50

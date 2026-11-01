@@ -95,6 +95,10 @@ export function createAgentStore(deps: AgentStoreDeps): AgentStore {
       return
     }
 
+    // An ended session only comes back on a fresh start or resume (idle,
+    // which SessionStart maps to); stray events after the end are ignored.
+    if (existing.endedMs !== null && !ended && state !== 'idle') return
+
     const card = existing.card
     const label = status.label ?? card.label
     const changed =

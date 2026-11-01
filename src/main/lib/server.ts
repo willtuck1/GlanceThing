@@ -25,8 +25,21 @@ class ServerManager extends (EventEmitter as new () => TypedEmitter<{
 }>) {
   private wss: WebSocketServer | null = null
   private port: number | null = null
+  private starting: Promise<void> | null = null
 
+  /** Starting again while running stops the old server (and its setup) first. */
   async start() {
+    if (this.starting) return this.starting
+    this.starting = (async () => {
+      if (this.wss) await this.stop()
+      await this.startServer()
+    })().finally(() => {
+      this.starting = null
+    })
+    return this.starting
+  }
+
+  private async startServer() {
     const cleanup = await runServerSetup()
 
     const WS_PASSWORD = getSocketPassword()
