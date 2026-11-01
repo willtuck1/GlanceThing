@@ -20,6 +20,7 @@ Dates are PR `merged_at` (UTC). Versions come from PR bodies and `git log` bump 
 | M9B | #21 | 2026-10-10 | v0.0.16-tabs.9 | JSON connectors: four generic layouts, dot-path mapping, secret header, SSRF/rebinding-safe fetch, no client release needed | Chrome 69 layouts; dial to "+N more"; real Home Assistant/LAN; `.local` names; live https SNI with pinned socket; Electron IPC/safeStorage; proxies |
 | M9C | #22 | 2026-10-10 | v0.0.16-tabs.10 | MCP connectors: recipes, OAuth 2.1 PKCE sign-in, read-only guard, safeFetch, add-connector workflow | Packaged SDK load; real browser sign-in/firewall prompt; OS keyring; real MCP server registration/annotations; device; workflow lookup by name |
 | M10 | #24 | 2026-10-10 | v0.0.16-tabs.11 | Clock tab, host-owned timer with desktop alert, sleep clock with 5 widgets, button 4 sleeps on clock | Button 4 key value on device; long-press on touch; sleep/ADB brightness; notification sound/Focus on Win/macOS; Electron; Chrome 69; once-a-second tick CPU; older clients get blank screensaver |
+| M11 | PR TBD | n/s | v0.0.16-tabs.12 (planned) | Agents tab: 127.0.0.1 token-guarded listener, Claude Code adapter, session cards, auto-jump when one waits | Real Claude Code hooks on Windows; auto-jump wake on device; dial scroll; safeStorage on user OS; firewall behaviour of packaged app |
 
 Infra PRs
 
@@ -111,6 +112,12 @@ Also: #18 (docs, 2026-10-09) merged Clock tab and sleep clock into one roadmap i
 - Workflow registry was loaded before `add-connector.js` existed, so dry runs used `scriptPath`; first dry run failed host lint (`no-explicit-any`), so the workflow's Write phase must leave eslint and tsc clean (#22).
 - Review was sometimes relayed from the user's other session (#13).
 
+### Agents (M11)
+- `npm root -g` on this PC masked the session-id path segment as `***`, so Playwright installed under the session scratchpad could not be required; install it to a plain path (`npm i -g --prefix <dir> playwright`, `PLAYWRIGHT_BROWSERS_PATH=<dir>/browsers`).
+- `pkill` does not exist in Git Bash on Windows; kill the preview server by PID.
+- Parallel coders running the gate see each other's half-written files: gate failures can be transient. Check who owns the failing file before fixing it.
+- A `grep` on gate output exits 0 even when a line says FAIL; test for FAIL explicitly before committing.
+
 ### Claude Code hooks (checked 2026-11-01, M11)
 - Source: code.claude.com/docs/en/hooks.md. Common stdin fields: `session_id`, `transcript_path`, `cwd`, `hook_event_name`, `permission_mode`; tool events add `tool_name`, `tool_input` (+ `tool_response` on PostToolUse).
 - Notification carries `message`, optional `title` and `notification_type` (`permission_prompt`, `idle_prompt`, `elicitation_dialog`, `agent_needs_input`, `auth_success`, ...). Classify on `notification_type`, never forward `message`. A separate `PermissionRequest` event carries `tool_name`.
@@ -134,6 +141,8 @@ Also: #18 (docs, 2026-10-09) merged Clock tab and sleep clock into one roadmap i
 - Unofficial Sleeper projections endpoint accepted, adapter never throws and hides the Est. column on failure (#13).
 - Release builds run once per tag push; releases auto-titled `GlanceThing_v0.NN` (#14, #23).
 - Button macros, if any, must be long-presses because all four short presses are taken (#18).
+- Agents = push handler + context, not Feed/`useFeed`: no fetch or interval, nothing persisted, and auto-jump needs pushes while the tab is inactive or the device sleeps (M11).
+- Agents token in safeStorage; plaintext fallback accepted, because it only guards against local card spoofing (M11).
 
 ## Model escalations
 
@@ -161,4 +170,5 @@ Also: #18 (docs, 2026-10-09) merged Clock tab and sleep clock into one roadmap i
 - Clock: older clients told to sleep on `clock` show a blank screensaver; once-a-second tick CPU on the device; notification sound/Focus Assist/DND on Win/macOS (#24).
 - Reviewer nits left unchanged: no test for `DisplayContext` message filter; slider initial state hardcodes 25/45 (#16). Feed start order follows registry order (#20). Client has no test harness for optimistic star logic or `useLongPress` (#3).
 - Hooks (Stop, SessionStart) and the token savings from #15 not yet confirmed (#15).
+- M11 Agents: real Claude Code hooks firing on Windows (hook shell, curl quoting) unverified; auto-jump waking a sleeping device unverified; if the listener port falls back (47816-47825) and changes, existing hooks silently fail until the config is re-copied.
 - Roadmap after M10 (renumbered in M11): M11 Agents tab (tabs.12), M12 connector builder + Notifications (tabs.13, parked on `milestone/12-builder-notify`), M13 Gmail (try as MCP recipe first).
