@@ -397,6 +397,11 @@ describe('isProtectedStorageKey', () => {
     expect(isProtectedStorageKey('weatherUnits')).toBe(false)
     expect(isProtectedStorageKey('connectorsX')).toBe(false)
   })
+
+  it('protects the agents listener token', () => {
+    expect(isProtectedStorageKey('agentsToken')).toBe(true)
+    expect(isProtectedStorageKey('agentsTokenX')).toBe(false)
+  })
 })
 
 const MCP_BASE = {
