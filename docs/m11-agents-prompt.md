@@ -46,8 +46,8 @@ PART 0: Housekeeping (first commits on the branch, and git operations)
 
 PART 1: Agents tab. Feature, from the user's point of view.
 
-When I run Claude Code on the same computer as the GlanceThing desktop app,
-each session appears as a card in an Agents tab on the Car Thing, so I can
+When I run an AI agent (Claude Code first, any agent later) on the same
+computer as the GlanceThing desktop app, each session appears as a card in an Agents tab on the Car Thing, so I can
 see at a glance whether anything needs me without switching windows.
 
 States (4; colour is never the only signal, every card also shows the word):
@@ -56,23 +56,48 @@ States (4; colour is never the only signal, every card also shows the word):
 - idle (grey #8E8E93): it finished its turn and waits for my next prompt
 - stopped (red #FF453A): the session ended, or it went silent while working
 
-Sources: local Claude Code only, through Claude Code hooks. Cloud sessions
-and other agents are out of scope (they can use the same endpoint later).
+Design goal: model-agnostic. Everything downstream of ingest (store, cards,
+colours, sorting, auto-jump) knows only one normalized status shape and
+never anything agent-specific. Each agent is an adapter that translates its
+own events into that shape. Shipped adapters this milestone: Claude Code
+only (local, via hooks). Cloud sessions are out of scope (they need a relay).
+Adding Codex, OpenCode, Gemini CLI, OpenClaw or a custom script later must be
+one new adapter file + tests + a config snippet, with no client release and
+no change outside the adapters folder and its registry.
 
 Host (security-sensitive steps go to Opus per the harness):
 1. Ingest: an HTTP listener in the Electron main process bound to 127.0.0.1
    only (never 0.0.0.0), fixed default port 47816 with fallback to the next
-   free port, shown in Settings. POST /v1/hook, JSON body ≤ 64 KB, 2 s read
-   timeout, requires header `Authorization: Bearer <token>` (token: 32 random
+   free port, shown in Settings. JSON body ≤ 64 KB, 2 s read timeout, every
+   route requires header `Authorization: Bearer <token>` (token: 32 random
    bytes hex, generated on first use, stored with setStorageValue(...,
    true), protected key, "Regenerate" in Settings). Wrong/missing token → 401,
    anything else → 404/413/400. Reply fast (202) and never throw. No CORS
    headers, refuse requests carrying an Origin header (blocks browser pages
-   from posting).
-2. Mapping (pure module + tests with committed sample hook payloads). Verify
-   event names and Notification fields against the current Claude Code hooks
-   docs (docs.claude.com) before writing; record what you found in
-   HISTORY.md. Intended mapping:
+   from posting). Routes:
+   - POST /v1/status: the generic, documented endpoint any agent or wrapper
+     script can call directly. Body = AgentStatus:
+     {source: string (1–24 chars, [a-z0-9-], e.g. "claude-code", "codex",
+      "custom"), sessionId: string (≤ 128), label?: string, state:
+      "working"|"waiting"|"idle"|"stopped", detail?: string, end?: boolean}
+     Validated strictly; label/detail trimmed and capped (24 / 48 chars),
+     control characters stripped. end:true = session ended (stopped, removed
+     after 10 min).
+   - POST /v1/hook/<adapterId>: raw events from an agent's own hook system,
+     passed to that adapter's pure `toStatus(payload) → AgentStatus | null`
+     (null = ignore). Unknown adapterId → 404.
+   Session key = source + ":" + sessionId, so two agents can never collide.
+2. Adapters: src/main/lib/agents/adapters/<id>.ts, listed in
+   adapters/registry.ts. Each exports {id, label (short tag shown on
+   cards, ≤ 8 chars, e.g. "Claude"), toStatus, configSnippet(port, token),
+   setupSteps: string[]} and has a test file with committed sample payloads.
+   Adapters are the privacy boundary: they may only emit fixed phrases plus
+   a tool name in `detail`, and a folder basename as `label`. Add a short
+   "Adding an agent" section to docs/NEW_APP.md describing this contract and
+   the /v1/status body, so the next agent is one adapter PR.
+   First adapter: claude-code. Verify event names and Notification fields
+   against the current Claude Code hooks docs (docs.claude.com) before
+   writing; record what you found in HISTORY.md. Intended mapping:
    - SessionStart → idle
    - UserPromptSubmit, PreToolUse, PostToolUse, SubagentStop → working
    - Notification asking for permission or input → waiting;
@@ -80,13 +105,16 @@ Host (security-sensitive steps go to Opus per the harness):
    - Stop → idle
    - SessionEnd → stopped; the card is removed 10 min later
    - working with no event for 15 min → stopped, detail "No signal"
-   Key = session_id. Card fields: label = basename of cwd (≤ 24 chars),
-   detail ≤ 48 chars built only from fixed phrases plus tool_name
-   ("Running Bash", "Needs approval: Edit", "Waiting for you", "Done",
-   "Session ended", "No signal"), state, sinceMs (host epoch of last state
-   change). NEVER forward prompts, messages, tool inputs, file paths beyond
-   the cwd basename, or transcript_path to the device (privacy, per the
-   brief). Max 12 sessions kept; oldest idle/stopped dropped first.
+   sessionId = session_id, label = basename of cwd, detail built only from
+   fixed phrases plus tool_name ("Running Bash", "Needs approval: Edit",
+   "Waiting for you", "Done", "Session ended"). NEVER forward prompts,
+   messages, tool inputs, file paths beyond the cwd basename, or
+   transcript_path (privacy, per the brief).
+   The store (adapter-independent) owns timing: working with no update for
+   15 min → stopped, detail "No signal"; ended sessions are removed after
+   10 min. Card fields sent to the device: {key, source, sourceLabel, label,
+   state, detail, sinceMs (host epoch of last state change)}. Max 12
+   sessions kept; oldest idle/stopped dropped first.
 3. Module `agents` (code-built app module, follow docs/NEW_APP.md), last in
    both registries. It is push-based: state changes broadcast the feed payload
    (coalesce to at most one broadcast per 250 ms); a client request gets the
@@ -94,10 +122,13 @@ Host (security-sensitive steps go to Opus per the harness):
    Payload: {sessions: Card[], counts: {working, waiting, idle, stopped}}.
    In-memory only; an app restart starts empty.
 4. Settings → Agents panel: listener status (running on 127.0.0.1:<port> or
-   the error), token Show/Copy/Regenerate, and a "Copy hook config" button
-   that copies the JSON snippet for ~/.claude/settings.json (user level, so
-   every project reports). Each hook command:
-   curl -s -m 2 -X POST http://127.0.0.1:<port>/v1/hook -H "Authorization: Bearer <token>" -H "Content-Type: application/json" --data-binary @- || true
+   the error), token Show/Copy/Regenerate, then one row per registered
+   adapter with its label, setup steps and a "Copy config" button (from the
+   adapter's configSnippet), plus a "Custom agent" row that copies a curl
+   example for /v1/status. Claude Code's snippet is for
+   ~/.claude/settings.json (user level, so every project reports). Each hook
+   command:
+   curl -s -m 2 -X POST http://127.0.0.1:<port>/v1/hook/claude-code -H "Authorization: Bearer <token>" -H "Content-Type: application/json" --data-binary @- || true
    (stdin is the hook JSON; curl ships with Windows 10+ and macOS). Hooks
    must never block or fail Claude Code: 2 s cap, always exit 0. Short
    setup steps under the button. Do not edit ~/.claude/settings.json from
@@ -110,7 +141,8 @@ Client (Chrome 69 rules apply):
    - Cards sorted waiting → stopped → working → idle, then newest change
      first. Each card ~88 px tall, 4 visible: a 6 px full-height status bar
      on the left in the state colour (the signature element), project label
-     28 px semibold, state word + detail 20 px in #EBEBF5 at 60% or more,
+     28 px semibold with the sourceLabel as a small outlined tag after it
+     (18 px, e.g. "Claude"), state word + detail 20 px in #EBEBF5 at 60% or more,
      elapsed time right-aligned ("4m", "1h 2m") from host time (ClockContext
      hostNow, never Date). Text ≥ 18 px everywhere. Contrast vs #000 ≥ 4.5:1.
    - Waiting cards only: a slow 2 s opacity pulse on the status bar. No other
@@ -128,7 +160,8 @@ Client (Chrome 69 rules apply):
    (empty, 1 waiting + 2 working + 1 idle, 6+ sessions scrolled, a stopped
    card). Fix Critical and High findings, list the rest in the PR body.
 
-Out of scope: approve/deny from the device, cloud sessions, OpenClaw/Codex,
+Out of scope: approve/deny from the device, cloud sessions, adapters other
+than claude-code (the contract must make them easy),
 writing ~/.claude/settings.json, sleep-clock widget, notification sound.
 
 You are the coordinator on Opus 5.5. Follow "Agent harness (cascading
@@ -146,12 +179,13 @@ constraints, acceptance test. Use explorer for repo searches.
 2. Part 0 first. Then per step: coder, `npm run gate -- fast` yourself, commit.
 3. Preview screenshots (scripts/preview, add payload variants for agents),
    then step 7. Run reviewer on the full diff. Fix real findings via coder.
-4. Update AGENTS.md (files, module, listener, port, token key, hook mapping,
-   message, rules, commands, roadmap) and add an "Agents" note to
-   docs/NEW_APP.md if it helps future tabs. Required.
+4. Update AGENTS.md (files, module, listener, port, token key, routes, adapter contract and registry,
+   message, rules, commands, roadmap) and the "Adding an agent"
+   section to docs/NEW_APP.md. Required.
 5. Bump to 0.0.16-tabs.12 (see AGENTS.md). Full `npm run gate`. Open a DRAFT
    PR and stop. Include a 5-line manual test I can run on my PC: install
-   hooks, start Claude Code, trigger a permission prompt, see yellow + jump.
+   hooks, start Claude Code, trigger a permission prompt, see yellow + jump,
+   plus one curl to /v1/status with source "custom" that shows a card.
 
 Rules:
 - Paste real gate output; a subagent saying "tests pass" is not evidence.
@@ -177,7 +211,8 @@ AGENTS.md.
 
 ## Why these choices (for the next human or agent)
 - Four states, not three: idle (grey) separates "finished, your move when you like" from "blocked on you" (yellow), so yellow stays rare and meaningful. This matches the managents model the Jit brief cites.
-- Local hooks only: cloud sessions can't reach 127.0.0.1 on the PC. A relay is a later milestone.
+- Model-agnostic from day one: one normalized AgentStatus shape plus per-agent adapters, so each new agent (Codex, OpenCode, Gemini CLI, OpenClaw, a custom script) is one adapter PR with no client release. Agents without a hook or notify feature need a small wrapper script calling /v1/status. Some agents only report "finished", so they may never show yellow; that is accepted per adapter.
+- Local hooks only: cloud sessions can't reach 127.0.0.1 on the PC. A relay that forwards to /v1/status is a later milestone.
 - Port + bearer token + Origin refusal: any local process or web page could otherwise spoof agent cards.
 - Fixed-phrase details: the Car Thing sits in view of others; the brief plans privacy mode, and the MVP never shows prompt or file content.
 - Read-only: approve/deny needs PTY-managed sessions (brief, phase 3).
