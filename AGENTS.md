@@ -23,6 +23,7 @@ Electron host (`src/main`, `src/preload`, `src/renderer`) that pushes data over 
 - Clock key check (device): Settings → Clock → "Show button presses on the device" on, then press each button; the overlay bottom-left on the device and Settings → Logs (category `Keys`) show what arrived. If `4` never shows up, use the long-press on the Clock tab's clock face or Settings → Clock → "Sleep device on clock".
 - Adding a tab: `docs/NEW_APP.md` is the one guide, with a "which path" table (JSON connector, MCP recipe, code-built app module) and a section for each.
 - `claude_plan.md` is the original M0–M4 spec, all done. Read only the section you need. Don't read `docs/m*-screenshots/`.
+- `docs/HISTORY.md`: milestone ledger, traps and decisions; read Traps before starting a milestone. New traps go there, not here.
 
 ## Rules
 - Client must run on Chrome 69: no flexbox `gap`, `aspect-ratio` or `:is()`. The legacy Vite plugin handles JS syntax, not new browser APIs.
@@ -55,8 +56,9 @@ Applies to every milestone session and every prompt written for one.
 In this order. Effort is relative to M5/M6.
 Items 1–4 are done: **Polish** (M7: one team color per sports row, opacity sliders), **Weather tab** (M8, plus buttons 1/2 = prev/next tab, 3 = Calendar), **Connector platform** (M9A app modules + tab picker, tabs.8; M9B JSON connectors, tabs.9; M9C MCP connectors + recipes + `add-connector` workflow, tabs.10) and **Clock + sleep screen** (M10, tabs.11: Clock tab with timer, sleep clock with widgets, button 4). New tabs now start from `docs/NEW_APP.md`. Real-service MCP recipes are added later through the workflow, one PR each. Button macros, if any, must be long-presses (all four short presses are taken); prefer long-press over double-tap, because double-tap delays every single press by about 300 ms.
 
-5. **Notifications** (medium–large): the host compares each update to the last one against rules (close game, final, fantasy swings, upcoming event), then sends a `notify` message that the client shows over any tab or the sleep screen. Per-type toggles in Settings. Optional desktop notification for sound.
-6. **Gmail tab** (medium–large): first try it as an MCP recipe (item 3C); fall back to an app module (item 3A). Needs the restricted `gmail.readonly` scope. Every user has to sign in to Google again, and logins from an OAuth client in test mode expire every 7 days. "Important" means `is:important is:unread`. Build after Notifications.
+5. **M11: Agents tab** (tabs.12, in progress; plan in `docs/m11-plan.md`, spec in `docs/m11-agents-prompt.md`): local AI-agent sessions (Claude Code first, via hooks) appear as cards on the device; authenticated 127.0.0.1 listener + per-agent adapters; auto-jump when a session waits.
+6. **M12: Connector builder + Notifications** (large; tabs.13; parked on branch `milestone/12-builder-notify`, prompt `docs/m12-prompt.md`, steps A1, A2, A4, A5, A6, A10 committed, re-plan the rest). Builder: add a connector entirely in Settings with no AI: committed presets, a point-and-click mapper (sanitized sample, JSON tree, `suggestMapping`) and a tutorial popup in Settings → Connectors. Notifications: the host compares each update to the last one against rules (close game, final, fantasy swings, upcoming event), then sends a `notify` message that the client shows over any tab or the sleep screen. Per-type toggles in Settings. Optional desktop notification for sound.
+7. **M13: Gmail tab** (medium–large): first try it as an MCP recipe (item 3C); fall back to an app module (item 3A). Needs the restricted `gmail.readonly` scope. Every user has to sign in to Google again, and logins from an OAuth client in test mode expire every 7 days. "Important" means `is:important is:unread`. Build after M12.
 
 ## Keeping this file current (required)
 This file is the shared memory for every agent and session. Whenever a change makes anything here wrong or incomplete, update this file in the same commit:
