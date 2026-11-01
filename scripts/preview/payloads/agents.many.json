@@ -42,7 +42,7 @@
       "sourceLabel": "Claude",
       "label": "infra",
       "state": "waiting",
-      "detail": "Needs input: pick a branch",
+      "detail": "Waiting for you",
       "sinceMs": 1791660865000
     },
     {
