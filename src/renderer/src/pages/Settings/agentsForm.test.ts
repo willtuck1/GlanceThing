@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { listenerText, maskToken, stepsFor } from './agentsForm.js'
+import {
+  CUSTOM_SCHEMA,
+  listenerText,
+  maskToken,
+  stepsFor
+} from './agentsForm.js'
 
 describe('listenerText', () => {
   it('shows the port when running', () => {
@@ -16,7 +21,9 @@ describe('listenerText', () => {
   })
 
   it('handles not running without an error', () => {
-    expect(listenerText({ running: false, port: null })).toBe('Not listening')
+    expect(listenerText({ running: false, port: null })).toBe(
+      'Not listening'
+    )
   })
 })
 
@@ -37,5 +44,15 @@ describe('stepsFor', () => {
     expect(
       stepsFor({ id: 'x', label: 'X', setupSteps: [' one ', '', 'two'] })
     ).toEqual(['one', 'two'])
+  })
+})
+
+describe('CUSTOM_SCHEMA', () => {
+  it('lists the required fields, one per line', () => {
+    const text = CUSTOM_SCHEMA.join('\n')
+    expect(text).toMatch(/source:/)
+    expect(text).toMatch(/sessionId:/)
+    expect(text).toMatch(/state:\s+working \| waiting \| idle \| stopped/)
+    expect(CUSTOM_SCHEMA.every(l => !l.includes('\n'))).toBe(true)
   })
 })

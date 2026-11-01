@@ -23,6 +23,22 @@ export const STATE_COLOR: Record<AgentState, string> = {
   stopped: '#FF453A'
 }
 
+const GENERIC_DETAIL: Record<AgentState, string> = {
+  working: 'working',
+  waiting: '',
+  idle: 'idle',
+  stopped: 'stopped'
+}
+
+// Detail text worth showing after the state word ('' when it only repeats it).
+export function cardDetail(card: AgentCard): string {
+  const d = card.detail.trim()
+  const l = d.toLowerCase()
+  if (l === STATE_WORD[card.state].toLowerCase()) return ''
+  if (l === GENERIC_DETAIL[card.state]) return ''
+  return d
+}
+
 export function sortCards(cards: AgentCard[]): AgentCard[] {
   return cards.slice().sort((a, b) => {
     const d = STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state)

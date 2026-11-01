@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  cardDetail,
   formatElapsed,
   parseAgentsPayload,
   sortCards,
@@ -10,11 +11,7 @@ import {
 
 import type { AgentCard, AgentState } from './types.ts'
 
-const card = (
-  key: string,
-  state: AgentState,
-  sinceMs = 0
-): AgentCard => ({
+const card = (key: string, state: AgentState, sinceMs = 0): AgentCard => ({
   key,
   source: 'claude',
   sourceLabel: 'Claude',
@@ -55,9 +52,9 @@ describe('sortCards', () => {
 
 describe('summary', () => {
   it('lists non-zero counts in order', () => {
-    expect(
-      summary(counts({ waiting: 1, working: 2, idle: 1 }))
-    ).toBe('1 needs you · 2 working · 1 idle')
+    expect(summary(counts({ waiting: 1, working: 2, idle: 1 }))).toBe(
+      '1 needs you · 2 working · 1 idle'
+    )
     expect(summary(counts({ stopped: 3, idle: 1 }))).toBe(
       '3 stopped · 1 idle'
     )
@@ -113,5 +110,30 @@ describe('visibleCards', () => {
     expect(v.more).toBe(3)
     expect(v.cards[0].key).toBe('k14')
     expect(visibleCards(cards, 20).more).toBe(0)
+  })
+})
+
+describe('cardDetail', () => {
+  it('hides details that repeat the state', () => {
+    expect(
+      cardDetail({ ...card('a', 'working'), detail: 'working' })
+    ).toBe('')
+    expect(cardDetail({ ...card('a', 'idle'), detail: 'IDLE' })).toBe('')
+    expect(
+      cardDetail({ ...card('a', 'stopped'), detail: 'Stopped' })
+    ).toBe('')
+    expect(
+      cardDetail({ ...card('a', 'waiting'), detail: 'Needs you' })
+    ).toBe('')
+    expect(cardDetail(card('a', 'working'))).toBe('')
+  })
+
+  it('keeps real details', () => {
+    expect(
+      cardDetail({ ...card('a', 'working'), detail: 'Running Bash' })
+    ).toBe('Running Bash')
+    expect(cardDetail({ ...card('a', 'idle'), detail: 'Working' })).toBe(
+      'Working'
+    )
   })
 })

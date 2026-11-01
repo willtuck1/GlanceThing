@@ -18,6 +18,7 @@
 }
 
 .viewport {
+  position: relative;
   height: 352px;
   overflow: hidden;
 }
@@ -29,6 +30,33 @@
   background: #1c1c1e;
   border-radius: 12px;
   overflow: hidden;
+}
+
+.waiting {
+  background: #2a2614;
+  box-shadow: inset 0 0 0 1px rgba(255, 214, 10, 0.45);
+}
+
+.stateWaiting {
+  font-weight: 600;
+}
+
+.track {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  width: 3px;
+  height: 352px;
+  border-radius: 2px;
+  background: rgba(235, 235, 245, 0.18);
+}
+
+.thumb {
+  position: absolute;
+  left: 0;
+  width: 3px;
+  border-radius: 2px;
+  background: rgba(235, 235, 245, 0.6);
 }
 
 .bar {
@@ -48,7 +76,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0.35;
+    opacity: 0.55;
   }
   100% {
     opacity: 1;

@@ -33,3 +33,15 @@ export interface AgentsSettings {
   listener: AgentsListener
   adapters: AgentAdapterInfo[]
 }
+
+// Body of POST /v1/status for a custom agent, one field per line.
+export const CUSTOM_SCHEMA: string[] = [
+  '{',
+  '  source:    string',
+  '  sessionId: string',
+  '  label?:    string',
+  '  state:     working | waiting | idle | stopped',
+  '  detail?:   string',
+  '  end?:      boolean',
+  '}'
+]

@@ -7,6 +7,7 @@ import { useNow } from '@/contexts/ClockContext.tsx'
 import { accumulateWheel } from '../clock/timerControls.ts'
 
 import {
+  cardDetail,
   formatElapsed,
   parseAgentsPayload,
   STATE_COLOR,
@@ -19,6 +20,7 @@ import styles from './AgentsTab.module.css'
 
 const VISIBLE_ROWS = 4
 const CARD_STRIDE = 88
+const VIEWPORT_H = 352
 
 const AgentsTab: React.FC<{ active: boolean }> = ({ active }) => {
   const { payload } = useAgents()
@@ -36,6 +38,16 @@ const AgentsTab: React.FC<{ active: boolean }> = ({ active }) => {
   const maxRef = useRef(maxScroll)
   maxRef.current = maxScroll
   const listening = active && !blurred && !playerShown
+
+  // Back to the top on activation and when a new session starts waiting,
+  // so an auto-jump never lands with the waiting card above the viewport.
+  const waiting = parsed ? parsed.counts.waiting : 0
+  const prev = useRef({ active: false, waiting: 0 })
+  useEffect(() => {
+    const p = prev.current
+    if ((active && !p.active) || waiting > p.waiting) setScroll(0)
+    prev.current = { active, waiting }
+  }, [active, waiting])
 
   useEffect(() => {
     if (!listening) return
@@ -65,6 +77,16 @@ const AgentsTab: React.FC<{ active: boolean }> = ({ active }) => {
     )
   }
 
+  const total = cards.length
+  const thumbH = Math.max(
+    24,
+    Math.round((VIEWPORT_H * VISIBLE_ROWS) / total)
+  )
+  const thumbTop =
+    maxScroll > 0
+      ? Math.round((offset / maxScroll) * (VIEWPORT_H - thumbH))
+      : 0
+
   return (
     <div className={styles.tab}>
       <div className={styles.summary}>{summary(parsed.counts)}</div>
@@ -72,8 +94,16 @@ const AgentsTab: React.FC<{ active: boolean }> = ({ active }) => {
         <div style={{ marginTop: -offset * CARD_STRIDE }}>
           {cards.map(c => {
             const color = STATE_COLOR[c.state]
+            const detail = cardDetail(c)
             return (
-              <div key={c.key} className={styles.card}>
+              <div
+                key={c.key}
+                className={
+                  c.state === 'waiting'
+                    ? `${styles.card} ${styles.waiting}`
+                    : styles.card
+                }
+              >
                 <div
                   className={
                     c.state === 'waiting'
@@ -91,11 +121,16 @@ const AgentsTab: React.FC<{ active: boolean }> = ({ active }) => {
                   </div>
                   <div className={styles.line2}>
                     <span
+                      className={
+                        c.state === 'waiting'
+                          ? styles.stateWaiting
+                          : undefined
+                      }
                       style={c.state === 'idle' ? undefined : { color }}
                     >
                       {STATE_WORD[c.state]}
                     </span>
-                    {c.detail ? ` · ${c.detail}` : ''}
+                    {detail ? ` · ${detail}` : ''}
                   </div>
                 </div>
                 {now !== null && (
@@ -107,6 +142,14 @@ const AgentsTab: React.FC<{ active: boolean }> = ({ active }) => {
             )
           })}
         </div>
+        {total > VISIBLE_ROWS && (
+          <div className={styles.track}>
+            <div
+              className={styles.thumb}
+              style={{ height: thumbH, top: thumbTop }}
+            />
+          </div>
+        )}
       </div>
       {more > 0 && <div className={styles.more}>+{more} more</div>}
     </div>

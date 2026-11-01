@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 
 import {
   AgentsSettings,
+  CUSTOM_SCHEMA,
   listenerText,
   maskToken,
   stepsFor
@@ -19,6 +20,7 @@ const AgentsTab: React.FC = () => {
   const [copied, setCopied] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     window.api
@@ -27,6 +29,7 @@ const AgentsTab: React.FC = () => {
       .catch(() => setError('Could not load agent settings'))
     return () => {
       if (copiedTimer.current) clearTimeout(copiedTimer.current)
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
     }
   }, [])
 
@@ -67,8 +70,11 @@ const AgentsTab: React.FC = () => {
   async function regenerate() {
     if (!confirming) {
       setConfirming(true)
+      if (confirmTimer.current) clearTimeout(confirmTimer.current)
+      confirmTimer.current = setTimeout(() => setConfirming(false), 5000)
       return
     }
+    if (confirmTimer.current) clearTimeout(confirmTimer.current)
     setConfirming(false)
     try {
       setToken(await window.api.regenerateAgentsToken())
@@ -89,7 +95,8 @@ const AgentsTab: React.FC = () => {
     }
   }
 
-  if (!info) return error ? <p className={styles.description}>{error}</p> : null
+  if (!info)
+    return error ? <p className={styles.description}>{error}</p> : null
 
   return (
     <div className={styles.settingsTab}>
@@ -108,8 +115,17 @@ const AgentsTab: React.FC = () => {
           <button onClick={copyToken}>
             {copied === 'token' ? 'Copied' : 'Copy'}
           </button>
-          <button onClick={regenerate}>
-            {confirming ? 'Click again to confirm' : 'Regenerate'}
+          <button
+            className={
+              confirming
+                ? `${tabStyles.regen} ${tabStyles.regenConfirm}`
+                : tabStyles.regen
+            }
+            onClick={regenerate}
+          >
+            {confirming
+              ? 'Regenerate? Old hooks stop working'
+              : 'Regenerate'}
           </button>
         </div>
         {regenerated && (
@@ -124,8 +140,8 @@ const AgentsTab: React.FC = () => {
           <p>{adapter.label}</p>
           {adapter.id === 'claude-code' && (
             <p className={styles.description}>
-              Paste into ~/.claude/settings.json (user level, so every
-              project reports).
+              User-level file <code>~/.claude/settings.json</code>, so
+              every project reports.
             </p>
           )}
           <ol className={tabStyles.steps}>
@@ -135,7 +151,7 @@ const AgentsTab: React.FC = () => {
           </ol>
           <div className={styles.actions}>
             <button onClick={() => copySnippet(adapter.id)}>
-              {copied === adapter.id ? 'Copied' : 'Copy config'}
+              {copied === adapter.id ? 'Copied' : 'Copy hooks config'}
             </button>
           </div>
         </div>
@@ -143,10 +159,8 @@ const AgentsTab: React.FC = () => {
 
       <div className={styles.googleSection}>
         <p>Custom agent</p>
-        <p className={styles.description}>
-          POST /v1/status with {'{'}source, sessionId, label?, state:
-          working|waiting|idle|stopped, detail?, end?{'}'}.
-        </p>
+        <p className={styles.description}>POST /v1/status with JSON:</p>
+        <pre className={tabStyles.schema}>{CUSTOM_SCHEMA.join('\n')}</pre>
         <div className={styles.actions}>
           <button onClick={() => copySnippet('custom')}>
             {copied === 'custom' ? 'Copied' : 'Copy curl example'}

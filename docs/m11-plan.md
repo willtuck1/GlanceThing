@@ -61,8 +61,8 @@
 | W5.1 | W5 | Preview payloads | C scripts/preview/payloads/agents.json (empty), agents.{mixed,many,stopped}.json; M tabs.*.json (add agents), scripts/preview/README.md | haiku | W4.3, W4.4 | server answers each variant | done (M11 W5.1) |
 | W5.2 | W5 | Screenshots | C scripts/preview/settings-states/agents.json; docs/m11-screenshots/*.png | haiku | W5.1, W3.2 | empty, mixed, many scrolled, stopped, settings-agents | done (M11 W5.2) |
 | W5.3 | W5 | /apple-design review | report | opus | W5.2 | Critical/High list | done (report: 0 Critical, 2 High) |
-| W5.4 | W5 | Fix Critical/High | per finding | sonnet | W5.3 | re-shot PNGs | todo |
-| W6.1 | W6 | Full-diff review | report | opus | W5.4, W2.3 | findings | todo |
+| W5.4 | W5 | Fix Critical/High | per finding | sonnet | W5.3 | re-shot PNGs | done (M11 W5.4) |
+| W6.1 | W6 | Full-diff review | report | opus | W5.4, W2.3 | findings | done (0 Critical/High; 2 Medium, 6 Low) |
 | W6.2 | W6 | Fix review findings | per finding | sonnet | W6.1 | gate fast | todo |
 | D1 | docs | AGENTS.md (files, module, listener/port, `agentsToken`, routes, adapter contract, `agents` message, previews, roadmap); NEW_APP.md "Adding an agent"; HISTORY.md traps | M AGENTS.md, docs/NEW_APP.md, docs/HISTORY.md | sonnet | W6.2 | diff | done (M11 D1; touch-ups after review) |
 | D2 | docs | Bump to 0.0.16-tabs.12 | M package.json, client/package.json, both lockfiles | haiku | D1 | version in all 4 files | todo |
