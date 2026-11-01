@@ -1,17 +1,19 @@
-# M11 prompt: Connector builder + Notifications
+# M12 prompt: Connector builder + Notifications
 
-Filled-in copy of `docs/MASTER_PROMPT.md` for M11. Start a new cloud session on Opus 5.5 and paste the block below.
+> **Parked (2026-11-01):** Steps A1, A2, A4, A5, A6, A10 are committed; re-plan the rest. Renumbered from M11 to M12 (tabs.13) because M11 became the Agents tab.
+
+Filled-in copy of `docs/MASTER_PROMPT.md` for M12. Start a new cloud session on Opus 5.5 and paste the block below.
 
 ## Prompt
 
 ```
-Milestone M11 (builder-notify). Branch milestone/11-builder-notify from main.
+Milestone M12 (builder-notify). Branch milestone/12-builder-notify from main.
 
 Feature, from the user's point of view. Two parts, built in this order.
 
 Part A: Connector builder. Someone with little tech experience can add a
 useful tab entirely inside desktop Settings, without asking an AI or reading
-API docs. No LLM anywhere. Today they must type JSON paths by hand; after M11
+API docs. No LLM anywhere. Today they must type JSON paths by hand; after M12
 most of it is done for them:
 
 1. Preset gallery. "Add connector" offers "From a preset" first. A preset
@@ -99,7 +101,7 @@ files, constraints, acceptance test. Use explorer for repo searches.
    IPC, the tutorial, the notify message, rules, commands, roadmap status)
    and add "Presets" and "Point-and-click mapper" sections to docs/NEW_APP.md.
    Required.
-5. Bump the version to 0.0.16-tabs.12 (see AGENTS.md). `npm run gate`
+5. Bump the version to 0.0.16-tabs.13 (see AGENTS.md). `npm run gate`
    (full). Client screenshots with scripts/preview (see its README) for the
    notify banner over a tab and over the sleep clock. Open a DRAFT PR and
    stop.
