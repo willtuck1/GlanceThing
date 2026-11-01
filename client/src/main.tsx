@@ -4,6 +4,7 @@ import { AppBlurContextProvider } from '@/contexts/AppBlurContext.tsx'
 import { SocketContextProvider } from '@/contexts/SocketContext.tsx'
 import { DisplayContextProvider } from '@/contexts/DisplayContext.tsx'
 import { ClockProvider } from '@/contexts/ClockContext.tsx'
+import { AgentsContextProvider } from '@/contexts/AgentsContext.tsx'
 import { TabsContextProvider } from '@/contexts/TabsContext.tsx'
 import { SleepContextProvider } from '@/contexts/SleepContext.tsx'
 
@@ -26,10 +27,12 @@ root.render(
         <TabsContextProvider>
           <AppBlurContextProvider>
             <SleepContextProvider>
-              <MediaContextProvider>
-                <App />
-                <TimerAlert />
-              </MediaContextProvider>
+              <AgentsContextProvider>
+                <MediaContextProvider>
+                  <App />
+                  <TimerAlert />
+                </MediaContextProvider>
+              </AgentsContextProvider>
             </SleepContextProvider>
           </AppBlurContextProvider>
           <KeyDebug />
