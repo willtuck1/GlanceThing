@@ -1,0 +1,41 @@
+{
+  "sessions": [
+    {
+      "key": "claude-code:9a4f0c27",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "api-server",
+      "state": "stopped",
+      "detail": "No signal",
+      "sinceMs": 1791660145000
+    },
+    {
+      "key": "claude-code:d31e7b58",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "docs-site",
+      "state": "stopped",
+      "detail": "Session ended",
+      "sinceMs": 1791660865000
+    },
+    {
+      "key": "claude-code:6d0a2f54",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "web-client",
+      "state": "working",
+      "detail": "Running Edit",
+      "sinceMs": 1791660925000
+    },
+    {
+      "key": "claude-code:a1f6c3e8",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "data-import",
+      "state": "idle",
+      "detail": "Done",
+      "sinceMs": 1791659545000
+    }
+  ],
+  "counts": { "working": 1, "waiting": 0, "idle": 1, "stopped": 2 }
+}
