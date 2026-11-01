@@ -5,15 +5,19 @@
   "css": "[class*=\"_box_\"] { height: 840px !important; }",
   "api": {
     "getAgentsSettings": {
-      "listener": { "running": true, "port": 47816 },
+      "listener": {
+        "running": true,
+        "port": 47816
+      },
       "adapters": [
         {
           "id": "claude-code",
-          "label": "Claude Code",
+          "label": "Claude",
           "setupSteps": [
-            "Open ~/.claude/settings.json.",
-            "Merge the copied hooks into it.",
-            "Start a new Claude Code session."
+            "Open ~/.claude/settings.json (create it if missing).",
+            "Merge the copied \"hooks\" block into it; keep any hooks you already have.",
+            "Restart Claude Code. New sessions appear in the Agents tab.",
+            "If you regenerate the token or the port changes, copy the config again."
           ]
         }
       ]
