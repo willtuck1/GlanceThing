@@ -1,0 +1,148 @@
+.tab {
+  position: relative;
+  height: 100%;
+  background: #000;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.summary {
+  height: 44px;
+  line-height: 44px;
+  padding: 0 24px;
+  font-size: 22px;
+  color: rgba(235, 235, 245, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.viewport {
+  height: 352px;
+  overflow: hidden;
+}
+
+.card {
+  position: relative;
+  height: 80px;
+  margin: 0 24px 8px;
+  background: #1c1c1e;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.body {
+  position: absolute;
+  left: 22px;
+  right: 110px;
+  top: 0;
+  bottom: 0;
+  padding-top: 8px;
+  box-sizing: border-box;
+}
+
+.line1 {
+  height: 36px;
+  line-height: 36px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.label {
+  display: inline-block;
+  max-width: 70%;
+  vertical-align: middle;
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tag {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+  padding: 0 6px;
+  font-size: 18px;
+  line-height: 24px;
+  border: 1px solid rgba(235, 235, 245, 0.6);
+  border-radius: 6px;
+  color: rgba(235, 235, 245, 0.7);
+}
+
+.line2 {
+  height: 28px;
+  line-height: 28px;
+  font-size: 20px;
+  color: rgba(235, 235, 245, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.elapsed {
+  position: absolute;
+  right: 16px;
+  top: 0;
+  line-height: 80px;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(235, 235, 245, 0.7);
+}
+
+.more {
+  height: 28px;
+  line-height: 28px;
+  padding: 0 24px;
+  font-size: 20px;
+  color: rgba(235, 235, 245, 0.7);
+}
+
+.empty {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  padding-top: 170px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.emptyTitle {
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.emptyHint {
+  margin-top: 12px;
+  font-size: 20px;
+  color: rgba(235, 235, 245, 0.7);
+}
