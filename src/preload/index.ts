@@ -76,7 +76,11 @@ enum IPCHandler {
   TestConnector = 'testConnector',
   ListMcpRecipes = 'listMcpRecipes',
   McpSignIn = 'mcpSignIn',
-  McpSignOut = 'mcpSignOut'
+  McpSignOut = 'mcpSignOut',
+  GetAgentsSettings = 'getAgentsSettings',
+  GetAgentsToken = 'getAgentsToken',
+  RegenerateAgentsToken = 'regenerateAgentsToken',
+  GetAgentsSnippet = 'getAgentsSnippet'
 }
 
 // Custom APIs for renderer
@@ -205,7 +209,15 @@ const api = {
     ipcRenderer.invoke(IPCHandler.TestConnector, draft),
   listMcpRecipes: () => ipcRenderer.invoke(IPCHandler.ListMcpRecipes),
   mcpSignIn: (id: string) => ipcRenderer.invoke(IPCHandler.McpSignIn, id),
-  mcpSignOut: (id: string) => ipcRenderer.invoke(IPCHandler.McpSignOut, id)
+  mcpSignOut: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.McpSignOut, id),
+  getAgentsSettings: () =>
+    ipcRenderer.invoke(IPCHandler.GetAgentsSettings),
+  getAgentsToken: () => ipcRenderer.invoke(IPCHandler.GetAgentsToken),
+  regenerateAgentsToken: () =>
+    ipcRenderer.invoke(IPCHandler.RegenerateAgentsToken),
+  getAgentsSnippet: (id: string) =>
+    ipcRenderer.invoke(IPCHandler.GetAgentsSnippet, id)
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

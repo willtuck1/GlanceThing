@@ -154,6 +154,13 @@ interface ClockSettings {
   keyDebug: boolean
 }
 
+// Agents panel (M11); shape copied from src/main/lib/agents/ipc.ts. Never
+// carries the token.
+interface AgentsSettings {
+  listener: { running: boolean; port: number | null; error?: string }
+  adapters: { id: string; label: string; setupSteps: string[] }[]
+}
+
 declare global {
   interface Window {
     api: {
@@ -325,6 +332,12 @@ declare global {
       listMcpRecipes: () => Promise<McpRecipeInfo[]>
       mcpSignIn: (id: string) => Promise<{ ok: true } | { error: string }>
       mcpSignOut: (id: string) => Promise<boolean>
+      getAgentsSettings: () => Promise<AgentsSettings>
+      // The listener token; Settings shows it masked until Show.
+      getAgentsToken: () => Promise<string>
+      regenerateAgentsToken: () => Promise<string>
+      // 'custom' or an adapter id; null for an unknown id.
+      getAgentsSnippet: (id: string) => Promise<string | null>
     }
   }
 }
