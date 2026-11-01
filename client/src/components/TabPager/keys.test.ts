@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   CALENDAR_KEY,
   indexAfterChange,
+  indexForJump,
   isSleepKey,
   SLEEP_KEY,
   keyToIndex,
@@ -101,5 +102,15 @@ describe('pagerKeyForFirstReply', () => {
   it('remounts when hidden or reordered', () => {
     expect(pagerKeyForFirstReply(KEYS.slice(1), KEYS)).toBe('host')
     expect(pagerKeyForFirstReply([...KEYS].reverse(), KEYS)).toBe('host')
+  })
+})
+
+describe('indexForJump', () => {
+  it('finds the page', () => {
+    expect(indexForJump(KEYS, 'todo')).toBe(2)
+  })
+
+  it('returns null when the page is not shown', () => {
+    expect(indexForJump(KEYS, 'agents')).toBeNull()
   })
 })

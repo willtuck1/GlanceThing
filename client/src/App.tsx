@@ -13,6 +13,7 @@ import Menu from '@/components/Menu/Menu.tsx'
 import { modules } from '@/modules/registry.ts'
 import { pagerKeyForFirstReply } from '@/components/TabPager/keys.ts'
 import { visibleIds } from '@/modules/tabs.ts'
+import { useAgentJump } from '@/modules/agents/useAgentJump.ts'
 import { connectorModule } from '@/modules/connector/index.tsx'
 
 import styles from './App.module.css'
@@ -56,6 +57,8 @@ const App: React.FC = () => {
       .filter((p): p is TabPage => !!p)
   }, [idKey, connectors])
 
+  const jumpTo = useAgentJump(pages.map(p => p.key))
+
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -76,7 +79,7 @@ const App: React.FC = () => {
         <Statusbar />
         {/* Remounts once, only if the host's first tab settings differ from
             the default, so the pager starts on the first visible tab. */}
-        <TabPager key={pagerKey.current} pages={pages} />
+        <TabPager key={pagerKey.current} pages={pages} jumpTo={jumpTo} />
         <FullescreenPlayer shown={playerShown} setShown={setPlayerShown} />
       </div>
       <LoadingScreen />

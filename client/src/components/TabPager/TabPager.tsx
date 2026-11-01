@@ -2,7 +2,12 @@ import { memo, useContext, useEffect, useRef, useState } from 'react'
 
 import { SocketContext } from '@/contexts/SocketContext.tsx'
 
-import { indexAfterChange, isSleepKey, keyToIndex } from './keys.ts'
+import {
+  indexAfterChange,
+  indexForJump,
+  isSleepKey,
+  keyToIndex
+} from './keys.ts'
 import { AXIS_LOCK_PX, resolveSnap } from './snap.ts'
 
 import styles from './TabPager.module.css'
@@ -14,6 +19,8 @@ export interface TabPage {
 
 interface TabPagerProps {
   pages: TabPage[]
+  /** Go to page `key` whenever `seq` changes. */
+  jumpTo?: { key: string; seq: number }
 }
 
 // Re-renders only when its own `active` flips, not on every drag frame or
@@ -35,7 +42,7 @@ interface Drag {
   axis: 'x' | 'y' | null
 }
 
-const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
+const TabPager: React.FC<TabPagerProps> = ({ pages, jumpTo }) => {
   const { socket } = useContext(SocketContext)
   const keys = pages.map(p => p.key)
   const [indexState, setIndex] = useState(0)
@@ -53,6 +60,20 @@ const TabPager: React.FC<TabPagerProps> = ({ pages }) => {
     setPrevKeys(keys)
     setIndex(index)
   }
+
+  // Starts at the current seq so a remount doesn't repeat an old jump.
+  const handledSeq = useRef(jumpTo?.seq)
+  const jumpSeq = jumpTo?.seq
+  useEffect(() => {
+    if (!jumpTo || jumpTo.seq === handledSeq.current) return
+    handledSeq.current = jumpTo.seq
+    const i = indexForJump(
+      pages.map(p => p.key),
+      jumpTo.key
+    )
+    if (i !== null) setIndex(i)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpSeq])
 
   useEffect(() => {
     const listener = (e: KeyboardEvent) => {

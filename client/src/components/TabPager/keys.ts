@@ -50,3 +50,9 @@ export function pagerKeyForFirstReply(
     visible.every((id, i) => id === all[i])
   return same ? 'default' : 'host'
 }
+
+// Index of the page a jump targets, or null when that page isn't shown.
+export function indexForJump(keys: string[], key: string): number | null {
+  const i = keys.indexOf(key)
+  return i === -1 ? null : i
+}
