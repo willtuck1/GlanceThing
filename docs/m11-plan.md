@@ -66,7 +66,7 @@
 | W6.2 | W6 | Fix review findings | per finding | sonnet | W6.1 | gate fast | done (M11 W6.2 host + client) |
 | D1 | docs | AGENTS.md (files, module, listener/port, `agentsToken`, routes, adapter contract, `agents` message, previews, roadmap); NEW_APP.md "Adding an agent"; HISTORY.md traps | M AGENTS.md, docs/NEW_APP.md, docs/HISTORY.md | sonnet | W6.2 | diff | done (M11 D1; touch-ups after review) |
 | D2 | docs | Bump to 0.0.16-tabs.12 | M package.json, client/package.json, both lockfiles | haiku | D1 | version in all 4 files | done (M11 D2) |
-| D3 | – | Full `npm run gate`, draft PR | – | coordinator | D2 | real gate output | todo |
+| D3 | – | Full `npm run gate`, draft PR | – | coordinator | D2 | real gate output | done (draft PR) |
 
 ## Parallelism
 W1.1 → (W1.2 ∥ W1.3) → W1.4 → W1.5. After W1.1: W4.1 ∥ W4.2. After W1.5 three lanes: W2.2→W2.3, W3.1→W3.2, W4.3 ∥ W4.4. W5 onward serial.
