@@ -5,6 +5,7 @@ import { AppBlurContext } from '@/contexts/AppBlurContext.tsx'
 import { useClock } from '@/contexts/ClockContext.tsx'
 import { SleepContext } from '@/contexts/SleepContext.tsx'
 import { SocketContext } from '@/contexts/SocketContext.tsx'
+import { TabsSettledContext } from '@/contexts/TabsContext.tsx'
 
 import { initialJumpState, nextJump } from './autoJump.ts'
 import { parseAgentsPayload } from './view.ts'
@@ -24,13 +25,15 @@ export function useAgentJump(visibleKeys: string[]): Jump | undefined {
   const { timer } = useClock()
   const { sleepState, setSleepState } = useContext(SleepContext)
   const { socket } = useContext(SocketContext)
+  const settled = useContext(TabsSettledContext)
   const [jump, setJump] = useState<Jump | undefined>(undefined)
   const tracker = useRef(initialJumpState)
   const seq = useRef(0)
   const asleep = useRef(false)
   asleep.current = sleepState !== 'off'
 
-  const blocked = blurred || timer?.state === 'ringing'
+  // Until the tab list is known, visibility can't be decided.
+  const blocked = blurred || timer?.state === 'ringing' || !settled
   const tabVisible = visibleKeys.indexOf(AGENTS_KEY) !== -1
 
   useEffect(() => {

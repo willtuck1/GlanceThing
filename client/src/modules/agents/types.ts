@@ -1,6 +1,11 @@
 // Copied from src/main/lib/agents/types.ts; keep in sync.
 
-export const AGENT_STATES = ['working', 'waiting', 'idle', 'stopped'] as const
+export const AGENT_STATES = [
+  'working',
+  'waiting',
+  'idle',
+  'stopped'
+] as const
 export type AgentState = (typeof AGENT_STATES)[number]
 
 /** One session as shown on the device. */

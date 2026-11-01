@@ -97,4 +97,18 @@ describe('nextJump', () => {
     })
     expect(r2.jumpKey).toBe('b')
   })
+
+  it('holds the jump until the tab list has settled', () => {
+    const sessions = [card('a', 'waiting')]
+    // blocked is true while the tabs reply is pending
+    const r1 = nextJump(initialJumpState, {
+      sessions,
+      blocked: true,
+      tabVisible: true
+    })
+    const r2 = nextJump(r1.state, { sessions, ...open })
+    expect(r1.jumpKey).toBeNull()
+    expect(r1.state.jumped).toEqual([])
+    expect(r2.jumpKey).toBe('a')
+  })
 })
