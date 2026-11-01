@@ -156,7 +156,8 @@ describe('claude-code toStatus', () => {
   it('exports the adapter shape', () => {
     expect(id).toBe('claude-code')
     expect(label).toBe('Claude')
-    expect(adapter).toMatchObject({ id, label, toStatus, setupSteps: [] })
+    expect(adapter).toMatchObject({ id, label, toStatus })
+    expect(adapter.setupSteps.length).toBeGreaterThan(0)
     expect(typeof adapter.configSnippet).toBe('function')
   })
 

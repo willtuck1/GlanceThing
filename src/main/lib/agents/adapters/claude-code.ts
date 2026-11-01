@@ -1,4 +1,5 @@
 import type { AgentAdapter, AgentState, AgentStatus } from '../types.js'
+import { hookCommand } from '../snippets.js'
 import { parseAgentStatus } from '../validate.js'
 
 /**
@@ -130,9 +131,37 @@ export function toStatus(payload: unknown): AgentStatus | null {
   }
 }
 
-// Filled in by W2.3.
-export const configSnippet = (): string => ''
-export const setupSteps: string[] = []
+/** Hook events `toStatus` maps. */
+export const HOOK_EVENTS = [
+  'SessionStart',
+  'UserPromptSubmit',
+  'PreToolUse',
+  'PostToolUse',
+  'PostToolUseFailure',
+  'PermissionRequest',
+  'Notification',
+  'SubagentStop',
+  'Stop',
+  'StopFailure',
+  'SessionEnd'
+] as const
+
+/** `hooks` block for ~/.claude/settings.json. No matcher = all. timeout is seconds. */
+export function configSnippet(port: number, token: string): string {
+  const command = hookCommand(id, port, token)
+  const hooks: Record<string, unknown> = {}
+  for (const event of HOOK_EVENTS) {
+    hooks[event] = [{ hooks: [{ type: 'command', command, timeout: 5 }] }]
+  }
+  return JSON.stringify({ hooks }, null, 2)
+}
+
+export const setupSteps: string[] = [
+  'Open ~/.claude/settings.json (create it if missing).',
+  'Merge the copied "hooks" block into it; keep any hooks you already have.',
+  'Restart Claude Code. New sessions appear in the Agents tab.',
+  'If you regenerate the token or the port changes, copy the config again.'
+]
 
 export const adapter: AgentAdapter = {
   id,
