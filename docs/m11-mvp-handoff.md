@@ -1,6 +1,6 @@
 # M11 handoff: from code-complete to a working Agents tab
 
-Paste the prompt block into a new Claude Code session (Opus 5.5) on the user's Windows PC, in `C:\Users\alext\Downloads\GlanceThing`.
+Paste the prompt block into a new Claude Code session (Opus 5.5) on the computer that will run the desktop app and has the Car Thing plugged in by USB. That may not be the machine that built M11: start with "Setup on a new machine".
 
 ## Prompt
 
@@ -12,7 +12,7 @@ Car Thing). Read docs/m11-mvp-handoff.md (this file) fully, then AGENTS.md
 bullets "Agents (M11, host)", "Agents (M11, client)", "Client self-update",
 and "Rules"; docs/m11-plan.md only if you need a design reason.
 
-Work through the steps below in order. Say "not verified" for anything you
+Do "Setup on a new machine" first, then work through the steps in order. Say "not verified" for anything you
 couldn't observe. Paste real output, never a summary of it. Three failures on
 the same problem: stop and tell the user what's blocking. Fixes go on the same
 branch (one commit per fix, `npm run gate -- fast` before each commit). After
@@ -47,7 +47,7 @@ release without the user saying so at that step.
 | Key files | `src/main/lib/agents/` (listener, token, store, validate, snippets, ipc, adapters/), `src/main/lib/setup/agents.ts`, `client/src/modules/agents/`, `client/src/contexts/AgentsContext.tsx`, `src/renderer/src/pages/Settings/AgentsTab.tsx` |
 | Logging | By design nothing logs tokens, bodies or labels. To see what arrives, watch the curl exit/HTTP code or the device |
 | Gate | `npm run gate -- fast` between steps, `npm run gate` before the PR is marked ready |
-| Screenshots | Playwright lives in `C:\Users\alext\AppData\Local\Temp\gt-pw`; run scripts with `npm_config_prefix=/c/Users/alext/AppData/Local/Temp/gt-pw PLAYWRIGHT_BROWSERS_PATH=/c/Users/alext/AppData/Local/Temp/gt-pw/browsers`. Auto-jump shots need `VARIANT_tabs=all` |
+| Screenshots (only if needed) | Without a global Playwright: `npm i -g --prefix <dir> playwright`, then `PLAYWRIGHT_BROWSERS_PATH=<dir>/browsers node <dir>/node_modules/playwright/cli.js install chromium`, and run the preview scripts with `npm_config_prefix=<dir> PLAYWRIGHT_BROWSERS_PATH=<dir>/browsers`. Use a plain path for `<dir>` (no session ids). Auto-jump shots need `VARIANT_tabs=all` |
 | Windows shell traps | Git Bash has no `pkill` (kill by PID); grep on gate output exits 0 even on FAIL; in PowerShell use `curl.exe`, not `curl` |
 
 Test helpers (Git Bash; set `PORT` and `TOKEN` from Settings → Agents):
@@ -72,6 +72,15 @@ echo '{"session_id":"smoke-1","cwd":"C:\\Users\\x\\smoke-test","hook_event_name"
 
 # negative checks: no token → 401; with -H "Origin: http://x" → 400
 ```
+
+## Setup on a new machine
+
+1. Install Git for Windows (gives Git Bash), Node.js (the major version CI uses; see `.github/workflows/`), `gh` (signed in with push access to willtuck1/GlanceThing) and Claude Code (it is the agent under test).
+2. `git clone https://github.com/willtuck1/GlanceThing.git && cd GlanceThing && git checkout milestone/11-agents`
+3. `npm ci` and `npm --prefix client ci`. If scripts were skipped, run `node node_modules/electron/install.js` (otherwise the Electron-loading tests fail with "Electron failed to install correctly").
+4. `npm run gate -- fast`: all five lines must be `ok` before you start. Paste the output.
+5. The listener starts with the ws server, which starts only after the app's first-run setup is complete. On a machine that has never run GlanceThing, finish the in-app setup first (`docs/SETUP.md`). This machine has its own storage, so Google/Fantasy/Weather settings won't carry over (that doesn't matter for this test).
+6. The Car Thing must be plugged into this machine by USB. See `docs/SETUP.md` if it doesn't connect.
 
 ## Steps
 
@@ -98,7 +107,7 @@ echo '{"session_id":"smoke-1","cwd":"C:\\Users\\x\\smoke-test","hook_event_name"
 5. **Ready the PR.** Full `npm run gate`. Update the PR #25 body: what was verified (with outputs), fixes, what's still unverified. Mark it ready. **Ask the user before merging.**
 6. **Release, after the user merges.** `git checkout main && git pull && git tag v0.0.16-tabs.12 && git push origin v0.0.16-tabs.12`. Watch `build-release.yml` (`gh run list --workflow build-release.yml`, `gh run watch`). Confirm the release exists, isn't a pre-release, and is titled `GlanceThing_v0.NN`.
 7. **Install and confirm.** The user installs the released desktop app and connects the device; the client self-updates. Run step 3b once more on the release build.
-8. **Close out.** Record the final results in AGENTS.md and HISTORY.md (M11 ledger row: PR #25, verified items) in a small docs PR. Tell the user they can delete `claude/m11-agents-handoff` and `C:\Users\alext\AppData\Local\Temp\gt-pw`.
+8. **Close out.** Record the final results in AGENTS.md and HISTORY.md (M11 ledger row: PR #25, verified items) in a small docs PR. Tell the user they can delete the remote branch `claude/m11-agents-handoff` and any Playwright directory made for screenshots.
 
 ## Open decisions (ask the user if they come up)
 
