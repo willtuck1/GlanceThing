@@ -11,6 +11,8 @@ import {
   setStorageValue
 } from '../storage.js'
 
+import { AGENTS_TOKEN_KEY } from '../agents/token.js'
+
 import {
   cancelSignIn,
   clearAuthOnOriginChange,
@@ -55,6 +57,7 @@ export function isProtectedStorageKey(key: unknown): boolean {
   const k = String(key)
   return (
     k === CONNECTORS_KEY ||
+    k === AGENTS_TOKEN_KEY ||
     k.startsWith(SECRET_PREFIX) ||
     k.startsWith(MCP_AUTH_PREFIX)
   )

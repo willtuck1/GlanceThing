@@ -6,6 +6,7 @@ import { ModalContext } from '@/contexts/ModalContext.js'
 import Loader from '@/components/Loader/Loader.js'
 import Switch from '@/components/Switch/Switch.js'
 
+import AgentsTab from './AgentsTab.js'
 import ClockTab from './ClockTab.js'
 import ConnectorsTab from './ConnectorsTab.js'
 
@@ -26,6 +27,7 @@ enum Tab {
   Weather,
   Tabs,
   Clock,
+  Agents,
   Connectors,
   Advanced,
   Logs,
@@ -131,6 +133,13 @@ const Settings: React.FC = () => {
               Clock
             </button>
             <button
+              onClick={() => setCurrentTab(Tab.Agents)}
+              data-active={currentTab === Tab.Agents}
+            >
+              <span className="material-icons">smart_toy</span>
+              Agents
+            </button>
+            <button
               onClick={() => setCurrentTab(Tab.Connectors)}
               data-active={currentTab === Tab.Connectors}
             >
@@ -182,6 +191,8 @@ const Settings: React.FC = () => {
               <TabsTab />
             ) : currentTab === Tab.Clock ? (
               <ClockTab />
+            ) : currentTab === Tab.Agents ? (
+              <AgentsTab />
             ) : currentTab === Tab.Connectors ? (
               <ConnectorsTab />
             ) : currentTab === Tab.Advanced ? (

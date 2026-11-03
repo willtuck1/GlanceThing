@@ -1,0 +1,32 @@
+.token {
+  font-family: monospace;
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.steps {
+  margin: 4px 0 8px;
+  padding-left: 20px;
+  opacity: 0.8;
+  font-size: 14px;
+}
+
+.regen {
+  margin-left: 16px;
+  background: transparent;
+  color: #ff453a;
+  border: 1px solid #ff453a;
+}
+
+.regenConfirm {
+  background: #ff453a;
+  color: #fff;
+}
+
+.schema {
+  margin: 4px 0 8px;
+  font-family: monospace;
+  font-size: 13px;
+  opacity: 0.85;
+  white-space: pre;
+}

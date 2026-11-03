@@ -1,0 +1,17 @@
+{
+  "session_id": "sess-0000-5",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-5.jsonl",
+  "cwd": "C:\\Users\\someone\\proj\\glance-app",
+  "permission_mode": "default",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Read",
+  "tool_input": {
+    "command": "cat /secret/LEAKCHECK/file.ts",
+    "file_path": "/secret/LEAKCHECK/file.ts",
+    "description": "LEAKCHECK description"
+  },
+  "tool_response": {
+    "content": "LEAKCHECK file body",
+    "filePath": "/secret/LEAKCHECK/file.ts"
+  }
+}

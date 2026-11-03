@@ -1,5 +1,5 @@
 {
-  "order": ["weather", "calendar", "todo", "sports", "fantasy", "spotify", "json:list0001", "json:numb0001", "json:keyv0001", "json:grid0001"],
+  "order": ["weather", "calendar", "todo", "sports", "fantasy", "spotify", "clock", "agents", "json:list0001", "json:numb0001", "json:keyv0001", "json:grid0001"],
   "hidden": [],
   "connectors": [
     { "id": "json:list0001", "label": "Sensors", "layout": "list" },

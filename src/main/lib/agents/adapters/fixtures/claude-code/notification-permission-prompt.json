@@ -1,0 +1,10 @@
+{
+  "session_id": "sess-0000-9",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-9.jsonl",
+  "cwd": "C:\\Users\\someone\\proj\\glance-app",
+  "permission_mode": "default",
+  "hook_event_name": "Notification",
+  "message": "Claude needs your permission to use LEAKCHECK",
+  "title": "LEAKCHECK title",
+  "notification_type": "permission_prompt"
+}

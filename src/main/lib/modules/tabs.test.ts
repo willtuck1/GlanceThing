@@ -90,14 +90,14 @@ describe('get/setTabSettings', () => {
   })
 })
 
-describe('clock tab', () => {
+describe('agents tab', () => {
   it('is appended last for users with a saved order from before it existed', () => {
     store.set('tabSettings', {
       order: ['spotify', 'weather', 'calendar', 'todo', 'sports', 'fantasy'],
       hidden: []
     })
     const s = getTabSettings()
-    expect(s.order[s.order.length - 1]).toBe('clock')
+    expect(s.order[s.order.length - 1]).toBe('agents')
     expect(s.order[0]).toBe('spotify')
   })
 })

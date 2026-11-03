@@ -1,0 +1,13 @@
+{
+  "session_id": "sess-0000-8",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-8.jsonl",
+  "cwd": "/home/someone/work/my-repo",
+  "permission_mode": "default",
+  "hook_event_name": "PermissionRequest",
+  "tool_name": "Edit",
+  "tool_input": {
+    "command": "cat /secret/LEAKCHECK/file.ts",
+    "file_path": "/secret/LEAKCHECK/file.ts",
+    "description": "LEAKCHECK description"
+  }
+}

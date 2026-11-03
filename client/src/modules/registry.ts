@@ -6,6 +6,7 @@ import { module as fantasy } from './fantasy/index.tsx'
 import { module as spotify } from './spotify/index.tsx'
 
 import { module as clock } from './clock/index.tsx'
+import { module as agents } from './agents/index.tsx'
 
 import type { ClientModule } from './types.ts'
 
@@ -17,5 +18,6 @@ export const modules: ClientModule[] = [
   sports,
   fantasy,
   spotify,
-  clock
+  clock,
+  agents
 ]

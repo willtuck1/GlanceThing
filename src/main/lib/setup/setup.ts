@@ -6,8 +6,9 @@ import {
 import * as time from './time.js'
 import * as playback from './playback.js'
 import * as feeds from './feeds.js'
+import * as agents from './agents.js'
 
-const setupHandlers: SetupHandler[] = [time, playback, feeds]
+const setupHandlers: SetupHandler[] = [time, playback, feeds, agents]
 
 export async function runServerSetup() {
   const cleanupFunctions: CleanupFunction[] = []

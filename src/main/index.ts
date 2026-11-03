@@ -91,6 +91,12 @@ import {
   ipcMcpSignOut
 } from './lib/mcp/ipc.js'
 import {
+  ipcGetAgentsSettings,
+  ipcGetAgentsSnippet,
+  ipcGetAgentsToken,
+  ipcRegenerateAgentsToken
+} from './lib/agents/ipc.js'
+import {
   CLOCK_WIDGETS,
   clockPayload,
   getClockSettings,
@@ -311,7 +317,11 @@ enum IPCHandler {
   TestConnector = 'testConnector',
   ListMcpRecipes = 'listMcpRecipes',
   McpSignIn = 'mcpSignIn',
-  McpSignOut = 'mcpSignOut'
+  McpSignOut = 'mcpSignOut',
+  GetAgentsSettings = 'getAgentsSettings',
+  GetAgentsToken = 'getAgentsToken',
+  RegenerateAgentsToken = 'regenerateAgentsToken',
+  GetAgentsSnippet = 'getAgentsSnippet'
 }
 
 async function setupIpcHandlers() {
@@ -726,6 +736,20 @@ async function setupIpcHandlers() {
   ipcMain.handle(IPCHandler.McpSignIn, (_event, id) => ipcMcpSignIn(id))
 
   ipcMain.handle(IPCHandler.McpSignOut, (_event, id) => ipcMcpSignOut(id))
+
+  ipcMain.handle(IPCHandler.GetAgentsSettings, () =>
+    ipcGetAgentsSettings()
+  )
+
+  ipcMain.handle(IPCHandler.GetAgentsToken, () => ipcGetAgentsToken())
+
+  ipcMain.handle(IPCHandler.RegenerateAgentsToken, () =>
+    ipcRegenerateAgentsToken()
+  )
+
+  ipcMain.handle(IPCHandler.GetAgentsSnippet, (_event, id) =>
+    ipcGetAgentsSnippet(id)
+  )
 }
 
 async function setupTray() {

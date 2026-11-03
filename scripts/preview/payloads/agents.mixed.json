@@ -1,0 +1,41 @@
+{
+  "sessions": [
+    {
+      "key": "claude-code:3b9e1f07",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "glance-app",
+      "state": "waiting",
+      "detail": "Needs approval: Bash",
+      "sinceMs": 1791660985000
+    },
+    {
+      "key": "claude-code:8c2d4a61",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "api-server",
+      "state": "working",
+      "detail": "Running Edit",
+      "sinceMs": 1791660805000
+    },
+    {
+      "key": "claude-code:e5071b9d",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "docs-site",
+      "state": "working",
+      "detail": "Working",
+      "sinceMs": 1791660325000
+    },
+    {
+      "key": "claude-code:a1f6c3e8",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "notes",
+      "state": "idle",
+      "detail": "Done",
+      "sinceMs": 1791657325000
+    }
+  ],
+  "counts": { "working": 2, "waiting": 1, "idle": 1, "stopped": 0 }
+}

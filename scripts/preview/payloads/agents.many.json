@@ -1,0 +1,77 @@
+{
+  "sessions": [
+    {
+      "key": "claude-code:3b9e1f07",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "glance-app",
+      "state": "waiting",
+      "detail": "Needs approval: Bash",
+      "sinceMs": 1791660985000
+    },
+    {
+      "key": "claude-code:6d0a2f54",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "web-client",
+      "state": "working",
+      "detail": "Running Edit",
+      "sinceMs": 1791660925000
+    },
+    {
+      "key": "claude-code:8c2d4a61",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "api-server",
+      "state": "working",
+      "detail": "Running tests",
+      "sinceMs": 1791660685000
+    },
+    {
+      "key": "claude-code:e5071b9d",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "docs-site",
+      "state": "working",
+      "detail": "Working",
+      "sinceMs": 1791660505000
+    },
+    {
+      "key": "claude-code:c74e9b10",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "infra",
+      "state": "waiting",
+      "detail": "Waiting for you",
+      "sinceMs": 1791660865000
+    },
+    {
+      "key": "claude-code:a1f6c3e8",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "data-import",
+      "state": "idle",
+      "detail": "Done",
+      "sinceMs": 1791659545000
+    },
+    {
+      "key": "claude-code:f2b8d6a3",
+      "source": "claude-code",
+      "sourceLabel": "Claude",
+      "label": "mobile-app",
+      "state": "idle",
+      "detail": "Done",
+      "sinceMs": 1791658165000
+    },
+    {
+      "key": "custom:backup-0042",
+      "source": "custom",
+      "sourceLabel": "custom",
+      "label": "backup-job",
+      "state": "stopped",
+      "detail": "No signal",
+      "sinceMs": 1791660145000
+    }
+  ],
+  "counts": { "working": 3, "waiting": 2, "idle": 2, "stopped": 1 }
+}

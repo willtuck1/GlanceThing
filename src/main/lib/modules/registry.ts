@@ -1,3 +1,4 @@
+import { manifest as agents } from './agents/index.js'
 import { manifest as calendar } from './calendar/index.js'
 import { manifest as clock } from './clock/index.js'
 import { manifest as fantasy } from './fantasy/index.js'
@@ -17,7 +18,8 @@ export const modules: ModuleManifest[] = [
   sports,
   fantasy,
   spotify,
-  clock
+  clock,
+  agents
 ]
 
 export function getModule(id: string) {

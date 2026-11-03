@@ -8,6 +8,7 @@ The one guide to adding a tab to the Car Thing: pick a path, then follow its sec
 | --- | --- | --- | --- |
 | JSON connector | Any HTTPS (or LAN http) JSON API | Nothing; added in Settings | None |
 | MCP recipe | An MCP server with a read-only tool or resource | One recipe JSON (made by the `add-connector` workflow), a test and fixtures | Desktop build; no client release |
+| Agent adapter | A local AI tool that can run a command or POST on session events | One adapter file, a test with fixtures, one registry line (or no code: call `POST /v1/status`) | Desktop build; no client release |
 | Code-built app module | Anything else (custom UI, complex logic, several requests) | Host and client code | Client release |
 
 Prefer the top-most path that fits.
@@ -206,6 +207,55 @@ After it finishes: review the fixtures, update `AGENTS.md` if anything there bec
 - `src/main/lib/mcp/testServer/` has a test MCP server (`startTestMcpServer`, tool `list_tasks`, one resource) and a fake OAuth server (`startTestAuthServer`, `authorizeVia`) for vitest. They are for tests only and are not a standalone process. `src/main/lib/mcp/fixtures/` holds the matching `tools-list.json` and `list_tasks.result.json`.
 - Preview the tab: `VARIANT_tabs=mcp node scripts/preview/server.mjs &` adds the example tab at index 6 (see `scripts/preview/README.md`).
 - Settings screenshots: `node scripts/preview/settings.mjs <state>` with a state from `scripts/preview/settings-states/` (`mcp-list`, `mcp-form`, `mcp-expired`); output goes to `docs/m9c-screenshots/`.
+
+## Adding an agent
+
+An agent is a tool whose sessions show as cards in the Agents tab (M11). No client release is needed: the tab already renders any `AgentCard`. Code lives in `src/main/lib/agents/`; the listener is on 127.0.0.1 only (default port 47816, up to 47825) and needs the bearer token from Settings -> Agents.
+
+### Adapter (tools that can POST their own hook payload)
+
+An adapter is the privacy boundary: it turns the tool's raw hook payload into an `AgentStatus` and drops everything else.
+
+```ts
+interface AgentAdapter {
+  id: string            // /^[a-z0-9-]{1,24}$/, unique; becomes the route /v1/hook/<id> and the source
+  label: string         // at most 8 characters, shown on the card
+  toStatus(payload: unknown): AgentStatus | null
+  configSnippet(port: number, token: string): string  // text the user pastes into the tool
+  setupSteps: string[]  // shown in Settings -> Agents
+}
+```
+
+Rules for `toStatus`: pure; returns null to ignore a payload (still answered 202); never throws. `detail` may only be a fixed phrase, optionally with a sanitized tool name (`[A-Za-z0-9_.-]`, at most 24). `label` may only be a folder basename (the cwd's last segment, Windows or POSIX). Never read or forward prompts, tool inputs or outputs, messages, titles or transcript paths. The session key is `source:sessionId`.
+
+Files to add:
+
+1. `src/main/lib/agents/adapters/<id>.ts` exporting `adapter` (copy `claude-code.ts`).
+2. `src/main/lib/agents/adapters/<id>.test.ts` with committed synthetic fixtures in `adapters/fixtures/<id>/`. Put the marker `LEAKCHECK` in every free-text field (prompt, tool input, message, path) and assert the output JSON never contains it or a path separator. Cover each mapped event, garbage input and null.
+3. One line in `adapters/registry.ts` (`adapters` array). `registry.test.ts` checks unique ids and label length.
+
+For `configSnippet`, build the command with `hookCommand(id, port, token)` from `snippets.ts` (curl with `-m 2`, `|| true`). If the tool has per-hook timeouts, set one explicitly (Claude Code uses `timeout: 5`; SessionEnd otherwise gets 1.5 s).
+
+### Generic endpoint (scripts and tools that can call it directly)
+
+`POST http://127.0.0.1:<port>/v1/status` with `Authorization: Bearer <token>` and `Content-Type: application/json`. No adapter needed; use your own `source` (for example `custom`).
+
+| Field | Rule |
+| --- | --- |
+| `source` | required, `a-z 0-9 -`, 1-24 characters |
+| `sessionId` | required, printable ASCII without spaces, 1-128 characters |
+| `state` | required: `working`, `waiting`, `idle` or `stopped` |
+| `label` | optional, cleaned, capped at 24 characters |
+| `detail` | optional, cleaned, capped at 48 characters |
+| `end` | optional boolean; `true` forces `stopped` and removes the card after 10 minutes |
+
+Unknown fields are ignored; wrong types reject the whole body (400). Replies: 202 ok, 400 bad request/Origin/Host, 401 bad token, 404 unknown route, 413 over 64 KB.
+
+```
+curl -s -m 2 -X POST http://127.0.0.1:47816/v1/status -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d "{\"source\":\"custom\",\"sessionId\":\"demo\",\"label\":\"my-script\",\"state\":\"waiting\",\"detail\":\"Needs approval\"}"
+```
+
+On PowerShell use `curl.exe`. A working session silent for 15 minutes becomes stopped ("No signal"); at most 12 sessions are kept. The port can change if 47816 is taken, so re-copy the config from Settings after a port change.
 
 ## Code-built app modules
 

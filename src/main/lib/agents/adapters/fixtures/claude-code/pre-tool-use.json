@@ -1,0 +1,14 @@
+{
+  "session_id": "sess-0000-3",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-3.jsonl",
+  "cwd": "C:\\Users\\someone\\proj\\glance-app",
+  "permission_mode": "default",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "cat /secret/LEAKCHECK/file.ts",
+    "file_path": "/secret/LEAKCHECK/file.ts",
+    "description": "LEAKCHECK description"
+  },
+  "tool_use_id": "toolu_LEAKCHECK"
+}

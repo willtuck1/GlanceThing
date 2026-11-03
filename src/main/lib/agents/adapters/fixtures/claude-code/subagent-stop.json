@@ -1,0 +1,10 @@
+{
+  "session_id": "sess-0000-7",
+  "transcript_path": "/secret/LEAKCHECK/transcripts/sess-7.jsonl",
+  "cwd": "C:\\Users\\someone\\proj\\glance-app",
+  "permission_mode": "default",
+  "hook_event_name": "SubagentStop",
+  "stop_hook_active": false,
+  "agent_transcript_path": "/secret/LEAKCHECK/agent.jsonl",
+  "last_assistant_message": "LEAKCHECK summary"
+}
